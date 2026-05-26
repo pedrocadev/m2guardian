@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\CollaboratorController;
+use App\Http\Controllers\LeaderAuthController;
 use App\Http\Controllers\LeaderController;
 use App\Http\Controllers\MagicLinkController;
 use Illuminate\Support\Facades\Route;
@@ -25,7 +26,13 @@ Route::middleware(['auth:admin'])->prefix('admin')->name('admin.two-factor.')->g
     Route::post('/dois-fatores/desativar', [TwoFactorController::class, 'disable'])->name('disable');
 });
 
-// Área do líder
+// Login do líder (email + senha)
+Route::prefix('lider')->name('leader.')->group(function () {
+    Route::get('/login', [LeaderAuthController::class, 'showLogin'])->name('login');
+    Route::post('/login', [LeaderAuthController::class, 'login'])->middleware('throttle:admin-login')->name('login.attempt');
+});
+
+// Área do líder (autenticada)
 Route::middleware('auth.leader')->prefix('lider')->name('leader.')->group(function () {
     Route::get('/dashboard', [LeaderController::class, 'dashboard'])->name('dashboard');
     Route::get('/relatorio/pdf', [\App\Http\Controllers\ReportController::class, 'downloadPdf'])->name('report.pdf');
@@ -35,7 +42,7 @@ Route::middleware('auth.leader')->prefix('lider')->name('leader.')->group(functi
         Route::post('/convidar/{collaborator}/reenviar', [\App\Http\Controllers\LeaderInviteController::class, 'resend'])->name('invite.resend');
         Route::post('/convidar/{collaborator}/gerar-link', [\App\Http\Controllers\LeaderInviteController::class, 'generateLink'])->name('invite.generate-link');
     });
-    Route::post('/logout', [LeaderController::class, 'logout'])->name('logout');
+    Route::post('/logout', [LeaderAuthController::class, 'logout'])->name('logout');
 });
 
 // Área do colaborador

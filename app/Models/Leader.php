@@ -18,20 +18,35 @@ class Leader extends Authenticatable
         'company_id',
         'name',
         'email',
+        'password',
         'phone',
         'role_label',
         'status',
+        'last_login_at',
+        'last_login_ip',
+        'failed_attempts',
+        'locked_until',
+        'password_set_at',
     ];
 
     protected $hidden = [
+        'password',
         'remember_token',
     ];
 
     protected function casts(): array
     {
         return [
-            'last_login_at' => 'datetime',
+            'last_login_at'   => 'datetime',
+            'locked_until'    => 'datetime',
+            'password_set_at' => 'datetime',
+            'password'        => 'hashed',
         ];
+    }
+
+    public function isLocked(): bool
+    {
+        return $this->locked_until !== null && $this->locked_until->isFuture();
     }
 
     public function company(): BelongsTo

@@ -15,7 +15,7 @@ class LeaderInviteMail extends Mailable
 
     public function __construct(
         public Leader $leader,
-        public string $magicLinkUrl,
+        public string $password,
     ) {}
 
     public function envelope(): Envelope
@@ -29,6 +29,9 @@ class LeaderInviteMail extends Mailable
     {
         return new Content(
             view: 'emails.leader-invite',
+            with: [
+                'loginUrl' => route('leader.login'),
+            ],
         );
     }
 }

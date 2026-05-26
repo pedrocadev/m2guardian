@@ -11,7 +11,7 @@ class AuthLeader
     public function handle(Request $request, Closure $next)
     {
         if (!Auth::guard('leader')->check()) {
-            return redirect()->route('magic-link.invalid');
+            return redirect()->route('leader.login');
         }
 
         return $next($request);

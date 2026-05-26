@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ScenarioResource\Pages;
 use App\Models\Scenario;
+use Filament\Forms\Components\CheckboxList;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
@@ -28,7 +29,7 @@ class ScenarioResource extends Resource
             Forms\Components\Section::make('Identificação')->schema([
                 Forms\Components\Select::make('platform')
                     ->label('Plataforma')
-                    ->options(['wapp' => 'WhatsApp', 'teams' => 'Microsoft Teams', 'email' => 'E-mail'])
+                    ->options(['wapp' => 'WhatsApp', 'teams' => 'Microsoft Teams', 'email' => 'E-mail', 'outro' => 'Outra Plataforma'])
                     ->required(),
                 Forms\Components\TextInput::make('slug')
                     ->label('Slug')
@@ -74,6 +75,13 @@ class ScenarioResource extends Resource
                 Forms\Components\Toggle::make('demo_eligible')
                     ->label('Disponível no Demo')
                     ->helperText('Aparece nos 3 cenários do plano Demo'),
+                CheckboxList::make('target_areas')
+                    ->label('Áreas-alvo (para quais departamentos este cenário se aplica)')
+                    ->options(Scenario::AREAS)
+                    ->columns(3)
+                    ->helperText('Marque "Todos" se aplicar a qualquer colaborador, ou selecione áreas específicas. Útil para escolher quais cenários enviar a cada colaborador.')
+                    ->default(['todos'])
+                    ->columnSpanFull(),
             ])->columns(2),
 
             Forms\Components\Section::make('Editor de Mensagens')
@@ -171,12 +179,14 @@ class ScenarioResource extends Resource
                         'wapp'  => 'success',
                         'teams' => 'primary',
                         'email' => 'warning',
+                        'outro' => 'gray',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn ($state) => match ($state) {
                         'wapp'  => 'WhatsApp',
                         'teams' => 'Teams',
                         'email' => 'E-mail',
+                        'outro' => 'Outra',
                         default => $state,
                     }),
                 Tables\Columns\TextColumn::make('company.name')
@@ -191,6 +201,13 @@ class ScenarioResource extends Resource
                     ->label('Demo')
                     ->boolean()
                     ->alignCenter(),
+                Tables\Columns\TextColumn::make('target_areas')
+                    ->label('Áreas-alvo')
+                    ->badge()
+                    ->separator(',')
+                    ->formatStateUsing(fn ($state) => Scenario::AREAS[$state] ?? $state)
+                    ->color('info')
+                    ->limit(40),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
@@ -219,6 +236,7 @@ class ScenarioResource extends Resource
                     ->options(['active' => 'Ativo', 'draft' => 'Rascunho', 'archived' => 'Arquivado']),
                 Tables\Filters\TernaryFilter::make('is_default')->label('Apenas padrão M2'),
                 Tables\Filters\TernaryFilter::make('demo_eligible')->label('Apenas Demo'),
+                // (Filtro de área-alvo removido temporariamente — usar filtros de plataforma e demo)
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label('Editar'),

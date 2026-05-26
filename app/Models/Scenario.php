@@ -25,15 +25,29 @@ class Scenario extends Model
         'content',
         'is_default',
         'demo_eligible',
+        'target_areas',
         'version',
         'status',
         'updated_by_admin_id',
+    ];
+
+    public const AREAS = [
+        'todos'        => 'Todos os colaboradores',
+        'diretoria'    => 'Diretoria / C-Level',
+        'financeiro'   => 'Financeiro / Contas a Pagar',
+        'rh'           => 'Recursos Humanos',
+        'ti'           => 'TI / Tecnologia',
+        'comercial'    => 'Comercial / Vendas',
+        'juridico'     => 'Jurídico / Compliance',
+        'operacional'  => 'Operacional / Logística',
+        'compras'      => 'Compras / Suprimentos',
     ];
 
     protected function casts(): array
     {
         return [
             'content' => 'array',
+            'target_areas' => 'array',
             'is_default' => 'boolean',
             'demo_eligible' => 'boolean',
         ];
