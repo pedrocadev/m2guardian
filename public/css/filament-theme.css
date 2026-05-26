@@ -1,0 +1,135 @@
+/* ========================================
+   M2 Guardião — Tema Filament Admin
+   Identidade M2 Cloud & Security
+   ======================================== */
+
+/* Variáveis de cor M2 */
+:root {
+    --m2-red: #CC0000;
+    --m2-red-dark: #A30000;
+    --m2-red-light: #E60000;
+    --m2-black: #111111;
+    --m2-dark: #1a1a1a;
+    --m2-gray: #2d2d2d;
+}
+
+/* Sidebar escura com identidade M2 */
+.fi-sidebar {
+    background-color: #111111 !important;
+    border-right: 1px solid #2a2a2a !important;
+}
+
+.fi-sidebar-nav {
+    background-color: #111111 !important;
+}
+
+/* Header do sidebar — logo area */
+.fi-sidebar-header {
+    background-color: #0d0d0d !important;
+    border-bottom: 1px solid #CC0000 !important;
+    padding: 1rem !important;
+}
+
+/* Links do menu */
+.fi-sidebar-item-button {
+    color: #cccccc !important;
+    border-radius: 6px !important;
+    transition: all 0.15s ease !important;
+}
+
+.fi-sidebar-item-button:hover {
+    background-color: rgba(204, 0, 0, 0.15) !important;
+    color: #ffffff !important;
+}
+
+/* Item ativo do menu */
+.fi-sidebar-item-button.fi-active,
+.fi-sidebar-item-button[aria-current] {
+    background-color: #CC0000 !important;
+    color: #ffffff !important;
+}
+
+/* Ícones do menu */
+.fi-sidebar-item-icon {
+    color: inherit !important;
+}
+
+/* Grupo de navegação */
+.fi-sidebar-group-label {
+    color: #666666 !important;
+    font-size: 0.65rem !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    font-weight: 600 !important;
+}
+
+/* Topbar */
+.fi-topbar {
+    background-color: #ffffff !important;
+    border-bottom: 1px solid #e5e7eb !important;
+}
+
+/* Botões primários — vermelho M2 */
+.fi-btn-primary,
+button[class*="bg-primary"] {
+    background-color: #CC0000 !important;
+    border-color: #CC0000 !important;
+}
+
+.fi-btn-primary:hover,
+button[class*="bg-primary"]:hover {
+    background-color: #A30000 !important;
+}
+
+/* Badges e indicadores */
+.fi-badge-color-primary {
+    background-color: rgba(204, 0, 0, 0.1) !important;
+    color: #CC0000 !important;
+}
+
+/* Cards de estatísticas */
+.fi-wi-stats-overview-stat {
+    border-left: 3px solid #CC0000 !important;
+}
+
+/* Formulários — focus ring vermelho */
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: #CC0000 !important;
+    box-shadow: 0 0 0 1px #CC0000 !important;
+}
+
+/* Links */
+a.fi-link {
+    color: #CC0000 !important;
+}
+
+/* Tabelas — linha hover */
+.fi-ta-row:hover {
+    background-color: rgba(204, 0, 0, 0.04) !important;
+}
+
+/* Scrollbar da sidebar */
+.fi-sidebar::-webkit-scrollbar {
+    width: 4px;
+}
+
+.fi-sidebar::-webkit-scrollbar-track {
+    background: #1a1a1a;
+}
+
+.fi-sidebar::-webkit-scrollbar-thumb {
+    background: #CC0000;
+    border-radius: 4px;
+}
+
+/* Avatar do usuário no topbar */
+.fi-avatar {
+    border: 2px solid #CC0000 !important;
+}
+
+/* Collapse button da sidebar */
+.fi-sidebar-close-btn {
+    color: #cccccc !important;
+}
