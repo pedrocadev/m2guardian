@@ -23,6 +23,10 @@ class Collaborator extends Authenticatable
         'department',
         'profile',
         'invited_at',
+        'first_access_at',
+        'completed_at',
+        'score',
+        'total_questions',
     ];
 
     protected function casts(): array

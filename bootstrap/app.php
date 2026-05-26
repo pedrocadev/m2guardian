@@ -11,9 +11,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+
         $middleware->alias([
             'auth.leader'       => \App\Http\Middleware\AuthLeader::class,
             'auth.collaborator' => \App\Http\Middleware\AuthCollaborator::class,
+            'admin.2fa'         => \App\Http\Middleware\AdminTwoFactor::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

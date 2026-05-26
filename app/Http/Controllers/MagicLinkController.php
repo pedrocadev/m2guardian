@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\MagicLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -44,6 +45,13 @@ class MagicLinkController extends Controller
         );
 
         Auth::guard($guard)->login($user, remember: true);
+
+        AuditLog::record(
+            $guard, $user->id, "{$guard}.login",
+            get_class($user), $user->id,
+            ['purpose' => $magicLink->purpose],
+            $request->ip(), $request->userAgent()
+        );
 
         if ($guard === 'leader') {
             $user->update(['last_login_at' => now(), 'last_login_ip' => $request->ip(), 'status' => 'active']);

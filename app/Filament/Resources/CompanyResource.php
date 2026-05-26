@@ -10,6 +10,7 @@ use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\Str;
 
 class CompanyResource extends Resource
@@ -128,6 +129,28 @@ class CompanyResource extends Resource
                     ->label('Colaboradores')
                     ->counts('collaborators')
                     ->alignCenter(),
+                Tables\Columns\TextColumn::make('completion')
+                    ->label('Conclusão')
+                    ->getStateUsing(function (Company $record) {
+                        $total = $record->collaborators()->count();
+                        if ($total === 0) return '—';
+                        $done = $record->collaborators()->whereNotNull('completed_at')->count();
+                        $pct  = round($done / $total * 100);
+                        return "{$done}/{$total} ({$pct}%)";
+                    })
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('avg_score')
+                    ->label('Média')
+                    ->getStateUsing(function (Company $record) {
+                        $avg = $record->collaborators()
+                            ->whereNotNull('completed_at')
+                            ->whereNotNull('score')
+                            ->where('total_questions', '>', 0)
+                            ->selectRaw('AVG(score / total_questions * 100) as avg')
+                            ->value('avg');
+                        return $avg !== null ? round($avg) . '%' : '—';
+                    })
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Criado em')
                     ->dateTime('d/m/Y')
@@ -146,6 +169,75 @@ class CompanyResource extends Resource
                     ]),
             ])
             ->actions([
+                Tables\Actions\Action::make('results')
+                    ->label('Ver Resultados')
+                    ->icon('heroicon-o-chart-bar')
+                    ->color('primary')
+                    ->modalHeading(fn (Company $record) => 'Resultados — ' . $record->name)
+                    ->modalContent(function (Company $record) {
+                        $collaborators = $record->collaborators;
+                        $completed     = $collaborators->whereNotNull('completed_at');
+                        $pending       = $collaborators->whereNull('completed_at');
+                        $total         = $collaborators->count();
+                        $rate          = $total > 0 ? round($completed->count() / $total * 100) : 0;
+                        $avgScore      = $completed
+                            ->filter(fn($c) => $c->score !== null && $c->total_questions > 0)
+                            ->map(fn($c) => round($c->score / $c->total_questions * 100))
+                            ->avg() ?? 0;
+
+                        $rows = $collaborators->map(function ($c) {
+                            $pct = ($c->score !== null && $c->total_questions > 0)
+                                ? round($c->score / $c->total_questions * 100) . '%'
+                                : '—';
+                            $status = $c->completed_at
+                                ? '<span style="color:#16a34a;font-weight:700;">✔ Concluído</span>'
+                                : '<span style="color:#d97706;font-weight:700;">⏳ Pendente</span>';
+                            return "<tr style='border-bottom:1px solid #f0f0f0;'>
+                                <td style='padding:8px 12px;'><strong>" . e($c->name ?? '—') . "</strong><br><small style='color:#888;'>" . e($c->email) . "</small></td>
+                                <td style='padding:8px 12px;text-align:center;'>{$pct}</td>
+                                <td style='padding:8px 12px;'>{$status}</td>
+                                <td style='padding:8px 12px;color:#888;font-size:12px;'>" . ($c->completed_at?->format('d/m/Y H:i') ?? '—') . "</td>
+                            </tr>";
+                        })->implode('');
+
+                        $html = "
+                        <div style='font-family:Arial,sans-serif;'>
+                            <div style='display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;'>
+                                <div style='background:#f9f9f9;border-radius:8px;padding:14px;border-top:3px solid #2563eb;'>
+                                    <div style='font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;'>Total</div>
+                                    <div style='font-size:28px;font-weight:900;'>{$total}</div>
+                                </div>
+                                <div style='background:#f9f9f9;border-radius:8px;padding:14px;border-top:3px solid #16a34a;'>
+                                    <div style='font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;'>Concluídos</div>
+                                    <div style='font-size:28px;font-weight:900;color:#16a34a;'>{$completed->count()}</div>
+                                </div>
+                                <div style='background:#f9f9f9;border-radius:8px;padding:14px;border-top:3px solid #CC0000;'>
+                                    <div style='font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;'>Conclusão</div>
+                                    <div style='font-size:28px;font-weight:900;color:#CC0000;'>{$rate}%</div>
+                                </div>
+                                <div style='background:#f9f9f9;border-radius:8px;padding:14px;border-top:3px solid #d97706;'>
+                                    <div style='font-size:10px;color:#888;text-transform:uppercase;letter-spacing:1px;'>Média Acertos</div>
+                                    <div style='font-size:28px;font-weight:900;color:#d97706;'>" . round($avgScore) . "%</div>
+                                </div>
+                            </div>
+                            <table style='width:100%;border-collapse:collapse;font-size:13px;'>
+                                <thead>
+                                    <tr style='background:#f9f9f9;'>
+                                        <th style='padding:8px 12px;text-align:left;font-size:11px;color:#888;text-transform:uppercase;'>Colaborador</th>
+                                        <th style='padding:8px 12px;text-align:center;font-size:11px;color:#888;text-transform:uppercase;'>Pontuação</th>
+                                        <th style='padding:8px 12px;font-size:11px;color:#888;text-transform:uppercase;'>Status</th>
+                                        <th style='padding:8px 12px;font-size:11px;color:#888;text-transform:uppercase;'>Concluído em</th>
+                                    </tr>
+                                </thead>
+                                <tbody>{$rows}</tbody>
+                            </table>
+                        </div>";
+
+                        return new HtmlString($html);
+                    })
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar'),
+
                 Tables\Actions\EditAction::make()->label('Editar'),
                 Tables\Actions\DeleteAction::make()->label('Excluir'),
             ])

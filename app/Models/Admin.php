@@ -20,6 +20,13 @@ class Admin extends Authenticatable implements FilamentUser
         'password',
         'role',
         'status',
+        'failed_attempts',
+        'locked_until',
+        'last_login_at',
+        'last_login_ip',
+        'two_factor_secret',
+        'two_factor_confirmed_at',
+        'two_factor_recovery_codes',
     ];
 
     protected $hidden = [
@@ -54,7 +61,15 @@ class Admin extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->status === 'active';
+        if ($this->status !== 'active') return false;
+        if ($this->isLocked()) return false;
+
+        // Reset failed_attempts on successful access
+        if ($this->failed_attempts > 0) {
+            $this->updateQuietly(['failed_attempts' => 0, 'locked_until' => null]);
+        }
+
+        return true;
     }
 
     public function isSuper(): bool

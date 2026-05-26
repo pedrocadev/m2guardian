@@ -1,21 +1,40 @@
 <?php
 
-use App\Http\Controllers\MagicLinkController;
-use App\Http\Controllers\LeaderController;
+use App\Http\Controllers\Admin\TwoFactorController;
 use App\Http\Controllers\CollaboratorController;
+use App\Http\Controllers\LeaderController;
+use App\Http\Controllers\MagicLinkController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect('/admin');
 });
 
-// Magic link consumption (público)
-Route::get('/auth/acesso', [MagicLinkController::class, 'consume'])->name('magic-link.consume');
+// Magic link (rate limited)
+Route::middleware('throttle:magic-link')->group(function () {
+    Route::get('/auth/acesso', [MagicLinkController::class, 'consume'])->name('magic-link.consume');
+});
 Route::get('/auth/link-invalido', [MagicLinkController::class, 'invalid'])->name('magic-link.invalid');
+
+// Admin 2FA (autenticado, fora do Filament)
+Route::middleware(['auth:admin'])->prefix('admin')->name('admin.two-factor.')->group(function () {
+    Route::get('/dois-fatores/configurar', [TwoFactorController::class, 'setup'])->name('setup');
+    Route::post('/dois-fatores/confirmar', [TwoFactorController::class, 'confirm'])->name('confirm');
+    Route::get('/dois-fatores/verificar', [TwoFactorController::class, 'challenge'])->name('challenge');
+    Route::post('/dois-fatores/verificar', [TwoFactorController::class, 'verify'])->name('verify');
+    Route::post('/dois-fatores/desativar', [TwoFactorController::class, 'disable'])->name('disable');
+});
 
 // Área do líder
 Route::middleware('auth.leader')->prefix('lider')->name('leader.')->group(function () {
     Route::get('/dashboard', [LeaderController::class, 'dashboard'])->name('dashboard');
+    Route::get('/relatorio/pdf', [\App\Http\Controllers\ReportController::class, 'downloadPdf'])->name('report.pdf');
+    Route::middleware('throttle:invite')->group(function () {
+        Route::get('/convidar', [\App\Http\Controllers\LeaderInviteController::class, 'index'])->name('invite.index');
+        Route::post('/convidar', [\App\Http\Controllers\LeaderInviteController::class, 'store'])->name('invite.store');
+        Route::post('/convidar/{collaborator}/reenviar', [\App\Http\Controllers\LeaderInviteController::class, 'resend'])->name('invite.resend');
+        Route::post('/convidar/{collaborator}/gerar-link', [\App\Http\Controllers\LeaderInviteController::class, 'generateLink'])->name('invite.generate-link');
+    });
     Route::post('/logout', [LeaderController::class, 'logout'])->name('logout');
 });
 

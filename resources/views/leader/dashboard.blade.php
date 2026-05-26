@@ -125,9 +125,21 @@
             <h1>Painel de Treinamentos</h1>
             <p>Acompanhe o progresso da equipe no programa de conscientização em segurança.</p>
         </div>
-        <span class="license-badge {{ $isPro ? 'pro' : 'demo' }}">
-            {{ $isPro ? '⭐ PRO' : '🔒 DEMO' }}
-        </span>
+        <div style="display:flex; align-items:center; gap:12px;">
+            <a href="{{ route('leader.invite.index') }}"
+               style="display:inline-flex; align-items:center; gap:6px; background:#CC0000; color:#fff; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; text-decoration:none;">
+                + Convidar Colaboradores
+            </a>
+            @if($collaborators->count() > 0)
+            <a href="{{ route('leader.report.pdf') }}" target="_blank"
+               style="display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid #ddd; color:#333; padding:7px 14px; border-radius:6px; font-size:12px; font-weight:700; text-decoration:none;">
+                ⬇ Exportar PDF
+            </a>
+            @endif
+            <span class="license-badge {{ $isPro ? 'pro' : 'demo' }}">
+                {{ $isPro ? '⭐ PRO' : '🔒 DEMO' }}
+            </span>
+        </div>
     </div>
 
     @if(!$isPro)
