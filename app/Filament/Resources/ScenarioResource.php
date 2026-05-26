@@ -6,9 +6,11 @@ use App\Filament\Resources\ScenarioResource\Pages;
 use App\Models\Scenario;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 class ScenarioResource extends Resource
 {
@@ -22,6 +24,7 @@ class ScenarioResource extends Resource
     public static function form(Form $form): Form
     {
         return $form->schema([
+
             Forms\Components\Section::make('Identificação')->schema([
                 Forms\Components\Select::make('platform')
                     ->label('Plataforma')
@@ -30,27 +33,32 @@ class ScenarioResource extends Resource
                 Forms\Components\TextInput::make('slug')
                     ->label('Slug')
                     ->required()
-                    ->maxLength(60),
+                    ->maxLength(60)
+                    ->unique(ignoreRecord: true),
                 Forms\Components\TextInput::make('label')
-                    ->label('Título')
+                    ->label('Título do cenário')
                     ->required()
                     ->maxLength(120)
                     ->columnSpanFull(),
                 Forms\Components\TextInput::make('avatar')
-                    ->label('Emoji / Avatar')
+                    ->label('Emoji')
                     ->maxLength(8)
                     ->placeholder('👨‍💼'),
                 Forms\Components\ColorPicker::make('bg_color')
                     ->label('Cor de fundo'),
                 Forms\Components\TextInput::make('preview')
-                    ->label('Descrição prévia')
+                    ->label('Descrição prévia (lista)')
                     ->maxLength(255)
+                    ->columnSpanFull(),
+                Forms\Components\Textarea::make('intro')
+                    ->label('Introdução (mostrada antes do chat)')
+                    ->rows(2)
                     ->columnSpanFull(),
             ])->columns(2),
 
             Forms\Components\Section::make('Configuração')->schema([
                 Forms\Components\Select::make('company_id')
-                    ->label('Empresa (deixe vazio para padrão M2)')
+                    ->label('Empresa (vazio = padrão M2)')
                     ->relationship('company', 'name')
                     ->searchable()
                     ->preload()
@@ -62,18 +70,89 @@ class ScenarioResource extends Resource
                     ->required(),
                 Forms\Components\Toggle::make('is_default')
                     ->label('Cenário padrão M2')
-                    ->helperText('Disponível para todas as empresas'),
+                    ->helperText('Visível para todas as empresas'),
                 Forms\Components\Toggle::make('demo_eligible')
                     ->label('Disponível no Demo')
-                    ->helperText('Aparece para empresas com licença Demo'),
+                    ->helperText('Aparece nos 3 cenários do plano Demo'),
             ])->columns(2),
 
-            Forms\Components\Section::make('Conteúdo')->schema([
-                Forms\Components\Textarea::make('intro')
-                    ->label('Introdução')
-                    ->rows(3)
-                    ->columnSpanFull(),
-            ]),
+            Forms\Components\Section::make('Editor de Mensagens')
+                ->description('Monte o roteiro do cenário. Alterne entre mensagens de texto e perguntas.')
+                ->schema([
+                    Forms\Components\Repeater::make('content.messages')
+                        ->label('')
+                        ->schema([
+                            Forms\Components\Select::make('type')
+                                ->label('Tipo de bloco')
+                                ->options([
+                                    'text'     => '💬 Mensagem de texto',
+                                    'question' => '❓ Pergunta',
+                                ])
+                                ->required()
+                                ->live()
+                                ->columnSpanFull(),
+
+                            // ── Bloco de texto ──────────────────────────
+                            Forms\Components\Select::make('from')
+                                ->label('Quem envia')
+                                ->options(['them' => '← Deles (esquerda)', 'me' => '→ Eu (direita)'])
+                                ->default('them')
+                                ->required()
+                                ->visible(fn (Get $get) => $get('type') === 'text'),
+
+                            Forms\Components\Textarea::make('body')
+                                ->label('Texto da mensagem')
+                                ->rows(2)
+                                ->required()
+                                ->visible(fn (Get $get) => $get('type') === 'text')
+                                ->columnSpanFull(),
+
+                            // ── Bloco de pergunta ────────────────────────
+                            Forms\Components\TextInput::make('prompt')
+                                ->label('Enunciado da pergunta')
+                                ->required()
+                                ->visible(fn (Get $get) => $get('type') === 'question')
+                                ->columnSpanFull(),
+
+                            Forms\Components\Repeater::make('options')
+                                ->label('Opções de resposta')
+                                ->schema([
+                                    Forms\Components\TextInput::make('key')
+                                        ->label('Chave (a, b, c...)')
+                                        ->maxLength(4)
+                                        ->required()
+                                        ->placeholder('a'),
+                                    Forms\Components\Toggle::make('correct')
+                                        ->label('Resposta correta?')
+                                        ->inline(false),
+                                    Forms\Components\TextInput::make('text')
+                                        ->label('Texto da opção')
+                                        ->required()
+                                        ->columnSpan(2),
+                                    Forms\Components\Textarea::make('feedback')
+                                        ->label('Feedback ao selecionar')
+                                        ->rows(2)
+                                        ->required()
+                                        ->columnSpanFull(),
+                                ])
+                                ->columns(4)
+                                ->minItems(2)
+                                ->maxItems(4)
+                                ->addActionLabel('+ Adicionar opção')
+                                ->visible(fn (Get $get) => $get('type') === 'question')
+                                ->columnSpanFull(),
+                        ])
+                        ->columns(2)
+                        ->addActionLabel('+ Adicionar bloco')
+                        ->reorderableWithButtons()
+                        ->collapsible()
+                        ->itemLabel(fn (array $state): ?string => match ($state['type'] ?? null) {
+                            'text'     => '💬 ' . Str::limit($state['body'] ?? '...', 60),
+                            'question' => '❓ ' . Str::limit($state['prompt'] ?? '...', 60),
+                            default    => 'Novo bloco',
+                        })
+                        ->columnSpanFull(),
+                ]),
         ]);
     }
 
@@ -85,15 +164,17 @@ class ScenarioResource extends Resource
                     ->label('Cenário')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\BadgeColumn::make('platform')
+                Tables\Columns\TextColumn::make('platform')
                     ->label('Plataforma')
-                    ->colors([
-                        'success' => 'wapp',
-                        'primary' => 'teams',
-                        'warning' => 'email',
-                    ])
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'wapp' => 'WhatsApp',
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'wapp'  => 'success',
+                        'teams' => 'primary',
+                        'email' => 'warning',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'wapp'  => 'WhatsApp',
                         'teams' => 'Teams',
                         'email' => 'E-mail',
                         default => $state,
@@ -110,18 +191,20 @@ class ScenarioResource extends Resource
                     ->label('Demo')
                     ->boolean()
                     ->alignCenter(),
-                Tables\Columns\BadgeColumn::make('status')
+                Tables\Columns\TextColumn::make('status')
                     ->label('Status')
-                    ->colors([
-                        'success' => 'active',
-                        'warning' => 'draft',
-                        'danger' => 'archived',
-                    ])
-                    ->formatStateUsing(fn ($state) => match($state) {
-                        'active' => 'Ativo',
-                        'draft' => 'Rascunho',
+                    ->badge()
+                    ->color(fn ($state) => match ($state) {
+                        'active'   => 'success',
+                        'draft'    => 'warning',
+                        'archived' => 'danger',
+                        default    => 'gray',
+                    })
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'active'   => 'Ativo',
+                        'draft'    => 'Rascunho',
                         'archived' => 'Arquivado',
-                        default => $state,
+                        default    => $state,
                     }),
                 Tables\Columns\TextColumn::make('version')
                     ->label('v.')
@@ -139,6 +222,19 @@ class ScenarioResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make()->label('Editar'),
+                Tables\Actions\Action::make('duplicate')
+                    ->label('Duplicar')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->color('gray')
+                    ->action(function (Scenario $record) {
+                        $new = $record->replicate();
+                        $new->slug = $record->slug . '-copia-' . now()->format('YmdHis');
+                        $new->label = $record->label . ' (cópia)';
+                        $new->status = 'draft';
+                        $new->version = 1;
+                        $new->save();
+                    })
+                    ->successNotificationTitle('Cenário duplicado como rascunho'),
             ])
             ->defaultSort('platform');
     }
@@ -151,9 +247,9 @@ class ScenarioResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListScenarios::route('/'),
+            'index'  => Pages\ListScenarios::route('/'),
             'create' => Pages\CreateScenario::route('/create'),
-            'edit' => Pages\EditScenario::route('/{record}/edit'),
+            'edit'   => Pages\EditScenario::route('/{record}/edit'),
         ];
     }
 }
