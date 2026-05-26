@@ -1,0 +1,11 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# M2 Guardian — Cron do Laravel Scheduler + Backup
+# Adicionar ao crontab do usuário m2guardian:
+#   sudo crontab -u m2guardian -e
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Laravel Scheduler — roda a cada minuto, Laravel decide o que executar
+* * * * * cd /var/www/m2guardian && php artisan schedule:run >> /dev/null 2>&1
+
+# Backup diário do banco (3h da manhã, retenção 7 dias)
+0 3 * * * mysqldump --single-transaction -u m2guardian -p"$(grep DB_PASSWORD /var/www/m2guardian/.env | cut -d'=' -f2)" m2guardian | gzip > /var/backups/m2guardian-$(date +\%Y\%m\%d).sql.gz && find /var/backups -name "m2guardian-*.sql.gz" -mtime +7 -delete

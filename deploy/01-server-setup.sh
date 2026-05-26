@@ -1,0 +1,93 @@
+#!/bin/bash
+# ─────────────────────────────────────────────────────────────────────────────
+# M2 Guardian — Server Setup (Ubuntu 22.04)
+# Rodar como root logo após criar a VM. Instala toda a stack base.
+# ─────────────────────────────────────────────────────────────────────────────
+set -euo pipefail
+
+echo "============================================================"
+echo " M2 Guardian — Provisionamento Ubuntu 22.04"
+echo "============================================================"
+
+# 1) Atualizar sistema
+apt update && apt upgrade -y
+
+# 2) Pacotes base
+apt install -y curl wget git unzip software-properties-common \
+    ca-certificates lsb-release apt-transport-https gnupg \
+    ufw fail2ban htop nano vim
+
+# 3) PHP 8.3 (via Ondrej PPA)
+LC_ALL=C.UTF-8 add-apt-repository -y ppa:ondrej/php
+apt update
+apt install -y php8.3 php8.3-fpm php8.3-cli php8.3-common \
+    php8.3-mysql php8.3-xml php8.3-mbstring php8.3-curl \
+    php8.3-zip php8.3-gd php8.3-bcmath php8.3-intl \
+    php8.3-soap php8.3-redis php8.3-imagick php8.3-readline
+
+# 4) Composer
+curl -sS https://getcomposer.org/installer | php
+mv composer.phar /usr/local/bin/composer
+chmod +x /usr/local/bin/composer
+
+# 5) Node 20 LTS
+curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+apt install -y nodejs
+
+# 6) Nginx
+apt install -y nginx
+
+# 7) MariaDB 10.11
+apt install -y mariadb-server mariadb-client
+systemctl enable mariadb
+systemctl start mariadb
+
+# 8) Supervisor (queue worker)
+apt install -y supervisor
+systemctl enable supervisor
+
+# 9) Certbot (SSL futuro)
+apt install -y certbot python3-certbot-nginx
+
+# 10) Firewall — só 22 (SSH), 80 (HTTP) e 443 (HTTPS)
+ufw default deny incoming
+ufw default allow outgoing
+ufw allow 22/tcp
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw --force enable
+
+# 11) Fail2ban (proteção SSH)
+systemctl enable fail2ban
+systemctl start fail2ban
+
+# 12) Criar usuário do app (sem login direto)
+if ! id "m2guardian" &>/dev/null; then
+    useradd -r -s /bin/bash -d /var/www/m2guardian m2guardian
+fi
+mkdir -p /var/www/m2guardian
+chown -R m2guardian:m2guardian /var/www/m2guardian
+
+# 13) Configurações de PHP recomendadas para Laravel/Filament
+PHP_INI="/etc/php/8.3/fpm/php.ini"
+sed -i 's/^memory_limit = .*/memory_limit = 512M/' $PHP_INI
+sed -i 's/^upload_max_filesize = .*/upload_max_filesize = 32M/' $PHP_INI
+sed -i 's/^post_max_size = .*/post_max_size = 32M/' $PHP_INI
+sed -i 's/^max_execution_time = .*/max_execution_time = 120/' $PHP_INI
+sed -i 's/^;date.timezone =.*/date.timezone = America\/Sao_Paulo/' $PHP_INI
+
+systemctl restart php8.3-fpm
+
+echo ""
+echo "============================================================"
+echo " ✅ Provisionamento concluído"
+echo "============================================================"
+echo " Versões instaladas:"
+php -v | head -1
+node -v
+composer --version
+nginx -v
+mariadb --version | head -1
+echo ""
+echo " Próximo passo: rodar ./02-database-setup.sh"
+echo "============================================================"
