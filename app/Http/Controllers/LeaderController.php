@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Answer;
+use App\Models\Scenario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -10,9 +12,10 @@ class LeaderController extends Controller
     public function dashboard()
     {
         $leader = Auth::guard('leader')->user();
-        $company = $leader->load('company.collaborators');
+        $leader->load('company.collaborators.trainingSession');
 
-        $collaborators = $company->company->collaborators;
+        $company = $leader->company;
+        $collaborators = $company->collaborators;
         $completed = $collaborators->whereNotNull('completed_at');
         $pending = $collaborators->whereNull('completed_at');
 
@@ -20,15 +23,59 @@ class LeaderController extends Controller
             ? round(($completed->count() / $collaborators->count()) * 100)
             : 0;
 
-        $avgScore = $completed->avg('score') ?? 0;
+        $avgScore = $completed->filter(fn($c) => $c->score !== null && $c->total_questions > 0)
+            ->map(fn($c) => round($c->score / $c->total_questions * 100))
+            ->avg() ?? 0;
+
+        // Métricas Pro — só computadas, mas sempre passadas (view controla o blur)
+        $departmentStats = $collaborators
+            ->groupBy('department')
+            ->map(fn($group) => [
+                'total'     => $group->count(),
+                'completed' => $group->whereNotNull('completed_at')->count(),
+                'avg_score' => $group->whereNotNull('completed_at')
+                    ->filter(fn($c) => $c->score !== null && $c->total_questions > 0)
+                    ->map(fn($c) => round($c->score / $c->total_questions * 100))
+                    ->avg() ?? null,
+            ])
+            ->sortByDesc('total');
+
+        $sessionIds = $company->collaborators
+            ->pluck('trainingSession')
+            ->filter()
+            ->pluck('id');
+
+        $scenarioStats = collect();
+        if ($sessionIds->isNotEmpty()) {
+            $scenarioStats = Answer::whereIn('training_session_id', $sessionIds)
+                ->selectRaw('scenario_id, COUNT(*) as total, SUM(is_correct) as correct_count')
+                ->groupBy('scenario_id')
+                ->with('scenario:id,label,platform,avatar')
+                ->get()
+                ->map(fn($row) => [
+                    'label'    => $row->scenario?->label ?? 'Cenário #' . $row->scenario_id,
+                    'avatar'   => $row->scenario?->avatar ?? '❓',
+                    'platform' => $row->scenario?->platform ?? '',
+                    'total'    => $row->total,
+                    'correct'  => $row->correct_count,
+                    'rate'     => $row->total > 0 ? round($row->correct_count / $row->total * 100) : 0,
+                ])
+                ->sortBy('rate');
+        }
+
+        $isPro = $company->isPro();
 
         return view('leader.dashboard', compact(
             'leader',
+            'company',
             'collaborators',
             'completed',
             'pending',
             'completionRate',
-            'avgScore'
+            'avgScore',
+            'departmentStats',
+            'scenarioStats',
+            'isPro'
         ));
     }
 
