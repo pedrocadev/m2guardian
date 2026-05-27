@@ -6,7 +6,26 @@
     <title>Treinamento — Guardião Digital</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f4f5f7; color: #111; min-height: 100vh; }
+        body {
+            font-family: Arial, sans-serif;
+            color: #111;
+            min-height: 100vh;
+            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(255,255,255,0.55);
+            z-index: 0;
+            pointer-events: none;
+        }
+        body > * { position: relative; z-index: 1; }
 
         .header { background: #111; border-bottom: 3px solid #CC0000; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
         .brand { display: flex; align-items: center; gap: 10px; }
@@ -68,6 +87,68 @@
         .btn-start:hover { background: #aa0000; }
 
         .info-box { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 14px 18px; font-size: 13px; color: #795548; margin-bottom: 24px; }
+
+        /* Mascote — boas-vindas */
+        .mascote-hero {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-bottom: 16px;
+            animation: slideIn 0.6s ease;
+        }
+        .mascote-hero img {
+            width: 180px;
+            height: auto;
+            filter: drop-shadow(0 10px 20px rgba(204,0,0,0.18));
+            animation: floatY 3.5s ease-in-out infinite;
+        }
+        .mascote-hero .speech {
+            background: #fff;
+            border: 2px solid #CC0000;
+            border-radius: 16px;
+            padding: 14px 20px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #111;
+            position: relative;
+            max-width: 280px;
+            line-height: 1.5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .mascote-hero .speech::before {
+            content: '';
+            position: absolute;
+            left: -10px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-style: solid;
+            border-width: 8px 10px 8px 0;
+            border-color: transparent #CC0000 transparent transparent;
+        }
+        .mascote-hero .speech::after {
+            content: '';
+            position: absolute;
+            left: -7px;
+            top: 50%;
+            transform: translateY(-50%);
+            border-style: solid;
+            border-width: 7px 9px 7px 0;
+            border-color: transparent #fff transparent transparent;
+        }
+        @keyframes floatY {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-12px); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media (max-width: 600px) {
+            .mascote-hero { flex-direction: column; gap: 12px; }
+            .mascote-hero img { width: 140px; }
+            .mascote-hero .speech::before, .mascote-hero .speech::after { display: none; }
+        }
     </style>
 </head>
 <body>
@@ -86,8 +167,15 @@
 </div>
 
 <div class="main">
+    <div class="mascote-hero">
+        <img src="/images/mascote/guardiao-correndo.png" alt="Guardião Digital">
+        <div class="speech">
+            Olá <strong>{{ explode(' ', $collaborator->name ?? 'colaborador')[0] }}</strong>! Vamos juntos enfrentar os ataques digitais? 🛡️
+        </div>
+    </div>
+
     <div class="welcome">
-        <h1>Bem-vindo ao Treinamento 🛡️</h1>
+        <h1>Bem-vindo ao Treinamento</h1>
         <p>Você vai passar por <strong>{{ $scenarios->count() }} cenários</strong> de situações reais de segurança. Em cada um, tome a decisão certa e aprenda a identificar ameaças.</p>
     </div>
 

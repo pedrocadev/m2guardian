@@ -7,7 +7,28 @@
     <title>{{ $scenario->label }} — Guardião Digital</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f4f5f7; color: #111; min-height: 100vh; display: flex; flex-direction: column; }
+        body {
+            font-family: Arial, sans-serif;
+            color: #111;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(244,245,247,0.78);
+            z-index: 0;
+            pointer-events: none;
+        }
+        body > * { position: relative; z-index: 1; }
 
         .header { background: #111; border-bottom: 3px solid #CC0000; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; flex-shrink: 0; }
         .brand-name { color: #fff; font-weight: 900; font-size: 14px; letter-spacing: 1px; }
@@ -89,6 +110,71 @@
         @keyframes bounce { 0%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-6px); } }
 
         .bottom-spacer { height: 40px; }
+
+        /* Mascote fixo no canto durante o cenario */
+        .mascote-fixo {
+            position: fixed;
+            bottom: 0;
+            right: 16px;
+            width: 130px;
+            height: auto;
+            opacity: 0.85;
+            pointer-events: none;
+            z-index: 5;
+            filter: drop-shadow(0 6px 14px rgba(0,0,0,0.18));
+            animation: floatYsmall 4s ease-in-out infinite;
+        }
+        @keyframes floatYsmall {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        @media (max-width: 900px) { .mascote-fixo { display: none; } }
+
+        /* Mascote no feedback (aparece em cima da caixa) */
+        .feedback-mascot-wrap {
+            display: none;
+            justify-content: center;
+            margin: -36px auto 0;
+            animation: popIn 0.45s ease;
+        }
+        .feedback-mascot-wrap img {
+            width: 96px;
+            height: auto;
+            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15));
+        }
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.6); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Mascote "ola" no inicio do cenario */
+        .mascote-intro {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: #fff;
+            border-radius: 14px;
+            padding: 14px 18px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            margin-bottom: 14px;
+            border-left: 4px solid #CC0000;
+            animation: slideInRight 0.5s ease;
+        }
+        .mascote-intro img {
+            width: 60px;
+            height: auto;
+            flex-shrink: 0;
+        }
+        .mascote-intro .intro-text {
+            font-size: 13px;
+            color: #444;
+            line-height: 1.5;
+        }
+        .mascote-intro .intro-text strong { color: #CC0000; }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
     </style>
 </head>
 <body>
@@ -107,7 +193,16 @@
     <div class="question-counter">Pergunta <strong id="qCurrent">1</strong> de <strong id="qTotal">1</strong></div>
 </div>
 
-<div class="chat-area" id="chatArea"></div>
+<div class="chat-area" id="chatArea">
+    <div class="mascote-intro">
+        <img src="/images/mascote/guardiao-ola.png" alt="Guardião">
+        <div class="intro-text">
+            <strong>Atenção!</strong> Este é um cenário simulado. Leia as mensagens com calma e tome a decisão mais segura possível. Estou aqui para te ajudar! 🛡️
+        </div>
+    </div>
+</div>
+
+<img src="/images/mascote/guardiao-parado.png" alt="" class="mascote-fixo">
 
 <div class="bottom-spacer"></div>
 
@@ -193,6 +288,7 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
     card.innerHTML = `
         <div class="question-prompt">💬 ${q.prompt.replace(/</g, '&lt;')}</div>
         <div class="options">${optionsHtml}</div>
+        <div class="feedback-mascot-wrap"><img src="" alt=""></div>
         <div class="feedback-box"></div>
         <button class="continue-btn" type="button">Continuar →</button>
     `;
@@ -251,6 +347,15 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
                         // (no momento o backend não retorna qual era a correta, então deixa só selecionado)
                     }
                 });
+
+                // Mostra mascote do feedback (vitoria ou explicando)
+                const mascotWrap = card.querySelector('.feedback-mascot-wrap');
+                const mascotImg = mascotWrap.querySelector('img');
+                mascotImg.src = data.is_correct
+                    ? '/images/mascote/guardiao-vitoria.png'
+                    : '/images/mascote/guardiao-explicando.png';
+                mascotImg.alt = data.is_correct ? 'Acertou!' : 'Vamos aprender';
+                mascotWrap.style.display = 'flex';
 
                 // Mostra feedback
                 const fbox = card.querySelector('.feedback-box');

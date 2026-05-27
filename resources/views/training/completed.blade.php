@@ -6,9 +6,53 @@
     <title>Treinamento Concluído — Guardião Digital</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background: #f4f5f7; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; }
+        body {
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background: rgba(244,245,247,0.55);
+            z-index: 0;
+            pointer-events: none;
+        }
+        body > * { position: relative; z-index: 1; }
 
-        .card { background: #fff; border-radius: 16px; padding: 48px 40px; max-width: 480px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.08); text-align: center; }
+        .mascot-celebration {
+            text-align: center;
+            margin-bottom: -40px;
+            animation: bounceIn 0.8s ease;
+        }
+        .mascot-celebration img {
+            width: 220px;
+            height: auto;
+            filter: drop-shadow(0 12px 24px rgba(204,0,0,0.25));
+            animation: floatY 3s ease-in-out infinite;
+        }
+        @keyframes bounceIn {
+            0% { opacity: 0; transform: scale(0.3); }
+            60% { opacity: 1; transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        @keyframes floatY {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .card { background: #fff; border-radius: 16px; padding: 48px 40px 40px; max-width: 480px; width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.12); text-align: center; }
 
         .badge { display: inline-block; background: #111; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; padding: 5px 12px; border-radius: 4px; margin-bottom: 24px; }
 
@@ -41,6 +85,10 @@
     </style>
 </head>
 <body>
+<div class="mascot-celebration">
+    <img src="/images/mascote/guardiao-medalha.png" alt="Treinamento concluído!">
+</div>
+
 @php
     $score = $session->score ?? 0;
     $total = $session->total_questions ?? 1;
