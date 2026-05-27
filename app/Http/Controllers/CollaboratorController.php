@@ -21,7 +21,20 @@ class CollaboratorController extends Controller
 
         $scenarios = $this->getScenariosFor($collaborator);
         $session = $this->getOrCreateSession($collaborator, $scenarios, request());
-        $answeredIds = Answer::where('training_session_id', $session->id)->pluck('scenario_id');
+
+        // Conta cenarios FULL completos (todas as perguntas respondidas), nao apenas iniciados
+        $answeredIds = collect();
+        foreach ($scenarios as $s) {
+            $totalQ = collect($s->content['messages'])->where('type', 'question')->count();
+            $doneQ  = Answer::where('training_session_id', $session->id)
+                ->where('scenario_id', $s->id)
+                ->distinct('question_index')
+                ->count('question_index');
+            if ($totalQ > 0 && $doneQ >= $totalQ) {
+                $answeredIds->push($s->id);
+            }
+        }
+
         $nextScenario = $scenarios->first(fn($s) => !$answeredIds->contains($s->id));
 
         return view('training.index', compact('collaborator', 'scenarios', 'session', 'answeredIds', 'nextScenario'));

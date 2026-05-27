@@ -221,10 +221,12 @@
         $pct = $totalScenarios > 0 ? round($completed / $totalScenarios * 100) : 0;
     @endphp
 
-    <div class="progress-bar-wrap">
-        <div class="progress-bar-fill" style="width: {{ $pct }}%"></div>
-    </div>
-    <div class="progress-label">{{ $completed }} de {{ $totalScenarios }} cenários concluídos</div>
+    @unless($allDone)
+        <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width: {{ $pct }}%"></div>
+        </div>
+        <div class="progress-label">{{ $completed }} de {{ $totalScenarios }} cenários concluídos</div>
+    @endunless
 
     @if($completed === 0)
     <div class="info-box">
@@ -259,7 +261,7 @@
 
     @if($nextScenario)
         <a href="{{ route('training.show', $nextScenario->id) }}" class="btn-start">
-            {{ $completedCount === 0 ? 'Iniciar Treinamento →' : 'Continuar Treinamento →' }}
+            {{ $completed === 0 ? 'Iniciar Treinamento →' : 'Continuar Treinamento →' }}
         </a>
     @endif
 </div>
