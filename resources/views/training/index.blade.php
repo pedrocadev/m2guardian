@@ -167,30 +167,66 @@
 </div>
 
 <div class="main">
-    <div class="mascote-hero">
-        <img src="/images/mascote/guardiao-correndo.png" alt="Guardião Digital">
-        <div class="speech">
-            Olá <strong>{{ explode(' ', $collaborator->name ?? 'colaborador')[0] }}</strong>! Vamos juntos enfrentar os ataques digitais? 🛡️
-        </div>
-    </div>
+    @php
+        $firstName = explode(' ', $collaborator->name ?? 'colaborador')[0];
+        $completed = $answeredIds->count();
+        $totalScenarios = $scenarios->count();
+        $allDone = $completed >= $totalScenarios && $totalScenarios > 0;
+    @endphp
 
-    <div class="welcome">
-        <h1>Bem-vindo ao Treinamento</h1>
-        <p>Você vai passar por <strong>{{ $scenarios->count() }} cenários</strong> de situações reais de segurança. Em cada um, tome a decisão certa e aprenda a identificar ameaças.</p>
-    </div>
+    @if($completed === 0)
+        {{-- INÍCIO: Mascote correndo + saudação de boas-vindas --}}
+        <div class="mascote-hero">
+            <img src="/images/mascote/guardiao-correndo.png" alt="Guardião Digital">
+            <div class="speech">
+                Olá <strong>{{ $firstName }}</strong>! Vamos juntos enfrentar os ataques digitais? 🛡️
+            </div>
+        </div>
+
+        <div class="welcome">
+            <h1>Bem-vindo ao Treinamento</h1>
+            <p>Você vai passar por <strong>{{ $totalScenarios }} cenários</strong> de situações reais de segurança. Em cada um, tome a decisão certa e aprenda a identificar ameaças.</p>
+        </div>
+
+    @elseif(!$allDone)
+        {{-- EM ANDAMENTO: Mascote vitória + incentivo --}}
+        <div class="mascote-hero">
+            <img src="/images/mascote/guardiao-vitoria.png" alt="Continue!">
+            <div class="speech">
+                Continue assim, <strong>{{ $firstName }}</strong>! Você já completou <strong>{{ $completed }} de {{ $totalScenarios }}</strong>. Faltam só mais alguns! 💪
+            </div>
+        </div>
+
+        <div class="welcome">
+            <h1>Continue seu Treinamento</h1>
+            <p>Você está indo bem — faltam <strong>{{ $totalScenarios - $completed }} cenário(s)</strong> para concluir. Cada um pode te ensinar algo novo sobre proteção digital.</p>
+        </div>
+
+    @else
+        {{-- CONCLUÍDO (fallback raro — geralmente redireciona para /concluido) --}}
+        <div class="mascote-hero">
+            <img src="/images/mascote/guardiao-medalha.png" alt="Parabéns!">
+            <div class="speech">
+                Parabéns, <strong>{{ $firstName }}</strong>! Você finalizou todos os <strong>{{ $totalScenarios }} cenários</strong> do treinamento! 🎉
+            </div>
+        </div>
+
+        <div class="welcome">
+            <h1>Treinamento Concluído!</h1>
+            <p>Você completou todos os cenários. Seus resultados já foram registrados e seu líder foi notificado.</p>
+        </div>
+    @endif
 
     @php
-        $completedCount = $answeredIds->count();
-        $totalCount = $scenarios->count();
-        $pct = $totalCount > 0 ? round($completedCount / $totalCount * 100) : 0;
+        $pct = $totalScenarios > 0 ? round($completed / $totalScenarios * 100) : 0;
     @endphp
 
     <div class="progress-bar-wrap">
         <div class="progress-bar-fill" style="width: {{ $pct }}%"></div>
     </div>
-    <div class="progress-label">{{ $completedCount }} de {{ $totalCount }} cenários concluídos</div>
+    <div class="progress-label">{{ $completed }} de {{ $totalScenarios }} cenários concluídos</div>
 
-    @if($completedCount === 0)
+    @if($completed === 0)
     <div class="info-box">
         ⏱️ Duração estimada: <strong>10 a 15 minutos</strong>. Leia cada situação com atenção antes de responder.
     </div>

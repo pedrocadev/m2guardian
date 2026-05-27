@@ -130,17 +130,17 @@
         }
         @media (max-width: 900px) { .mascote-fixo { display: none; } }
 
-        /* Mascote no feedback (aparece em cima da caixa) */
+        /* Mascote no feedback (aparece entre as opcoes e a caixa de feedback) */
         .feedback-mascot-wrap {
             display: none;
             justify-content: center;
-            margin: -36px auto 0;
+            margin: 18px auto 4px;
             animation: popIn 0.45s ease;
         }
         .feedback-mascot-wrap img {
-            width: 96px;
+            width: 110px;
             height: auto;
-            filter: drop-shadow(0 8px 12px rgba(0,0,0,0.15));
+            filter: drop-shadow(0 6px 12px rgba(0,0,0,0.18));
         }
         @keyframes popIn {
             from { opacity: 0; transform: scale(0.6); }
