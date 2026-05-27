@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $scenario->label }} — Guardião Digital</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -18,16 +19,19 @@
         .s-info-label { font-size: 15px; font-weight: 700; }
         .s-info-sub { font-size: 12px; color: #888; }
 
+        .question-counter { margin-left: auto; background: #f5f5f5; border-radius: 16px; padding: 5px 12px; font-size: 12px; font-weight: 700; color: #666; }
+        .question-counter strong { color: #CC0000; }
+
         .chat-area { flex: 1; overflow-y: auto; padding: 24px; max-width: 680px; width: 100%; margin: 0 auto; }
 
         .msg { display: flex; margin-bottom: 12px; animation: fadeIn 0.3s ease; }
         .msg.them { justify-content: flex-start; }
         .msg.me { justify-content: flex-end; }
-        .bubble { max-width: 72%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6; }
+        .bubble { max-width: 72%; padding: 12px 16px; border-radius: 16px; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
         .bubble.them { background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.08); border-bottom-left-radius: 4px; color: #222; }
         .bubble.me { background: #CC0000; color: #fff; border-bottom-right-radius: 4px; }
 
-        .question-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-top: 8px; animation: fadeIn 0.3s ease; }
+        .question-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-top: 8px; margin-bottom: 8px; animation: fadeIn 0.3s ease; }
         .question-prompt { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 16px; }
 
         .options { display: flex; flex-direction: column; gap: 10px; }
@@ -45,20 +49,21 @@
             align-items: flex-start;
             gap: 12px;
         }
-        .option-btn:hover { border-color: #CC0000; background: #fff5f5; }
+        .option-btn:hover:not(:disabled) { border-color: #CC0000; background: #fff5f5; }
+        .option-btn:disabled { cursor: default; }
         .option-btn.selected-correct { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
         .option-btn.selected-wrong { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
         .option-btn.other-correct { border-color: #16a34a; background: #f0fdf4; opacity: 0.6; }
         .option-key { font-weight: 900; font-size: 13px; min-width: 20px; margin-top: 1px; }
 
-        .feedback-box { margin-top: 16px; padding: 14px 16px; border-radius: 10px; font-size: 13px; line-height: 1.6; display: none; }
+        .feedback-box { margin-top: 16px; padding: 14px 16px; border-radius: 10px; font-size: 13px; line-height: 1.6; display: none; animation: fadeIn 0.3s ease; }
         .feedback-box.correct { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
         .feedback-box.wrong { background: #fef2f2; border: 1px solid #fca5a5; color: #991b1b; }
 
-        .next-btn {
+        .continue-btn {
             display: none;
-            width: 100%;
             margin-top: 16px;
+            width: 100%;
             background: #111;
             color: #fff;
             border: none;
@@ -68,8 +73,12 @@
             font-weight: 700;
             cursor: pointer;
             letter-spacing: 0.5px;
+            transition: background 0.15s;
+            animation: fadeIn 0.3s ease;
         }
-        .next-btn:hover { background: #CC0000; }
+        .continue-btn:hover { background: #CC0000; }
+        .continue-btn.next-scenario { background: #CC0000; }
+        .continue-btn.next-scenario:hover { background: #aa0000; }
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -95,36 +104,48 @@
         <div class="s-info-label">{{ $scenario->label }}</div>
         <div class="s-info-sub">{{ $scenario->preview }}</div>
     </div>
+    <div class="question-counter">Pergunta <strong id="qCurrent">1</strong> de <strong id="qTotal">1</strong></div>
 </div>
 
-<div class="chat-area" id="chatArea">
-    <!-- mensagens inseridas via JS -->
-</div>
+<div class="chat-area" id="chatArea"></div>
 
-<form id="answerForm" method="POST" action="{{ route('training.answer') }}" style="display:none;">
-    @csrf
-    <input type="hidden" name="scenario_id" value="{{ $scenario->id }}">
-    <input type="hidden" name="question_index" value="0">
-    <input type="hidden" name="chosen_option_key" id="chosenKey">
-    <input type="hidden" name="response_time_ms" id="responseTime">
-</form>
+<div class="bottom-spacer"></div>
 
 <script>
-const messages = @json($scenario->content['messages']);
-const chatArea = document.getElementById('chatArea');
-let startTime = null;
+const messages       = @json($scenario->content['messages']);
+const scenarioId     = {{ $scenario->id }};
+const csrfToken      = document.querySelector('meta[name="csrf-token"]').content;
+const answerUrl      = '{{ route("training.answer") }}';
+const nextScenarioFallback = '{{ route("training.index") }}';
 
-function addBubble(from, body, delay) {
-    return new Promise(resolve => {
-        setTimeout(() => {
-            const wrap = document.createElement('div');
-            wrap.className = 'msg ' + from;
-            wrap.innerHTML = `<div class="bubble ${from}">${body}</div>`;
-            chatArea.appendChild(wrap);
-            chatArea.scrollTop = chatArea.scrollHeight;
-            resolve();
-        }, delay);
-    });
+// ─── Agrupa mensagens em "chunks", cada um termina com uma pergunta ──────
+const chunks = [];
+let buffer = [];
+for (const msg of messages) {
+    if (msg.type === 'question') {
+        chunks.push({ texts: buffer, question: msg });
+        buffer = [];
+    } else if (msg.type === 'text') {
+        buffer.push(msg);
+    }
+}
+// Mensagens de texto após a última pergunta (epílogo opcional)
+const epilogue = buffer;
+
+document.getElementById('qTotal').textContent = chunks.length;
+
+const chatArea = document.getElementById('chatArea');
+let questionStartTime = null;
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function addBubble(from, body) {
+    const wrap = document.createElement('div');
+    wrap.className = 'msg ' + from;
+    const safe = String(body).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    wrap.innerHTML = `<div class="bubble ${from}">${safe}</div>`;
+    chatArea.appendChild(wrap);
+    chatArea.scrollTop = chatArea.scrollHeight;
 }
 
 function showTyping() {
@@ -141,98 +162,141 @@ function removeTyping() {
     if (t) t.remove();
 }
 
-async function renderMessages() {
-    let delay = 0;
-
-    for (let i = 0; i < messages.length; i++) {
-        const msg = messages[i];
-
-        if (msg.type === 'text') {
-            const d = delay;
-            delay += 800;
-
-            setTimeout(() => {
-                removeTyping();
-                if (msg.from === 'them' && i + 1 < messages.length) showTyping();
-                addBubble(msg.from === 'them' ? 'them' : 'me', msg.body, 0);
-            }, d);
-
-        } else if (msg.type === 'question') {
-            setTimeout(() => {
-                removeTyping();
-                renderQuestion(msg);
-                startTime = Date.now();
-            }, delay + 400);
+async function renderTexts(texts) {
+    for (let i = 0; i < texts.length; i++) {
+        const msg = texts[i];
+        if (msg.from === 'them') {
+            showTyping();
+            await sleep(900);
+            removeTyping();
+        } else {
+            await sleep(400);
         }
+        addBubble(msg.from === 'them' ? 'them' : 'me', msg.body);
+        await sleep(300);
     }
 }
 
-function renderQuestion(q) {
+async function renderQuestion(q, questionIndex, isLastChunk) {
+    await sleep(400);
+
     const card = document.createElement('div');
     card.className = 'question-card';
 
-    const keys = ['a', 'b', 'c', 'd'];
-    let optionsHtml = q.options.map(opt => `
-        <button type="button" class="option-btn" data-key="${opt.key}" data-correct="${opt.correct}" data-feedback="${encodeURIComponent(opt.feedback || '')}">
+    const optionsHtml = q.options.map(opt => `
+        <button type="button" class="option-btn" data-key="${opt.key}">
             <span class="option-key">${opt.key.toUpperCase()}</span>
-            <span>${opt.text}</span>
+            <span>${opt.text.replace(/</g, '&lt;')}</span>
         </button>
     `).join('');
 
-    const feedbackId = 'feedback-' + Math.random().toString(36).slice(2);
-    const nextLabel = {{ $position }} < {{ $total }} ? 'Próximo cenário →' : 'Ver meu resultado →';
-
     card.innerHTML = `
-        <div class="question-prompt">💬 ${q.prompt}</div>
+        <div class="question-prompt">💬 ${q.prompt.replace(/</g, '&lt;')}</div>
         <div class="options">${optionsHtml}</div>
-        <div class="feedback-box" id="${feedbackId}"></div>
-        <button class="next-btn" id="nextBtn" type="button">${nextLabel}</button>
+        <div class="feedback-box"></div>
+        <button class="continue-btn" type="button">Continuar →</button>
     `;
 
     chatArea.appendChild(card);
     chatArea.scrollTop = chatArea.scrollHeight;
+    questionStartTime = Date.now();
 
-    card.querySelectorAll('.option-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            if (card.dataset.answered) return;
-            card.dataset.answered = '1';
+    return new Promise((resolve) => {
+        card.querySelectorAll('.option-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                if (card.dataset.answered) return;
+                card.dataset.answered = '1';
 
-            const chosenKey = this.dataset.key;
-            const isCorrect = this.dataset.correct === 'true';
-            const feedback = decodeURIComponent(this.dataset.feedback);
-            const elapsed = startTime ? Date.now() - startTime : 0;
+                const chosenKey = this.dataset.key;
+                const elapsed = questionStartTime ? Date.now() - questionStartTime : 0;
 
-            // Visual feedback
-            card.querySelectorAll('.option-btn').forEach(b => {
-                b.disabled = true;
-                if (b.dataset.key === chosenKey) {
-                    b.classList.add(isCorrect ? 'selected-correct' : 'selected-wrong');
-                } else if (b.dataset.correct === 'true') {
-                    b.classList.add('other-correct');
+                // Desabilita todas as opções e mostra estado visual
+                card.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+
+                // POST AJAX
+                let data;
+                try {
+                    const formData = new FormData();
+                    formData.append('_token', csrfToken);
+                    formData.append('scenario_id', scenarioId);
+                    formData.append('question_index', questionIndex);
+                    formData.append('chosen_option_key', chosenKey);
+                    formData.append('response_time_ms', elapsed);
+
+                    const res = await fetch(answerUrl, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRF-TOKEN': csrfToken,
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json',
+                        },
+                    });
+
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    data = await res.json();
+                } catch (err) {
+                    alert('Erro ao enviar resposta: ' + err.message);
+                    card.querySelectorAll('.option-btn').forEach(b => b.disabled = false);
+                    delete card.dataset.answered;
+                    return;
                 }
+
+                // Marca a opção escolhida e revela a correta
+                card.querySelectorAll('.option-btn').forEach(b => {
+                    if (b.dataset.key === chosenKey) {
+                        b.classList.add(data.is_correct ? 'selected-correct' : 'selected-wrong');
+                    } else if (!data.is_correct) {
+                        // Quando errou, destacar a correta seria revelar — só faz se o backend mandar
+                        // (no momento o backend não retorna qual era a correta, então deixa só selecionado)
+                    }
+                });
+
+                // Mostra feedback
+                const fbox = card.querySelector('.feedback-box');
+                fbox.className = 'feedback-box ' + (data.is_correct ? 'correct' : 'wrong');
+                fbox.textContent = data.feedback;
+                fbox.style.display = 'block';
+
+                // Botão de continuar
+                const contBtn = card.querySelector('.continue-btn');
+                if (data.scenario_complete) {
+                    if (data.training_complete) {
+                        contBtn.textContent = '🎉 Ver Meu Resultado →';
+                    } else {
+                        contBtn.textContent = 'Próximo Cenário →';
+                    }
+                    contBtn.classList.add('next-scenario');
+                    contBtn.addEventListener('click', () => {
+                        window.location.href = data.next_url || nextScenarioFallback;
+                    });
+                } else {
+                    contBtn.textContent = 'Continuar →';
+                    contBtn.addEventListener('click', () => {
+                        contBtn.style.display = 'none';
+                        resolve();
+                    });
+                }
+                contBtn.style.display = 'block';
+                chatArea.scrollTop = chatArea.scrollHeight;
             });
-
-            const fbox = document.getElementById(feedbackId);
-            fbox.className = 'feedback-box ' + (isCorrect ? 'correct' : 'wrong');
-            fbox.innerHTML = (isCorrect ? '✅ ' : '❌ ') + feedback;
-            fbox.style.display = 'block';
-
-            document.getElementById('chosenKey').value = chosenKey;
-            document.getElementById('responseTime').value = elapsed;
-
-            const nextBtn = document.getElementById('nextBtn');
-            nextBtn.style.display = 'block';
-            nextBtn.addEventListener('click', () => {
-                document.getElementById('answerForm').submit();
-            });
-
-            chatArea.scrollTop = chatArea.scrollHeight;
         });
     });
 }
 
-renderMessages();
+async function run() {
+    for (let i = 0; i < chunks.length; i++) {
+        document.getElementById('qCurrent').textContent = (i + 1);
+        await renderTexts(chunks[i].texts);
+        await renderQuestion(chunks[i].question, i, i === chunks.length - 1);
+    }
+    // Epílogo (se houver) — texto pós-última pergunta
+    if (epilogue.length > 0) {
+        await renderTexts(epilogue);
+    }
+}
+
+run();
 </script>
-<div class="bottom-spacer"></div>
 </body>
 </html>

@@ -66,7 +66,7 @@ class CollaboratorController extends Controller
     public function answer(Request $request)
     {
         $validated = $request->validate([
-            'scenario_id'      => ['required', 'integer', 'exists:scenarios,id'],
+            'scenario_id'       => ['required', 'integer', 'exists:scenarios,id'],
             'chosen_option_key' => ['required', 'string', 'max:8', 'regex:/^[a-z]$/i'],
             'response_time_ms'  => ['nullable', 'integer', 'min:0', 'max:600000'],
             'question_index'    => ['required', 'integer', 'min:0'],
@@ -75,12 +75,12 @@ class CollaboratorController extends Controller
         $collaborator = Auth::guard('collaborator')->user()->load('company', 'trainingSession');
 
         if ($collaborator->hasCompleted()) {
-            return redirect()->route('training.completed');
+            return $this->respondAnswer($request, ['next_url' => route('training.completed')]);
         }
 
         $session = $collaborator->trainingSession;
         if (!$session || $session->isCompleted()) {
-            return redirect()->route('training.index');
+            return $this->respondAnswer($request, ['next_url' => route('training.index')]);
         }
 
         $scenarios = $this->getScenariosFor($collaborator);
@@ -90,22 +90,27 @@ class CollaboratorController extends Controller
             abort(403);
         }
 
-        $alreadyAnswered = Answer::where('training_session_id', $session->id)
+        // Busca a pergunta específica
+        $question = collect($scenario->content['messages'])
+            ->where('type', 'question')
+            ->values()
+            ->get($validated['question_index']);
+
+        if (!$question) {
+            abort(422, 'Pergunta inválida');
+        }
+
+        $chosen    = collect($question['options'])->firstWhere('key', $validated['chosen_option_key']);
+        $isCorrect = (bool) ($chosen['correct'] ?? false);
+        $feedback  = $chosen['feedback'] ?? '';
+
+        // Salva (ou ignora se já respondida — evita duplicar contagem)
+        $existingAnswer = Answer::where('training_session_id', $session->id)
             ->where('scenario_id', $scenario->id)
-            ->exists();
+            ->where('question_index', $validated['question_index'])
+            ->first();
 
-        if (!$alreadyAnswered) {
-            $question = collect($scenario->content['messages'])
-                ->where('type', 'question')
-                ->values()
-                ->get($validated['question_index']);
-
-            $isCorrect = false;
-            if ($question) {
-                $chosen = collect($question['options'])->firstWhere('key', $validated['chosen_option_key']);
-                $isCorrect = (bool) ($chosen['correct'] ?? false);
-            }
-
+        if (!$existingAnswer) {
             Answer::create([
                 'training_session_id' => $session->id,
                 'collaborator_id'     => $collaborator->id,
@@ -119,16 +124,69 @@ class CollaboratorController extends Controller
             ]);
         }
 
-        $answeredIds = Answer::where('training_session_id', $session->id)->pluck('scenario_id');
-        $allDone = $scenarios->every(fn($s) => $answeredIds->contains($s->id));
+        // Cenário concluído? Todas as perguntas dele foram respondidas?
+        $totalQuestionsInScenario = collect($scenario->content['messages'])
+            ->where('type', 'question')
+            ->count();
 
-        if ($allDone) {
-            $this->completeTraining($collaborator, $session, $scenarios);
-            return redirect()->route('training.completed');
+        $answeredInScenario = Answer::where('training_session_id', $session->id)
+            ->where('scenario_id', $scenario->id)
+            ->distinct('question_index')
+            ->count('question_index');
+
+        $scenarioComplete = $answeredInScenario >= $totalQuestionsInScenario;
+
+        // Treinamento todo concluído? Todos os cenários têm todas as perguntas respondidas?
+        $trainingComplete = false;
+        $nextUrl = null;
+
+        if ($scenarioComplete) {
+            $allScenariosDone = $scenarios->every(function ($s) use ($session) {
+                $total = collect($s->content['messages'])->where('type', 'question')->count();
+                $done  = Answer::where('training_session_id', $session->id)
+                    ->where('scenario_id', $s->id)
+                    ->distinct('question_index')
+                    ->count('question_index');
+                return $done >= $total;
+            });
+
+            if ($allScenariosDone) {
+                $this->completeTraining($collaborator, $session, $scenarios);
+                $trainingComplete = true;
+                $nextUrl = route('training.completed');
+            } else {
+                $next = $scenarios->first(function ($s) use ($session) {
+                    $total = collect($s->content['messages'])->where('type', 'question')->count();
+                    $done  = Answer::where('training_session_id', $session->id)
+                        ->where('scenario_id', $s->id)
+                        ->distinct('question_index')
+                        ->count('question_index');
+                    return $done < $total;
+                });
+                $nextUrl = $next ? route('training.show', $next->id) : route('training.completed');
+            }
         }
 
-        $next = $scenarios->first(fn($s) => !$answeredIds->contains($s->id));
-        return redirect()->route('training.show', $next->id);
+        return $this->respondAnswer($request, [
+            'is_correct'        => $isCorrect,
+            'feedback'          => $feedback,
+            'scenario_complete' => $scenarioComplete,
+            'training_complete' => $trainingComplete,
+            'next_url'          => $nextUrl,
+        ]);
+    }
+
+    private function respondAnswer(Request $request, array $data)
+    {
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json($data);
+        }
+
+        // Fallback (testes legados não-AJAX): redireciona como antes
+        if (!empty($data['next_url'])) {
+            return redirect($data['next_url']);
+        }
+        return back();
     }
 
     public function completed()
