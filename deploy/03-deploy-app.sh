@@ -7,7 +7,8 @@
 set -euo pipefail
 
 APP_DIR="/var/www/m2guardian"
-REPO_URL="https://github.com/pedrocadev/m2guardian.git"
+# Usa SSH Deploy Key (cadastrada em Settings > Deploy keys do repo)
+REPO_URL="git@github.com:M2-Solution-Dev/M2Guardian.2-0.git"
 APP_USER="m2guardian"
 
 echo "============================================================"

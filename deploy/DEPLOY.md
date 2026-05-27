@@ -60,6 +60,29 @@ sudo bash deploy/02-database-setup.sh
 
 **ANOTAR A SENHA gerada** que aparece no final (também fica salva em `/root/.m2guardian-db-credentials`).
 
+### A.6 — Gerar SSH Deploy Key para o GitHub
+
+```bash
+sudo bash deploy/02b-github-deploy-key.sh
+```
+
+O script mostra uma **chave pública** no terminal. Copie-a inteira.
+
+Acesse: https://github.com/M2-Solution-Dev/M2Guardian.2-0/settings/keys
+
+1. Clique em **"Add deploy key"**
+2. Title: `VPS Produção`
+3. Cole a chave no campo "Key"
+4. **NÃO marque** "Allow write access" (deve ser somente leitura)
+5. Clique em "Add key"
+
+Depois de cadastrar, teste:
+```bash
+sudo -u m2guardian ssh -T git@github.com
+```
+
+Deve responder: *"Hi M2-Solution-Dev/M2Guardian.2-0! You have successfully authenticated..."*
+
 ---
 
 ## FASE B — Subir a Aplicação
