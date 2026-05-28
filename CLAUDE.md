@@ -6,17 +6,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **M2 Guardião Digital** is a **B2B SaaS** for corporate security-awareness training. M2 admins provision client companies; each company has leaders (managers) who invite collaborators (employees) to take phishing/BEC/social-engineering training scenarios. Two license tiers (Demo: 3 collaborators / 3 scenarios; Pro: configurable / all 13 scenarios).
 
+**Production status (deployed 2026-05-28):** Live at **https://guardiao.m2cloud.com.br** on Oracle Cloud Always Free (ARM Ampere, Ubuntu 22.04 LTS, 8GB RAM). HTTPS via Let's Encrypt with auto-renewal. Cost: R$ 0/month.
+
 The dev workflow is **local-first** (Herd on Windows) with **git-deployed production** (Ubuntu VPS via scripts in `deploy/`). Never edit code directly on the production server — always commit and run `deploy/03-deploy-app.sh`.
 
 ## Environment
 
-- **Runtime:** Laravel 11 + PHP 8.4 via **Laravel Herd** on Windows
-- **Database:** MariaDB 10.11 (local — managed by Herd; DB name `m2guardian`)
+- **Runtime:** Laravel 11 + PHP 8.4 via **Laravel Herd** on Windows (production also runs PHP 8.4 — required by Symfony 8.x)
+- **Database:** MariaDB (local — managed by Herd; DB name `m2guardian`)
 - **Local URL:** `http://m2guardian.test` (Herd auto-site)
 - **PHP not in PATH by default.** Every new PowerShell session needs:
   ```powershell
   $env:PATH = "C:\Users\Pedrosa\.config\herd\bin;$env:PATH"
   ```
+
+## Git Setup (multi-remote)
+
+Single `git push origin main` deploys to **both repositories simultaneously** via configured multi-pushURL:
+
+- **Personal (public):** https://github.com/pedrocadev/m2guardian
+- **Company (private, source of production):** https://github.com/M2-Solution-Dev/M2Guardian.2-0
+
+`origin` is configured with 2 pushURLs. To verify: `git remote -v` → expect `origin` with one fetch URL and two push URLs.
+
+Production VM pulls from M2-Solution-Dev/M2Guardian.2-0 via HTTPS with a PAT stored in `/var/www/m2guardian/.git-credentials` (chmod 600). Org bans Deploy Keys, so PAT is the only option.
 
 ## Common Commands
 
@@ -42,7 +55,16 @@ php artisan queue:work
 php artisan tinker
 ```
 
-**Default super admin:** `suporte@m2cloud.com.br` / `M2Guardian@2026` — created by `AdminSeeder`. **Re-run `db:seed --class=AdminSeeder` if it disappears** (rare cases where local DB was wiped).
+**Default super admin:** `suporte@m2cloud.com.br` / `M2Guardian@2026` — created by `AdminSeeder`. **Re-run `db:seed --class=AdminSeeder` if it disappears** (rare cases where local DB was wiped). The production admin password was changed manually after deploy.
+
+## Slash Commands (skills) for Production Validation
+
+Two specialized subagents live in `.claude/agents/` with thin slash-command wrappers in `.claude/commands/`:
+
+- **`/test-prod`** → invokes the `production-tester` subagent. Runs 10 HTTP smoke tests against `https://guardiao.m2cloud.com.br` (status codes, redirects, asset loads, auth-required routes, response headers). Returns a markdown report with pass/fail + severity. Use after every production deploy.
+- **`/test-security`** → invokes the `security-tester` subagent. Runs 12 defensive (white-hat, non-invasive) checks: TLS cert validity, security headers, 19 sensitive file paths blocked, rate-limit functioning, CSRF enforced, SQL/XSS pattern rejection, directory listing disabled, auth on protected routes. Returns a 0-100 score with OWASP-mapped findings.
+
+Both agents run **purely via HTTP** — no SSH, no code modifications, no rate-limit breaching. Safe to invoke any time.
 
 ## Architecture
 
@@ -86,6 +108,23 @@ Filament resolves closures via **parameter name reflection**, NOT positional bin
 
 Same applies to filter `->query()` callbacks.
 
+### Filament CSS overlay gotcha (learned the hard way)
+
+Do **NOT** use a fixed `body::before` overlay with `position: relative; z-index: 1;` on `.fi-topbar` / `.fi-sidebar` / `.fi-main` to create background effects. This creates a new stacking context that **silently breaks Filament's user-menu dropdown** (it opens visually but clicks fall through to nothing). The dropdown uses Floating UI which positions absolute at body level — the stacking context disrupts event handling.
+
+**Use stacked CSS backgrounds instead** (current technique in `public/css/filament-theme.css`):
+
+```css
+body.fi-body, .fi-simple-layout {
+    background-image:
+        linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92)),
+        url('/images/mascote/bg-circuito.jpg') !important;
+    background-attachment: fixed !important;
+}
+```
+
+No pseudo-elements, no z-index manipulation. Equivalent visual result, no JS-breaking side effects.
+
 ### Areas by guard
 
 - `/admin/*` — Filament panel (admin guard)
@@ -124,6 +163,10 @@ Same applies to filter `->query()` callbacks.
 
 Email scenarios use the same shape — the multi-step email "bodies" from the legacy m2shield prototype are flattened into sequential `text` messages followed by their question.
 
+### Timestamp default trap (MariaDB strict mode)
+
+When adding `timestamp NOT NULL` columns in migrations, **always chain `->useCurrent()`** (or `->nullable()`). MariaDB strict SQL mode rejects `1067 Invalid default value` otherwise. The 7 original migrations were patched for this — keep the convention. Laravel's `'strict' => true` in `config/database.php` is the canonical setting; don't disable it as a workaround.
+
 ### Mass-assignment trap
 
 Several `update()` calls have silently failed in the past because the column wasn't in `$fillable`. When adding new columns via migration, **always** also add them to the corresponding model's `$fillable` (especially `Admin::$fillable` for the brute-force lockout fields and `Collaborator::$fillable` for `completed_at`, `score`, `total_questions`).
@@ -131,7 +174,7 @@ Several `update()` calls have silently failed in the past because the column was
 ### Email (local vs production)
 
 - **Local dev:** `MAIL_MAILER=log` — emails go to `storage/logs/laravel.log`. Queue driver is `database` — run `php artisan queue:work` to actually process the job.
-- **Production:** Microsoft 365 SMTP (port 587 TLS) with Senha de Aplicativo. Configure in `.env`. Sent async via Supervisor-managed worker (`deploy/supervisor-worker.conf`).
+- **Production:** Currently `MAIL_MAILER=log` (SMTP M365 deferred — backlog item). When activated, port 587 TLS with M365 App Password. Sent async via Supervisor-managed worker (`deploy/supervisor-worker.conf` — 2 processes running 24/7 in production).
 
 ### Hardening summary
 
@@ -141,6 +184,9 @@ Configured in `app/Providers/AppServiceProvider.php` (rate limiters + failed-log
 - Brute-force lockout: 5 failed attempts → 15-min lock (admin and leader, separate counters)
 - 2FA TOTP via `pragmarx/google2fa-laravel`, secret encrypted (`Admin::$casts`)
 - Security headers: X-Frame-Options DENY, HSTS, X-Content-Type-Options, Referrer-Policy, Permissions-Policy
+- **CSP in `Content-Security-Policy-Report-Only` mode** — observation period before switching to enforced. Permits `'unsafe-inline'` + `'unsafe-eval'` since Filament/Livewire/Alpine require both.
+
+Production-side: `server_tokens off` in Nginx (hides version), HTTP→HTTPS redirect 301, fail2ban on SSH, Oracle Cloud Security List as 2nd-tier firewall.
 
 ## Testing
 
@@ -151,28 +197,48 @@ Configured in `app/Providers/AppServiceProvider.php` (rate limiters + failed-log
 
 If you add tests that need a model, the factory is probably already in `database/factories/` (`AdminFactory`, `CompanyFactory`, `LeaderFactory`, `CollaboratorFactory`, `ScenarioFactory`).
 
+**Migration tip:** Some migrations use raw `DB::statement("ALTER TABLE ... MODIFY COLUMN ... ENUM(...)")` for MySQL-specific schema changes. These check `DB::getDriverName() === 'sqlite'` and skip on SQLite to keep tests working. Follow this pattern when writing similar MySQL-only DDL.
+
 ## Production Deployment
 
-Self-contained in `deploy/`:
+Self-contained scripts in `deploy/` (Oracle Cloud Ubuntu 22.04 ARM-compatible):
 
-- `01-server-setup.sh` — provisions Ubuntu 22.04 (PHP, Nginx, MariaDB, Node, Supervisor, Certbot, UFW)
-- `02-database-setup.sh` — creates DB + user, optimizes MariaDB
-- `03-deploy-app.sh` — **idempotent**; git pull + composer install + npm build + migrations + cache rebuild + service restart
-- `nginx-http.conf` / `nginx-https.conf` — server configs
-- `.env.production` — template
-- `supervisor-worker.conf` — queue worker
-- `cron-scheduler.txt` — scheduler + daily DB backup
+- `01-server-setup.sh` — provisions PHP 8.4, Nginx, MariaDB, Node 20, Supervisor, Certbot, UFW
+- `02-database-setup.sh` — creates DB + user with random password (uses `openssl rand` to avoid `pipefail+SIGPIPE` bug), writes optimized MariaDB config
+- `02b-github-deploy-key.sh` — generates SSH deploy key (UNUSED in current production — M2-Solution-Dev org bans deploy keys; we use HTTPS+PAT instead, see DEPLOY.md section A.6)
+- `03-deploy-app.sh` — **idempotent**; on first run does `git init + remote add + fetch + reset --hard` (works in existing non-empty dir, unlike `git clone`); on subsequent runs does `git pull` + composer + npm install + migrations + cache + service restart
+- `nginx-http.conf` / `nginx-https.conf` — server configs (Certbot rewrites these to add SSL block)
+- `.env.production` — template (NOT in `.gitignore` — committed for reference; real `.env` is per-server)
+- `supervisor-worker.conf` — 2 queue workers running 24/7
+- `cron-scheduler.txt` — Laravel scheduler every minute + daily 3AM DB backup with 7-day retention
 - `DEPLOY.md` — step-by-step walkthrough
 
-Production updates after merging to `main`:
+**Update flow** (after `git push origin main`):
 ```bash
-ssh m2admin@VPS
+ssh ubuntu@137.131.186.168
 sudo bash /var/www/m2guardian/deploy/03-deploy-app.sh
 ```
 
-## Project Status Reference
+⏱️ ~30 seconds to 2 minutes depending on whether composer/npm dependencies changed.
 
-- Full feature & stack breakdown for leadership/stakeholders is in `STATUS.md`
-- All 8 planned phases are complete (database, auth, invites, training, dashboard, scenario editor, PDF, hardening)
+⚠️ **Nginx config in production is NOT touched by `03-deploy-app.sh`.** If you change `deploy/nginx-*.conf` and need it in production, you must manually re-copy and reload nginx. Or use `sed` for targeted changes.
+
+## Reference Documents
+
+- **`STATUS.md`** — feature inventory & stack breakdown for leadership/stakeholders
+- **`DEPLOY-REPORT.md`** — full implementation report (Oracle Cloud setup, 9 deployment bugs fixed in repo, hardening applied, backlog, commit timeline)
+- **`deploy/DEPLOY.md`** — operational playbook for deploying to a fresh VM
+- All planned phases complete (database, auth, invites, training, dashboard, scenario editor, PDF, hardening)
 - 13 production-ready scenarios seeded (6 WhatsApp + 4 Teams + 3 Email)
-- Repo: `https://github.com/pedrocadev/m2guardian`
+
+## Known Backlog (post-launch)
+
+| # | Item | Priority |
+|---|------|----------|
+| 1 | Configure SMTP M365 (email delivery) | High |
+| 2 | Enable 2FA TOTP on super admin | High |
+| 3 | Investigate intermittent dropdown logout bug (Filament user menu, possibly cache-related) | Medium |
+| 4 | Migrate CSP from `Report-Only` to enforced after observation | Medium |
+| 5 | Visual refinements with marketing team | Low |
+| 6 | LGPD legal copy (privacy policy + consent) | Low |
+| 7 | Upgrade Nginx 1.18 → 1.24+ in maintenance window | Low |
