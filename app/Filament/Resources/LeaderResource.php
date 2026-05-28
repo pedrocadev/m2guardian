@@ -42,7 +42,18 @@ class LeaderResource extends Resource
                     ->email()
                     ->required()
                     ->maxLength(180)
-                    ->helperText('Este será o login do líder no painel.'),
+                    ->helperText('Este será o login do líder no painel.')
+                    ->unique(
+                        table: 'leaders',
+                        column: 'email',
+                        ignoreRecord: true,
+                        modifyRuleUsing: function ($rule, Forms\Get $get) {
+                            return $rule->where('company_id', $get('company_id'));
+                        },
+                    )
+                    ->validationMessages([
+                        'unique' => 'Já existe um líder com este e-mail para a empresa selecionada.',
+                    ]),
                 Forms\Components\TextInput::make('phone')
                     ->label('Telefone')
                     ->maxLength(20),
