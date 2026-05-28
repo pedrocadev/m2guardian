@@ -164,12 +164,19 @@ body.fi-body::before {
     background: rgba(17, 17, 17, 0.92);
 }
 
-/* Garante que os elementos principais ficam acima do overlay */
+/* Garante que TODOS os elementos principais ficam acima do overlay */
+/* Inclui as telas simples de auth (login, recuperacao) que usam layout diferente */
 .fi-sidebar,
 .fi-topbar,
 .fi-main,
 .fi-page,
-.fi-modal {
+.fi-modal,
+.fi-simple-layout,
+.fi-simple-main,
+.fi-simple-page,
+.fi-simple-page-section,
+.fi-simple-header,
+.fi-simple-footer {
     position: relative;
     z-index: 1;
 }
@@ -177,8 +184,16 @@ body.fi-body::before {
 /* Cards e tabelas continuam com fundo solido pra contraste */
 .fi-section,
 .fi-ta-ctn,
-.fi-fo-component-ctn {
+.fi-fo-component-ctn,
+.fi-simple-main {
     background-color: #ffffff !important;
+}
+
+/* Card de login centralizado: garante fundo branco + sombra pra destacar do background */
+.fi-simple-main {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 16px !important;
+    padding: 2rem !important;
 }
 
 .dark .fi-section,
