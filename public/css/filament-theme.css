@@ -133,3 +133,56 @@ a.fi-link {
 .fi-sidebar-close-btn {
     color: #cccccc !important;
 }
+
+/* ========================================
+   Background tematico com circuitos M2
+   ======================================== */
+
+/* Aplica o bg-circuito como fundo fixo do painel inteiro */
+body.fi-body,
+.fi-layout {
+    background-image: url('/images/mascote/bg-circuito.jpg') !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-attachment: fixed !important;
+    background-repeat: no-repeat !important;
+    position: relative;
+}
+
+/* Overlay branco translucido sobre o fundo pra preservar legibilidade do conteudo */
+body.fi-body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.92);
+    z-index: 0;
+    pointer-events: none;
+}
+
+/* Em dark mode (Filament), overlay mais escuro */
+.dark body.fi-body::before {
+    background: rgba(17, 17, 17, 0.92);
+}
+
+/* Garante que os elementos principais ficam acima do overlay */
+.fi-sidebar,
+.fi-topbar,
+.fi-main,
+.fi-page,
+.fi-modal {
+    position: relative;
+    z-index: 1;
+}
+
+/* Cards e tabelas continuam com fundo solido pra contraste */
+.fi-section,
+.fi-ta-ctn,
+.fi-fo-component-ctn {
+    background-color: #ffffff !important;
+}
+
+.dark .fi-section,
+.dark .fi-ta-ctn,
+.dark .fi-fo-component-ctn {
+    background-color: #1a1a1a !important;
+}
