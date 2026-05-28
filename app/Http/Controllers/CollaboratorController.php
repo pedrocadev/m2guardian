@@ -19,6 +19,11 @@ class CollaboratorController extends Controller
             return redirect()->route('training.completed');
         }
 
+        // Primeira visita (sem sessão de treinamento criada ainda) → tela de boas-vindas
+        if (!$collaborator->trainingSession && !session('training.welcome_seen')) {
+            return redirect()->route('training.welcome');
+        }
+
         $scenarios = $this->getScenariosFor($collaborator);
         $session = $this->getOrCreateSession($collaborator, $scenarios, request());
 
@@ -38,6 +43,65 @@ class CollaboratorController extends Controller
         $nextScenario = $scenarios->first(fn($s) => !$answeredIds->contains($s->id));
 
         return view('training.index', compact('collaborator', 'scenarios', 'session', 'answeredIds', 'nextScenario'));
+    }
+
+    public function welcome()
+    {
+        $collaborator = Auth::guard('collaborator')->user()->load('company', 'trainingSession');
+
+        if ($collaborator->hasCompleted()) {
+            return redirect()->route('training.completed');
+        }
+
+        // Se já começou (tem session) → vai direto pro index
+        if ($collaborator->trainingSession) {
+            return redirect()->route('training.index');
+        }
+
+        return view('training.welcome', compact('collaborator'));
+    }
+
+    public function howItWorks()
+    {
+        $collaborator = Auth::guard('collaborator')->user()->load('company', 'trainingSession');
+
+        if ($collaborator->hasCompleted()) {
+            return redirect()->route('training.completed');
+        }
+
+        if ($collaborator->trainingSession) {
+            return redirect()->route('training.index');
+        }
+
+        return view('training.how-it-works', compact('collaborator'));
+    }
+
+    public function startJourney(Request $request)
+    {
+        $request->session()->put('training.welcome_seen', true);
+        return redirect()->route('training.index');
+    }
+
+    public function transition($id)
+    {
+        $collaborator = Auth::guard('collaborator')->user()->load('company', 'trainingSession');
+
+        if ($collaborator->hasCompleted()) {
+            return redirect()->route('training.completed');
+        }
+
+        $scenarios = $this->getScenariosFor($collaborator);
+        $scenario = $scenarios->firstWhere('id', (int) $id);
+
+        if (!$scenario) {
+            abort(403);
+        }
+
+        $position = $scenarios->search(fn($s) => $s->id === $scenario->id) + 1;
+        $total = $scenarios->count();
+        $previousScenario = $scenarios->get($position - 2); // 0-indexed: posição N-1 do array
+
+        return view('training.transition', compact('collaborator', 'scenario', 'position', 'total', 'previousScenario'));
     }
 
     public function show($id)
@@ -176,7 +240,7 @@ class CollaboratorController extends Controller
                         ->count('question_index');
                     return $done < $total;
                 });
-                $nextUrl = $next ? route('training.show', $next->id) : route('training.completed');
+                $nextUrl = $next ? route('training.transition', $next->id) : route('training.completed');
             }
         }
 

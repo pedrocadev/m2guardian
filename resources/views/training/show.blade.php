@@ -234,13 +234,58 @@ let questionStartTime = null;
 
 function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+// Detecta qual elemento rola: chat-area (overflow interno) ou o window (página inteira)
+function getScrollContext() {
+    // Se o chat-area tem scroll interno usável, usa ele
+    if (chatArea.scrollHeight > chatArea.clientHeight + 4) {
+        return {
+            getStart: () => chatArea.scrollTop,
+            getTarget: () => chatArea.scrollHeight - chatArea.clientHeight,
+            setScroll: (v) => { chatArea.scrollTop = v; },
+        };
+    }
+    // Senão, rola o window
+    return {
+        getStart: () => window.scrollY || window.pageYOffset || document.documentElement.scrollTop,
+        getTarget: () => document.documentElement.scrollHeight - window.innerHeight,
+        setScroll: (v) => { window.scrollTo(0, v); },
+    };
+}
+
+// Scroll suave e lento até o fim (ease-in-out)
+function smoothScrollToBottom(duration = 700) {
+    return new Promise((resolve) => {
+        const ctx = getScrollContext();
+        const start = ctx.getStart();
+        const target = ctx.getTarget();
+        const distance = target - start;
+        if (Math.abs(distance) < 4) { resolve(); return; }
+
+        const startTime = performance.now();
+        function step(now) {
+            const elapsed = now - startTime;
+            const t = Math.min(elapsed / duration, 1);
+            const eased = 0.5 - 0.5 * Math.cos(Math.PI * t);
+            ctx.setScroll(start + distance * eased);
+            if (t < 1) requestAnimationFrame(step);
+            else resolve();
+        }
+        requestAnimationFrame(step);
+    });
+}
+
+function quickScrollToBottom() {
+    const ctx = getScrollContext();
+    ctx.setScroll(ctx.getTarget());
+}
+
 function addBubble(from, body) {
     const wrap = document.createElement('div');
     wrap.className = 'msg ' + from;
     const safe = String(body).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     wrap.innerHTML = `<div class="bubble ${from}">${safe}</div>`;
     chatArea.appendChild(wrap);
-    chatArea.scrollTop = chatArea.scrollHeight;
+    smoothScrollToBottom(450);
 }
 
 function showTyping() {
@@ -249,7 +294,7 @@ function showTyping() {
     wrap.id = 'typing';
     wrap.innerHTML = `<div class="typing"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>`;
     chatArea.appendChild(wrap);
-    chatArea.scrollTop = chatArea.scrollHeight;
+    smoothScrollToBottom(400);
 }
 
 function removeTyping() {
@@ -294,7 +339,8 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
     `;
 
     chatArea.appendChild(card);
-    chatArea.scrollTop = chatArea.scrollHeight;
+    // Scroll lento até a nova pergunta — dá tempo do usuário perceber que tem mais
+    smoothScrollToBottom(1200);
     questionStartTime = Date.now();
 
     return new Promise((resolve) => {
@@ -383,7 +429,8 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
                     });
                 }
                 contBtn.style.display = 'block';
-                chatArea.scrollTop = chatArea.scrollHeight;
+                // Scroll lento até o feedback + botão continuar
+                smoothScrollToBottom(800);
             });
         });
     });

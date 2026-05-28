@@ -48,6 +48,10 @@ Route::middleware('auth.leader')->prefix('lider')->name('leader.')->group(functi
 // Área do colaborador
 Route::middleware('auth.collaborator')->prefix('treinamento')->name('training.')->group(function () {
     Route::get('/', [CollaboratorController::class, 'index'])->name('index');
+    Route::get('/boas-vindas', [CollaboratorController::class, 'welcome'])->name('welcome');
+    Route::get('/como-funciona', [CollaboratorController::class, 'howItWorks'])->name('how-it-works');
+    Route::post('/iniciar', [CollaboratorController::class, 'startJourney'])->name('start');
+    Route::get('/transicao/{scenario}', [CollaboratorController::class, 'transition'])->name('transition');
     Route::get('/cenario/{scenario}', [CollaboratorController::class, 'show'])->name('show');
     Route::post('/resposta', [CollaboratorController::class, 'answer'])->name('answer');
     Route::get('/concluido', [CollaboratorController::class, 'completed'])->name('completed');

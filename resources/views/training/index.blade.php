@@ -21,86 +21,53 @@
             content: '';
             position: fixed;
             inset: 0;
-            background: rgba(255,255,255,0.55);
+            background: rgba(255, 255, 255, 0.55);
             z-index: 0;
             pointer-events: none;
         }
         body > * { position: relative; z-index: 1; }
 
-        .header { background: #111; border-bottom: 3px solid #CC0000; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
-        .brand { display: flex; align-items: center; gap: 10px; }
-        .brand-name { color: #fff; font-weight: 900; font-size: 15px; letter-spacing: 1px; }
-        .brand-sub { color: #888; font-size: 10px; letter-spacing: 0.5px; display: block; }
-        .header-user { color: #ccc; font-size: 13px; text-align: right; }
-        .header-user strong { color: #fff; display: block; }
-
-        .main { max-width: 760px; margin: 0 auto; padding: 40px 24px; }
-
-        .welcome { text-align: center; margin-bottom: 40px; }
-        .welcome h1 { font-size: 26px; font-weight: 900; margin-bottom: 8px; }
-        .welcome p { color: #666; font-size: 15px; line-height: 1.6; max-width: 520px; margin: 0 auto; }
-
-        .progress-bar-wrap { background: #e5e7eb; border-radius: 8px; height: 8px; margin: 24px 0 8px; }
-        .progress-bar-fill { background: #CC0000; border-radius: 8px; height: 8px; transition: width 0.4s; }
-        .progress-label { font-size: 12px; color: #888; text-align: right; margin-bottom: 32px; }
-
-        .scenarios { display: flex; flex-direction: column; gap: 16px; margin-bottom: 40px; }
-        .scenario-card {
-            background: #fff;
-            border-radius: 12px;
-            padding: 20px 24px;
+        /* Header */
+        .header {
+            background: radial-gradient(ellipse at 20% 50%, #3a3a3a 0%, #1a1a1a 60%, #0a0a0a 100%);
+            border-bottom: 3px solid #CC0000;
+            padding: 8px 32px;
             display: flex;
             align-items: center;
-            gap: 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-            border-left: 4px solid #e5e7eb;
-            text-decoration: none;
-            color: inherit;
+            justify-content: space-between;
+            min-height: 80px;
+            gap: 24px;
         }
-        .scenario-card.done { border-left-color: #16a34a; opacity: 0.75; }
-        .scenario-card.active { border-left-color: #CC0000; }
-        .scenario-card.locked { opacity: 0.45; pointer-events: none; }
-
-        .s-avatar { width: 52px; height: 52px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 26px; flex-shrink: 0; }
-        .s-info { flex: 1; }
-        .s-label { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
-        .s-preview { font-size: 13px; color: #888; }
-        .s-platform { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: #aaa; text-transform: uppercase; margin-top: 4px; }
-        .s-status { font-size: 12px; font-weight: 700; flex-shrink: 0; }
-        .s-status.done { color: #16a34a; }
-        .s-status.active { color: #CC0000; }
-        .s-status.locked { color: #ccc; }
-
-        .btn-start {
+        .brand-logo { display: flex; align-items: center; flex: 0 0 auto; }
+        .brand-logo img {
+            height: 130px;
+            width: auto;
             display: block;
-            width: 100%;
-            background: #CC0000;
-            color: #fff;
-            text-align: center;
-            padding: 16px;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 700;
-            text-decoration: none;
-            letter-spacing: 0.5px;
+            mix-blend-mode: lighten;
+            filter: drop-shadow(0 0 10px rgba(204, 0, 0, 0.25));
+            margin: -25px 0;
         }
-        .btn-start:hover { background: #aa0000; }
+        .brand-fallback { display: none; align-items: center; gap: 10px; }
+        .brand-name { color: #fff; font-weight: 900; font-size: 15px; letter-spacing: 1px; }
+        .brand-sub { color: #888; font-size: 10px; letter-spacing: 0.5px; display: block; }
+        .header-user { color: #ddd; font-size: 13px; text-align: right; flex-shrink: 0; }
+        .header-user strong { color: #fff; display: block; font-size: 14px; margin-bottom: 2px; }
 
-        .info-box { background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px; padding: 14px 18px; font-size: 13px; color: #795548; margin-bottom: 24px; }
+        .main { max-width: 720px; margin: 0 auto; padding: 36px 24px 60px; }
 
-        /* Mascote — boas-vindas */
+        /* Mascote hero */
         .mascote-hero {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 24px;
-            margin-bottom: 16px;
+            gap: 22px;
+            margin-bottom: 24px;
             animation: slideIn 0.6s ease;
         }
         .mascote-hero img {
-            width: 180px;
+            width: 150px;
             height: auto;
-            filter: drop-shadow(0 10px 20px rgba(204,0,0,0.18));
+            filter: drop-shadow(0 10px 20px rgba(204, 0, 0, 0.18));
             animation: floatY 3.5s ease-in-out infinite;
         }
         .mascote-hero .speech {
@@ -112,9 +79,9 @@
             font-weight: 600;
             color: #111;
             position: relative;
-            max-width: 280px;
+            max-width: 300px;
             line-height: 1.5;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
         }
         .mascote-hero .speech::before {
             content: '';
@@ -136,6 +103,196 @@
             border-width: 7px 9px 7px 0;
             border-color: transparent #fff transparent transparent;
         }
+
+        /* Progresso — dots gamificados */
+        .progress-block {
+            background: rgba(255, 255, 255, 0.85);
+            border-radius: 14px;
+            padding: 16px 22px;
+            margin-bottom: 28px;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+            animation: slideIn 0.7s ease;
+        }
+        .progress-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        .progress-top .left {
+            font-weight: 800;
+            color: #111;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .progress-top .right {
+            color: #888;
+            font-weight: 600;
+        }
+        .progress-top .right strong { color: #CC0000; }
+
+        .progress-dots {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .dot {
+            flex: 1;
+            min-width: 24px;
+            height: 10px;
+            border-radius: 5px;
+            background: #e5e7eb;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .dot.done {
+            background: linear-gradient(90deg, #16a34a, #22c55e);
+            box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+        }
+        .dot.current {
+            background: linear-gradient(90deg, #CC0000, #ff3344);
+            box-shadow: 0 0 12px rgba(204, 0, 0, 0.5);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        /* MISSION POPUP CARD — o cenário "ativo" */
+        .mission-popup {
+            background: #fff;
+            border-radius: 22px;
+            padding: 0;
+            box-shadow: 0 20px 50px rgba(204, 0, 0, 0.18), 0 6px 16px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            animation: missionPopIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border: 2px solid #CC0000;
+        }
+
+        .mission-banner {
+            background: linear-gradient(135deg, #CC0000 0%, #8a0000 100%);
+            color: #fff;
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .mission-banner .badge {
+            background: #fff;
+            color: #CC0000;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .mission-body {
+            padding: 28px 28px 26px;
+            display: flex;
+            gap: 22px;
+            align-items: flex-start;
+        }
+        .mission-avatar {
+            width: 78px;
+            height: 78px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            flex-shrink: 0;
+            box-shadow: 0 6px 14px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .mission-avatar::after {
+            content: '';
+            position: absolute;
+            inset: -4px;
+            border-radius: 22px;
+            border: 2px dashed rgba(204, 0, 0, 0.3);
+            animation: rotateBorder 12s linear infinite;
+        }
+
+        .mission-info { flex: 1; min-width: 0; }
+        .mission-platform {
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #CC0000;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+            display: inline-block;
+            background: rgba(204, 0, 0, 0.08);
+            padding: 3px 10px;
+            border-radius: 10px;
+        }
+        .mission-title {
+            font-size: 22px;
+            font-weight: 900;
+            color: #111;
+            line-height: 1.2;
+            margin-bottom: 8px;
+        }
+        .mission-preview {
+            font-size: 14px;
+            color: #555;
+            line-height: 1.55;
+        }
+
+        .mission-footer {
+            padding: 18px 28px 26px;
+            border-top: 1px dashed #f0f0f0;
+        }
+        .btn-accept {
+            display: block;
+            width: 100%;
+            background: linear-gradient(135deg, #CC0000 0%, #aa0000 100%);
+            color: #fff;
+            text-align: center;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 800;
+            text-decoration: none;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 6px 16px rgba(204, 0, 0, 0.3);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-accept:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 22px rgba(204, 0, 0, 0.4);
+        }
+        .btn-accept:active { transform: translateY(0); }
+
+        .btn-accept::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+            animation: shimmer 2.5s infinite;
+        }
+
+        /* Estado concluído (fallback raro) */
+        .all-done {
+            text-align: center;
+            background: #fff;
+            border-radius: 18px;
+            padding: 40px 28px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
+        }
+        .all-done h2 { font-size: 26px; font-weight: 900; margin-bottom: 12px; }
+        .all-done p { color: #666; font-size: 15px; line-height: 1.6; }
+
+        /* Animações */
         @keyframes floatY {
             0%, 100% { transform: translateY(0); }
             50% { transform: translateY(-12px); }
@@ -144,20 +301,50 @@
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        @media (max-width: 600px) {
+        @keyframes missionPopIn {
+            0% { opacity: 0; transform: scale(0.7) translateY(40px); }
+            60% { transform: scale(1.04) translateY(-4px); }
+            100% { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 12px rgba(204, 0, 0, 0.5); }
+            50% { box-shadow: 0 0 22px rgba(204, 0, 0, 0.85); }
+        }
+        @keyframes rotateBorder {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        @media (max-width: 720px) {
+            .header { min-height: 70px; padding: 6px 16px; flex-direction: column; gap: 4px; }
+            .brand-logo img { height: 90px; margin: -15px 0; }
+            .header-user { text-align: center; }
+
             .mascote-hero { flex-direction: column; gap: 12px; }
-            .mascote-hero img { width: 140px; }
+            .mascote-hero img { width: 130px; }
             .mascote-hero .speech::before, .mascote-hero .speech::after { display: none; }
+
+            .mission-body { flex-direction: column; align-items: center; text-align: center; gap: 16px; padding: 24px 20px 20px; }
+            .mission-title { font-size: 19px; }
+            .mission-banner { font-size: 11px; padding: 12px 18px; }
         }
     </style>
 </head>
 <body>
 <div class="header">
-    <div class="brand">
-        <span style="font-size:22px;">🛡️</span>
-        <div>
-            <span class="brand-name">GUARDIÃO DIGITAL</span>
-            <span class="brand-sub">by M2 Cloud & Security</span>
+    <div class="brand-logo">
+        <img src="/images/logo-guardiao.png" alt="Guardião Digital — by M2 Cloud & Security"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div class="brand-fallback">
+            <span style="font-size:22px;">🛡️</span>
+            <div>
+                <span class="brand-name">GUARDIÃO DIGITAL</span>
+                <span class="brand-sub">by M2 Cloud &amp; Security</span>
+            </div>
         </div>
     </div>
     <div class="header-user">
@@ -172,97 +359,76 @@
         $completed = $answeredIds->count();
         $totalScenarios = $scenarios->count();
         $allDone = $completed >= $totalScenarios && $totalScenarios > 0;
+        $nextPosition = $nextScenario
+            ? $scenarios->search(fn($s) => $s->id === $nextScenario->id) + 1
+            : null;
+        $platforms = ['wapp' => 'WhatsApp', 'teams' => 'Microsoft Teams', 'email' => 'E-mail'];
+
+        // Mensagem do mascote contextual
+        if ($completed === 0) {
+            $mascote = 'guardiao-correndo.png';
+            $speech = "Pronto, <strong>{$firstName}</strong>? Sua primeira missão chegou! 🛡️";
+        } elseif (!$allDone) {
+            $mascote = 'guardiao-vitoria.png';
+            $remaining = $totalScenarios - $completed;
+            $speech = "Mandou bem, <strong>{$firstName}</strong>! Próxima missão na área. Faltam <strong>{$remaining}</strong>. 💪";
+        } else {
+            $mascote = 'guardiao-medalha.png';
+            $speech = "Parabéns, <strong>{$firstName}</strong>! Você concluiu todas as missões! 🏆";
+        }
     @endphp
 
-    @if($completed === 0)
-        {{-- INÍCIO: Mascote correndo + saudação de boas-vindas --}}
-        <div class="mascote-hero">
-            <img src="/images/mascote/guardiao-correndo.png" alt="Guardião Digital">
-            <div class="speech">
-                Olá <strong>{{ $firstName }}</strong>! Vamos juntos enfrentar os ataques digitais? 🛡️
-            </div>
-        </div>
-
-        <div class="welcome">
-            <h1>Bem-vindo ao Treinamento</h1>
-            <p>Você vai passar por <strong>{{ $totalScenarios }} cenários</strong> de situações reais de segurança. Em cada um, tome a decisão certa e aprenda a identificar ameaças.</p>
-        </div>
-
-    @elseif(!$allDone)
-        {{-- EM ANDAMENTO: Mascote vitória + incentivo --}}
-        <div class="mascote-hero">
-            <img src="/images/mascote/guardiao-vitoria.png" alt="Continue!">
-            <div class="speech">
-                Continue assim, <strong>{{ $firstName }}</strong>! Você já completou <strong>{{ $completed }} de {{ $totalScenarios }}</strong>. Faltam só mais alguns! 💪
-            </div>
-        </div>
-
-        <div class="welcome">
-            <h1>Continue seu Treinamento</h1>
-            <p>Você está indo bem — faltam <strong>{{ $totalScenarios - $completed }} cenário(s)</strong> para concluir. Cada um pode te ensinar algo novo sobre proteção digital.</p>
-        </div>
-
-    @else
-        {{-- CONCLUÍDO (fallback raro — geralmente redireciona para /concluido) --}}
-        <div class="mascote-hero">
-            <img src="/images/mascote/guardiao-medalha.png" alt="Parabéns!">
-            <div class="speech">
-                Parabéns, <strong>{{ $firstName }}</strong>! Você finalizou todos os <strong>{{ $totalScenarios }} cenários</strong> do treinamento! 🎉
-            </div>
-        </div>
-
-        <div class="welcome">
-            <h1>Treinamento Concluído!</h1>
-            <p>Você completou todos os cenários. Seus resultados já foram registrados e seu líder foi notificado.</p>
-        </div>
-    @endif
-
-    @php
-        $pct = $totalScenarios > 0 ? round($completed / $totalScenarios * 100) : 0;
-    @endphp
+    <div class="mascote-hero">
+        <img src="/images/mascote/{{ $mascote }}" alt="Guardião Digital">
+        <div class="speech">{!! $speech !!}</div>
+    </div>
 
     @unless($allDone)
-        <div class="progress-bar-wrap">
-            <div class="progress-bar-fill" style="width: {{ $pct }}%"></div>
+        <div class="progress-block">
+            <div class="progress-top">
+                <span class="left">Progresso</span>
+                <span class="right"><strong>{{ $completed }}</strong> / {{ $totalScenarios }} missões</span>
+            </div>
+            <div class="progress-dots">
+                @for($i = 1; $i <= $totalScenarios; $i++)
+                    @php
+                        $dotClass = $i <= $completed ? 'done' : ($i === $completed + 1 ? 'current' : '');
+                    @endphp
+                    <div class="dot {{ $dotClass }}"></div>
+                @endfor
+            </div>
         </div>
-        <div class="progress-label">{{ $completed }} de {{ $totalScenarios }} cenários concluídos</div>
     @endunless
 
-    @if($completed === 0)
-    <div class="info-box">
-        ⏱️ Duração estimada: <strong>10 a 15 minutos</strong>. Leia cada situação com atenção antes de responder.
-    </div>
-    @endif
-
-    <div class="scenarios">
-        @foreach($scenarios as $i => $scenario)
-            @php
-                $isDone = $answeredIds->contains($scenario->id);
-                $isNext = $nextScenario?->id === $scenario->id;
-                $isLocked = !$isDone && !$isNext;
-                $cardClass = $isDone ? 'done' : ($isNext ? 'active' : 'locked');
-                $href = $isNext ? route('training.show', $scenario->id) : '#';
-                $statusLabel = $isDone ? '✔ Concluído' : ($isNext ? '→ Iniciar' : '🔒 Bloqueado');
-                $platforms = ['wapp' => 'WhatsApp', 'teams' => 'Microsoft Teams', 'email' => 'E-mail'];
-            @endphp
-            <a href="{{ $href }}" class="scenario-card {{ $cardClass }}">
-                <div class="s-avatar" style="background: {{ $scenario->bg_color }}20;">
-                    {{ $scenario->avatar }}
-                </div>
-                <div class="s-info">
-                    <div class="s-label">{{ $i + 1 }}. {{ $scenario->label }}</div>
-                    <div class="s-preview">{{ $scenario->preview }}</div>
-                    <div class="s-platform">{{ $platforms[$scenario->platform] ?? $scenario->platform }}</div>
-                </div>
-                <div class="s-status {{ $cardClass }}">{{ $statusLabel }}</div>
-            </a>
-        @endforeach
-    </div>
-
     @if($nextScenario)
-        <a href="{{ route('training.show', $nextScenario->id) }}" class="btn-start">
-            {{ $completed === 0 ? 'Iniciar Treinamento →' : 'Continuar Treinamento →' }}
-        </a>
+        <div class="mission-popup">
+            <div class="mission-banner">
+                <span>⚡ Missão {{ $nextPosition }} de {{ $totalScenarios }}</span>
+                <span class="badge">{{ $platforms[$nextScenario->platform] ?? $nextScenario->platform }}</span>
+            </div>
+
+            <div class="mission-body">
+                <div class="mission-avatar" style="background: {{ $nextScenario->bg_color }}25;">
+                    {{ $nextScenario->avatar }}
+                </div>
+                <div class="mission-info">
+                    <span class="mission-platform">Cenário simulado</span>
+                    <h2 class="mission-title">{{ $nextScenario->label }}</h2>
+                    <p class="mission-preview">{{ $nextScenario->preview }}</p>
+                </div>
+            </div>
+
+            <div class="mission-footer">
+                <a href="{{ route('training.show', $nextScenario->id) }}" class="btn-accept">
+                    Aceitar missão →
+                </a>
+            </div>
+        </div>
+    @else
+        <div class="all-done">
+            <h2>🏆 Treinamento concluído!</h2>
+            <p>Você completou todas as missões. Seu resultado já foi registrado.</p>
+        </div>
     @endif
 </div>
 </body>
