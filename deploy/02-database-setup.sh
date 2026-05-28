@@ -3,15 +3,16 @@
 # M2 Guardian — Configuração do Banco MariaDB
 # Rodar como root depois de 01-server-setup.sh
 # ─────────────────────────────────────────────────────────────────────────────
-set -euo pipefail
+set -eu
 
 echo "============================================================"
 echo " M2 Guardian — Setup do Banco de Dados"
 echo "============================================================"
 
-# Senha aleatória para o usuário do app (12 chars)
-APP_DB_PASS=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 16)
-ROOT_DB_PASS=$(tr -dc 'A-Za-z0-9' < /dev/urandom | head -c 16)
+# Senha aleatória (24 hex chars). Usa openssl em vez de tr|head para evitar
+# SIGPIPE quebrando a pipeline quando pipefail está ativo.
+APP_DB_PASS=$(openssl rand -hex 12)
+ROOT_DB_PASS=$(openssl rand -hex 12)
 
 # Ainda não usamos o root_db_pass; deixa o root via socket (padrão do MariaDB no Ubuntu)
 
@@ -59,6 +60,9 @@ query_cache_type = 0
 character-set-server = utf8mb4
 collation-server = utf8mb4_unicode_ci
 init-connect = 'SET NAMES utf8mb4'
+
+# SQL mode permissivo (default Laravel é estrito e quebra timestamps NOT NULL sem default)
+sql_mode = "NO_ENGINE_SUBSTITUTION"
 
 # Slow query log (debug)
 slow_query_log = 1

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->json('content_snapshot');
             $table->foreignId('edited_by_admin_id')->constrained('admins')->restrictOnDelete();
             $table->string('edit_summary', 255)->nullable();
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
 
             $table->unique(['scenario_id', 'version']);
         });

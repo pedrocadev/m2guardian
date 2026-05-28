@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('email', 180);
             $table->string('department', 80)->nullable();
             $table->enum('profile', ['rh', 'financeiro', 'operacao', 'outro'])->default('outro');
-            $table->timestamp('invited_at');
+            $table->timestamp('invited_at')->useCurrent();
             $table->timestamp('first_access_at')->nullable();
             $table->timestamp('completed_at')->nullable();
             $table->unsignedSmallInteger('score')->nullable();

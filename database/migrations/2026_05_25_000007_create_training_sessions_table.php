@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('training_sessions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('collaborator_id')->constrained('collaborators')->cascadeOnDelete();
-            $table->timestamp('started_at');
+            $table->timestamp('started_at')->useCurrent();
             $table->timestamp('completed_at')->nullable();
             $table->unsignedSmallInteger('total_scenarios');
             $table->unsignedSmallInteger('total_questions');

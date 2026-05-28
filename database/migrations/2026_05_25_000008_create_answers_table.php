@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('chosen_option_key', 8);
             $table->boolean('is_correct');
             $table->unsignedInteger('response_time_ms')->nullable();
-            $table->timestamp('answered_at');
+            $table->timestamp('answered_at')->useCurrent();
 
             $table->index(['collaborator_id', 'scenario_id']);
             $table->index(['scenario_id', 'is_correct']);

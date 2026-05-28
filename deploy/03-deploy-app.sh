@@ -7,8 +7,9 @@
 set -euo pipefail
 
 APP_DIR="/var/www/m2guardian"
-# Usa SSH Deploy Key (cadastrada em Settings > Deploy keys do repo)
-REPO_URL="git@github.com:M2-Solution-Dev/M2Guardian.2-0.git"
+# HTTPS com credential helper (PAT) — orgs com policy bloqueando Deploy Keys
+# usam essa via. Configurar credentials antes em /var/www/m2guardian/.git-credentials
+REPO_URL="https://github.com/M2-Solution-Dev/M2Guardian.2-0.git"
 APP_USER="m2guardian"
 
 echo "============================================================"
@@ -16,9 +17,15 @@ echo " M2 Guardian — Deploy da Aplicação"
 echo "============================================================"
 
 # 1) Primeiro deploy: clonar; depois: atualizar
+# Se o APP_DIR ja existe (criado pelo 01-server-setup.sh com .git-credentials),
+# inicializa o git in-place pra nao bater com 'git clone exige pasta vazia'.
 if [ ! -d "$APP_DIR/.git" ]; then
-    echo "→ Primeiro deploy: clonando repositório..."
-    sudo -u $APP_USER git clone $REPO_URL $APP_DIR
+    echo "→ Primeiro deploy: inicializando repositório..."
+    cd $APP_DIR
+    sudo -u $APP_USER git init -b main
+    sudo -u $APP_USER git remote add origin $REPO_URL
+    sudo -u $APP_USER git fetch origin main
+    sudo -u $APP_USER git reset --hard origin/main
 else
     echo "→ Atualizando repositório existente..."
     cd $APP_DIR
@@ -32,8 +39,9 @@ echo "→ composer install..."
 sudo -u $APP_USER composer install --no-dev --optimize-autoloader --no-interaction
 
 # 3) Instalar dependências JS e compilar assets
-echo "→ npm ci && npm run build..."
-sudo -u $APP_USER npm ci
+# Usa 'install' em vez de 'ci' porque o package-lock.json nao e versionado
+echo "→ npm install && npm run build..."
+sudo -u $APP_USER npm install --no-audit --no-fund
 sudo -u $APP_USER npm run build
 
 # 4) .env — se não existe, copia do template e gera APP_KEY
@@ -78,7 +86,7 @@ sudo -u $APP_USER php artisan storage:link 2>/dev/null || true
 
 # 10) Restart serviços
 echo "→ Restart PHP-FPM e queue..."
-systemctl restart php8.3-fpm
+systemctl restart php8.4-fpm
 supervisorctl restart m2guardian-worker:* 2>/dev/null || true
 
 echo ""

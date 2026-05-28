@@ -1,16 +1,77 @@
 # M2 Guardian — Guia de Deploy em Produção
 
 Roteiro completo para subir o M2 Guardian numa VM Ubuntu 22.04 LTS.
+Compatível com **x86_64** e **ARM64** (Oracle Cloud Always Free).
 
 ---
 
 ## Pré-requisitos
 
-- VM Ubuntu 22.04 LTS com **mínimo 4GB RAM** (8GB recomendado)
+- VM Ubuntu 22.04 LTS com **mínimo 4GB RAM** (8GB+ recomendado)
 - Acesso SSH como **root** (ou usuário com sudo)
 - IP público da VM
 - Conta Microsoft 365 com **Senha de Aplicativo** habilitada (para SMTP)
 - (Opcional) Domínio para HTTPS
+
+---
+
+## FASE 0 — Oracle Cloud (se for usar Always Free)
+
+> Pule esta fase se já tiver a VM rodando em outro provedor.
+
+### 0.1 — Criar a instância
+
+1. Console Oracle Cloud → **Compute** → **Instances** → **Create Instance**
+2. **Name**: `m2guardian-prod`
+3. **Image**: clique em "Change image" → selecione **Canonical Ubuntu 22.04**
+4. **Shape**: clique em "Change shape" → selecione **VM.Standard.A1.Flex** (ARM, gratuito)
+   - **OCPU count**: 2
+   - **Memory**: 12 GB (você tem até 24GB grátis)
+5. **Networking**:
+   - Marque "Assign a public IPv4 address"
+   - Use a VCN padrão ou crie uma nova com Internet Gateway
+6. **Add SSH keys**: 
+   - Selecione "Generate a key pair for me" → **baixe a chave privada** (`.key`)
+   - Ou cole sua chave pública existente
+7. Clique em **Create**. Aguarde ~1 min até o status ficar "Running".
+8. Copie o **Public IP** da página da instância.
+
+### 0.2 — Abrir portas 80 e 443 na Security List
+
+Oracle Cloud bloqueia portas por padrão no nível da rede.
+
+1. No menu da instância, clique em **Virtual Cloud Network** (link em "Primary VNIC")
+2. Em **Security Lists** → clique no "Default Security List"
+3. **Add Ingress Rules**:
+   - **Regra 1**: Source CIDR `0.0.0.0/0`, IP Protocol **TCP**, Destination Port `80`
+   - **Regra 2**: Source CIDR `0.0.0.0/0`, IP Protocol **TCP**, Destination Port `443`
+
+### 0.3 — Primeiro acesso SSH (Oracle usa chave, não senha)
+
+No seu PC Windows, abra o PowerShell na pasta onde salvou a chave `.key`:
+
+```powershell
+# Ajusta permissões da chave (Windows pode dar erro de permissão)
+icacls C:\caminho\para\chave.key /inheritance:r
+icacls C:\caminho\para\chave.key /grant:r "$($env:USERNAME):(R)"
+
+# Conecta — Oracle Ubuntu usa o usuário 'ubuntu', NÃO 'root'
+ssh -i C:\caminho\para\chave.key ubuntu@SEU_IP_PUBLICO
+```
+
+Se conectou: você está dentro como `ubuntu`. Para virar root: `sudo -i`
+
+### 0.4 — Limpar regras iptables do Oracle (importante!)
+
+A imagem Oracle Ubuntu vem com regras iptables que bloqueiam HTTP/HTTPS no nível do sistema operacional. Limpe antes de continuar:
+
+```bash
+sudo iptables -F INPUT
+sudo iptables -F FORWARD
+sudo netfilter-persistent save
+```
+
+Pronto. Pode seguir para a FASE A.
 
 ---
 
@@ -20,7 +81,7 @@ Roteiro completo para subir o M2 Guardian numa VM Ubuntu 22.04 LTS.
 
 ```bash
 ssh root@SEU_IP_DA_VM
-# ou: ssh ubuntu@SEU_IP_DA_VM   (em algumas VMs vem com usuário ubuntu)
+# ou: ssh ubuntu@SEU_IP_DA_VM   (em Oracle Cloud usa 'ubuntu')
 ```
 
 ### A.2 — Criar usuário admin (se logou como root)
@@ -60,28 +121,40 @@ sudo bash deploy/02-database-setup.sh
 
 **ANOTAR A SENHA gerada** que aparece no final (também fica salva em `/root/.m2guardian-db-credentials`).
 
-### A.6 — Gerar SSH Deploy Key para o GitHub
+### A.6 — Configurar autenticação GitHub (HTTPS + PAT)
+
+> Use esta abordagem se a sua organização **bloqueia Deploy Keys** (política comum em empresas).
+> Caso suporte SSH Deploy Keys, use o script `02b-github-deploy-key.sh` em vez disso.
+
+1. **Gerar Personal Access Token (PAT) fine-grained:**
+   - Acesse: https://github.com/settings/personal-access-tokens/new
+   - **Token name:** `M2 Guardian VPS Produção`
+   - **Resource owner:** `M2-Solution-Dev` (selecione a org, não usuário pessoal)
+   - **Expiration:** 1 year
+   - **Repository access:** Only select repositories → `M2Guardian.2-0`
+   - **Permissions → Contents:** Read-only
+   - Clique em **Generate token** e copie o token (começa com `github_pat_`)
+
+2. **Se a organização exige aprovação de tokens** (comum quando Deploy Keys está bloqueado):
+   - Vai aparecer "pending approval"
+   - Owner da org aprova em: `https://github.com/organizations/M2-Solution-Dev/settings/personal-access-token-requests`
+
+3. **Salvar o token na VM como credential helper do usuário m2guardian:**
 
 ```bash
-sudo bash deploy/02b-github-deploy-key.sh
+# Cria arquivo de credentials (substitua SEU_TOKEN_AQUI pelo PAT copiado)
+echo "https://pedrocadev:SEU_TOKEN_AQUI@github.com" | sudo tee /var/www/m2guardian/.git-credentials
+sudo chown m2guardian:m2guardian /var/www/m2guardian/.git-credentials
+sudo chmod 600 /var/www/m2guardian/.git-credentials
+
+# Configura git do usuário m2guardian pra usar esse arquivo
+sudo -u m2guardian git config --global credential.helper "store --file=/var/www/m2guardian/.git-credentials"
+
+# Testa o acesso
+sudo -u m2guardian git ls-remote https://github.com/M2-Solution-Dev/M2Guardian.2-0.git HEAD
 ```
 
-O script mostra uma **chave pública** no terminal. Copie-a inteira.
-
-Acesse: https://github.com/M2-Solution-Dev/M2Guardian.2-0/settings/keys
-
-1. Clique em **"Add deploy key"**
-2. Title: `VPS Produção`
-3. Cole a chave no campo "Key"
-4. **NÃO marque** "Allow write access" (deve ser somente leitura)
-5. Clique em "Add key"
-
-Depois de cadastrar, teste:
-```bash
-sudo -u m2guardian ssh -T git@github.com
-```
-
-Deve responder: *"Hi M2-Solution-Dev/M2Guardian.2-0! You have successfully authenticated..."*
+Deve mostrar o hash do último commit + `HEAD`. Se mostrar `403 Forbidden`, o token está pendente de aprovação.
 
 ---
 
@@ -135,6 +208,8 @@ Pressione `ENTER` no terminal pra continuar o script. Ele vai rodar migrations +
 
 ```bash
 sudo cp /var/www/m2guardian/deploy/nginx-http.conf /etc/nginx/sites-available/m2guardian
+# Se quiser usar domínio em vez de aceitar qualquer Host, troca o server_name:
+# sudo sed -i 's|server_name _;|server_name SEU.DOMINIO.com.br;|' /etc/nginx/sites-available/m2guardian
 sudo ln -sf /etc/nginx/sites-available/m2guardian /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
@@ -349,13 +424,28 @@ zcat /var/backups/m2guardian-20260601.sql.gz | mysql -u m2guardian -p m2guardian
 
 ## Recursos do Servidor
 
-Com 8GB RAM, configurado conforme este guia, suporta:
-- ~50 empresas simultâneas (Demo + Pro)
-- ~500 colaboradores ativos em treinamento
-- ~2000 sessões por dia
+Com 8-12GB RAM (ou os 24GB do Oracle Always Free), configurado conforme este guia, suporta:
+- ~50-100 empresas simultâneas (Demo + Pro)
+- ~500-1000 colaboradores ativos em treinamento
+- ~2000-4000 sessões por dia
+
+### Notas Oracle Cloud Always Free
+
+- **Shape:** VM.Standard.A1.Flex (ARM Ampere) — **grátis para sempre**
+- **Limite total:** 4 OCPUs + 24GB RAM distribuídos entre todas as instâncias ARM da conta
+- **Arquitetura:** ARM64 (aarch64) — todos os pacotes deste deploy têm suporte nativo
+- **Boot volume:** até 200GB grátis
+- **Banda:** 10TB/mês grátis (mais que suficiente)
+
+### Particularidades ARM (Oracle)
+
+- O script `01-server-setup.sh` instala tudo via apt — funciona idêntico em ARM
+- Performance é **excelente** para PHP/Nginx (Ampere é otimizado)
+- Se um pacote pedir compilação nativa (raro), ARM compila normalmente
+- Imagem Docker (se for usar no futuro) precisa ser ARM64 ou multi-arch
 
 Quando precisar escalar:
 - Adicionar Redis (cache + sessão)
 - Mover queue para Redis
 - Aumentar `numprocs` do worker
-- Migrar DB para servidor dedicado
+- Migrar DB para servidor dedicado (Oracle Autonomous DB tem free tier também)

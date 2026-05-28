@@ -14,11 +14,11 @@ return new class extends Migration
             $table->string('tokenable_type', 60);
             $table->unsignedBigInteger('tokenable_id');
             $table->enum('purpose', ['leader_login', 'collaborator_training', 'admin_recovery']);
-            $table->timestamp('expires_at');
+            $table->timestamp('expires_at')->useCurrent();
             $table->timestamp('consumed_at')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->string('user_agent', 255)->nullable();
-            $table->timestamp('created_at');
+            $table->timestamp('created_at')->useCurrent();
 
             $table->index(['tokenable_type', 'tokenable_id']);
             $table->index(['expires_at', 'consumed_at']);
