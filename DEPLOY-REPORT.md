@@ -103,7 +103,7 @@ A plataforma **M2 Guardião Digital** foi implantada com sucesso em ambiente de 
 
 | Repo | URL | Função |
 |------|-----|--------|
-| **Pessoal (público)** | https://github.com/pedrocadev/m2guardian | Mirror e source do deploy |
+| **Pessoal (privado)** | https://github.com/pedrocadev/m2guardian | Mirror e source do deploy |
 | **Empresa (privado)** | https://github.com/M2-Solution-Dev/M2Guardian.2-0 | Repositório oficial |
 
 **Multi-push configurado:** todo `git push origin main` envia automaticamente para os 2 repos. Branch principal: `main`.
