@@ -136,64 +136,39 @@ a.fi-link {
 
 /* ========================================
    Background tematico com circuitos M2
+   Tecnica: gradient empilhado sobre imagem (sem pseudo-elementos
+   nem z-index manipulation, para nao quebrar dropdowns Floating UI)
    ======================================== */
 
-/* Aplica o bg-circuito como fundo fixo do painel inteiro */
 body.fi-body,
-.fi-layout {
-    background-image: url('/images/mascote/bg-circuito.jpg') !important;
+.fi-simple-layout {
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)),
+        url('/images/mascote/bg-circuito.jpg') !important;
     background-size: cover !important;
     background-position: center !important;
     background-attachment: fixed !important;
     background-repeat: no-repeat !important;
-    position: relative;
-}
-
-/* Overlay branco translucido sobre o fundo pra preservar legibilidade do conteudo */
-body.fi-body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: rgba(255, 255, 255, 0.92);
-    z-index: 0;
-    pointer-events: none;
 }
 
 /* Em dark mode (Filament), overlay mais escuro */
-.dark body.fi-body::before {
-    background: rgba(17, 17, 17, 0.92);
+.dark body.fi-body,
+.dark .fi-simple-layout {
+    background-image:
+        linear-gradient(rgba(17, 17, 17, 0.92), rgba(17, 17, 17, 0.92)),
+        url('/images/mascote/bg-circuito.jpg') !important;
 }
 
-/* Garante que TODOS os elementos principais ficam acima do overlay */
-/* Inclui as telas simples de auth (login, recuperacao) que usam layout diferente */
-.fi-sidebar,
-.fi-topbar,
-.fi-main,
-.fi-page,
-.fi-modal,
-.fi-simple-layout,
-.fi-simple-main,
-.fi-simple-page,
-.fi-simple-page-section,
-.fi-simple-header,
-.fi-simple-footer {
-    position: relative;
-    z-index: 1;
-}
-
-/* Cards e tabelas continuam com fundo solido pra contraste */
-.fi-section,
-.fi-ta-ctn,
-.fi-fo-component-ctn,
+/* Card de login centralizado: fundo branco solido + sombra pra destacar */
 .fi-simple-main {
     background-color: #ffffff !important;
-}
-
-/* Card de login centralizado: garante fundo branco + sombra pra destacar do background */
-.fi-simple-main {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
     border-radius: 16px !important;
     padding: 2rem !important;
+}
+
+.dark .fi-simple-main {
+    background-color: #1a1a1a !important;
 }
 
 .dark .fi-section,
