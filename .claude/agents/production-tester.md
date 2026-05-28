@@ -60,10 +60,14 @@ curl -s -o /dev/null -w "%{http_code}\n" https://guardiao.m2cloud.com.br/auth/li
 Esperado: `200`.
 
 ### Teste 6 — Assets dinâmicos do Livewire/Filament
+Filament 3 carrega Livewire via `livewire.min.js` (com `.min`). Teste essa URL específica.
+
 ```bash
-curl -s -o /dev/null -w "Livewire JS: %{http_code} (size: %{size_download})\n" https://guardiao.m2cloud.com.br/livewire/livewire.js
+curl -s -o /dev/null -w "Livewire JS: %{http_code} (size: %{size_download})\n" https://guardiao.m2cloud.com.br/livewire/livewire.min.js
 ```
-Esperado: `200`, tamanho > 50000 bytes (Livewire JS minificado).
+Esperado: `200`, tamanho > 100000 bytes (Livewire JS minificado, geralmente ~165KB).
+
+Nota: o endpoint `/livewire/livewire.js` (sem `.min`) retorna 404 — isso é esperado e NÃO é um bug. O Filament só usa a versão `.min`.
 
 ### Teste 7 — Health check
 ```bash
