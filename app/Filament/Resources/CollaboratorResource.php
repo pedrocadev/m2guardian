@@ -154,17 +154,43 @@ class CollaboratorResource extends Resource
                     ->icon('heroicon-o-clipboard-document')
                     ->color('gray')
                     ->visible(fn (Collaborator $record) => $record->completed_at === null)
-                    ->action(function (Collaborator $record) {
+                    ->action(function (Collaborator $record, $livewire) {
                         ['plain_token' => $plainToken] = MagicLink::generateFor(
                             $record, 'collaborator_training', expiresDays: 30
                         );
                         $url = url('/auth/acesso') . '?t=' . $plainToken;
 
+                        // Tenta copiar via Clipboard API; fallback pra textarea + execCommand
+                        // (cobre HTTPS, HTTP local, e navegadores antigos)
+                        $urlJson = json_encode($url, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+                        $livewire->js(<<<JS
+                            (async function() {
+                                const url = {$urlJson};
+                                let ok = false;
+                                try {
+                                    if (navigator.clipboard && window.isSecureContext) {
+                                        await navigator.clipboard.writeText(url);
+                                        ok = true;
+                                    }
+                                } catch (e) { ok = false; }
+                                if (!ok) {
+                                    const ta = document.createElement('textarea');
+                                    ta.value = url;
+                                    ta.style.position = 'fixed';
+                                    ta.style.opacity = '0';
+                                    document.body.appendChild(ta);
+                                    ta.select();
+                                    try { document.execCommand('copy'); } catch (e) {}
+                                    document.body.removeChild(ta);
+                                }
+                            })();
+                        JS);
+
                         Notification::make()
-                            ->title('Link gerado — copie abaixo:')
+                            ->title('✓ Link copiado!')
                             ->body($url)
-                            ->info()
-                            ->persistent()
+                            ->success()
+                            ->duration(8000)
                             ->send();
                     }),
 
