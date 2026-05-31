@@ -124,20 +124,46 @@ class CollaboratorController extends Controller
             return redirect()->route('training.index');
         }
 
-        $alreadyAnswered = Answer::where('training_session_id', $session->id)
-            ->where('scenario_id', $scenario->id)
-            ->exists();
+        // Total de perguntas neste cenário
+        $totalQuestions = collect($scenario->content['messages'])
+            ->where('type', 'question')
+            ->count();
 
-        if ($alreadyAnswered) {
-            $answeredIds = Answer::where('training_session_id', $session->id)->pluck('scenario_id');
-            $next = $scenarios->first(fn($s) => !$answeredIds->contains($s->id));
-            return redirect()->route($next ? 'training.show' : 'training.completed', $next?->id);
+        // Respostas que ja foram dadas para este cenário (indexadas por question_index)
+        $answers = Answer::where('training_session_id', $session->id)
+            ->where('scenario_id', $scenario->id)
+            ->get()
+            ->keyBy('question_index');
+
+        // Só redireciona pro próximo se TODAS as perguntas deste cenário foram respondidas
+        if ($totalQuestions > 0 && $answers->count() >= $totalQuestions) {
+            $next = $scenarios->first(function ($s) use ($session) {
+                $totalQ = collect($s->content['messages'])->where('type', 'question')->count();
+                $doneQ  = Answer::where('training_session_id', $session->id)
+                    ->where('scenario_id', $s->id)
+                    ->distinct('question_index')
+                    ->count('question_index');
+                return $totalQ === 0 || $doneQ < $totalQ;
+            });
+
+            if ($next) {
+                return redirect()->route('training.transition', $next->id);
+            }
+            return redirect()->route('training.completed');
         }
+
+        // Monta map de respostas anteriores pro front: { question_index: { key, is_correct } }
+        $previousAnswers = $answers->map(fn($a) => [
+            'key'        => $a->chosen_option_key,
+            'is_correct' => (bool) $a->is_correct,
+        ])->toArray();
 
         $position = $scenarios->search(fn($s) => $s->id === $scenario->id) + 1;
         $total = $scenarios->count();
 
-        return view('training.show', compact('collaborator', 'scenario', 'session', 'position', 'total'));
+        return view('training.show', compact(
+            'collaborator', 'scenario', 'session', 'position', 'total', 'previousAnswers'
+        ));
     }
 
     public function answer(Request $request)

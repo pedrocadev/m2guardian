@@ -55,6 +55,20 @@
         .question-card { background: #fff; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); margin-top: 8px; margin-bottom: 8px; animation: fadeIn 0.3s ease; }
         .question-prompt { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 16px; }
 
+        .answered-tag {
+            display: inline-block;
+            background: #f3f4f6;
+            color: #6b7280;
+            font-size: 10.5px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            padding: 4px 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            border: 1px solid #e5e7eb;
+        }
+
         .options { display: flex; flex-direction: column; gap: 10px; }
         .option-btn {
             background: #f9f9f9;
@@ -208,6 +222,7 @@
 
 <script>
 const messages       = @json($scenario->content['messages']);
+const previousAnswers = @json($previousAnswers ?? (object)[]);
 const scenarioId     = {{ $scenario->id }};
 const csrfToken      = document.querySelector('meta[name="csrf-token"]').content;
 const answerUrl      = '{{ route("training.answer") }}';
@@ -302,9 +317,14 @@ function removeTyping() {
     if (t) t.remove();
 }
 
-async function renderTexts(texts) {
+async function renderTexts(texts, instant = false) {
     for (let i = 0; i < texts.length; i++) {
         const msg = texts[i];
+        if (instant) {
+            // Modo replay: aparece de uma vez, sem typing/delays
+            addBubble(msg.from === 'them' ? 'them' : 'me', msg.body);
+            continue;
+        }
         if (msg.from === 'them') {
             showTyping();
             await sleep(900);
@@ -318,7 +338,10 @@ async function renderTexts(texts) {
 }
 
 async function renderQuestion(q, questionIndex, isLastChunk) {
-    await sleep(400);
+    const previous = previousAnswers[questionIndex];
+    const isReplay = !!previous;
+
+    await sleep(isReplay ? 100 : 400);
 
     const card = document.createElement('div');
     card.className = 'question-card';
@@ -331,6 +354,7 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
     `).join('');
 
     card.innerHTML = `
+        ${isReplay ? '<div class="answered-tag">✓ Já respondida — sem permissão de alterar</div>' : ''}
         <div class="question-prompt">💬 ${q.prompt.replace(/</g, '&lt;')}</div>
         <div class="options">${optionsHtml}</div>
         <div class="feedback-mascot-wrap"><img src="" alt=""></div>
@@ -339,8 +363,44 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
     `;
 
     chatArea.appendChild(card);
-    // Scroll lento até a nova pergunta — dá tempo do usuário perceber que tem mais
-    smoothScrollToBottom(1200);
+    smoothScrollToBottom(isReplay ? 400 : 1200);
+
+    // ── REPLAY de pergunta já respondida ─────────────────────────────────
+    if (isReplay) {
+        const chosenKey = previous.key;
+        const isCorrect = previous.is_correct;
+        const chosen = (q.options || []).find(o => o.key === chosenKey);
+        const feedbackText = chosen?.feedback ?? '';
+
+        card.querySelectorAll('.option-btn').forEach(b => {
+            b.disabled = true;
+            b.style.cursor = 'not-allowed';
+            if (b.dataset.key === chosenKey) {
+                b.classList.add(isCorrect ? 'selected-correct' : 'selected-wrong');
+            } else {
+                b.style.opacity = '0.45';
+            }
+        });
+
+        const mascotWrap = card.querySelector('.feedback-mascot-wrap');
+        const mascotImg = mascotWrap.querySelector('img');
+        mascotImg.src = isCorrect
+            ? '/images/mascote/guardiao-vitoria.png'
+            : '/images/mascote/guardiao-explicando.png';
+        mascotImg.alt = isCorrect ? 'Acertou!' : 'Vamos aprender';
+        mascotWrap.style.display = 'flex';
+
+        const fbox = card.querySelector('.feedback-box');
+        fbox.className = 'feedback-box ' + (isCorrect ? 'correct' : 'wrong');
+        fbox.textContent = feedbackText;
+        fbox.style.display = 'block';
+
+        // Não mostra "Continue" — só dá um pequeno respiro pro user ver
+        // e segue pra próxima pergunta automaticamente
+        await sleep(700);
+        return;
+    }
+
     questionStartTime = Date.now();
 
     return new Promise((resolve) => {
@@ -438,11 +498,11 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
 
 async function run() {
     for (let i = 0; i < chunks.length; i++) {
+        const isPreAnswered = !!previousAnswers[i];
         document.getElementById('qCurrent').textContent = (i + 1);
-        await renderTexts(chunks[i].texts);
+        await renderTexts(chunks[i].texts, isPreAnswered);
         await renderQuestion(chunks[i].question, i, i === chunks.length - 1);
     }
-    // Epílogo (se houver) — texto pós-última pergunta
     if (epilogue.length > 0) {
         await renderTexts(epilogue);
     }
