@@ -52,13 +52,7 @@ class LeaderInviteController extends Controller
             'invited_at'          => now(),
         ]);
 
-        ['plain_token' => $plainToken] = MagicLink::generateFor(
-            $collaborator,
-            'collaborator_training',
-            expiresDays: 30
-        );
-
-        $magicLinkUrl = url('/auth/acesso') . '?t=' . $plainToken;
+        $magicLinkUrl = MagicLink::generateUrlFor($collaborator, 'collaborator_training', expiresDays: 30);
 
         try {
             Mail::to($collaborator->email)
@@ -80,14 +74,8 @@ class LeaderInviteController extends Controller
             abort(403);
         }
 
-        ['plain_token' => $plainToken] = MagicLink::generateFor(
-            $collaborator,
-            'collaborator_training',
-            expiresDays: 30
-        );
-
         return response()->json([
-            'url' => url('/auth/acesso') . '?t=' . $plainToken,
+            'url' => MagicLink::generateUrlFor($collaborator, 'collaborator_training', expiresDays: 30),
         ]);
     }
 
@@ -95,18 +83,11 @@ class LeaderInviteController extends Controller
     {
         $leader = Auth::guard('leader')->user()->load('company');
 
-        // Garante que o colaborador pertence à empresa do líder
         if ($collaborator->company_id !== $leader->company_id) {
             abort(403);
         }
 
-        ['plain_token' => $plainToken] = MagicLink::generateFor(
-            $collaborator,
-            'collaborator_training',
-            expiresDays: 30
-        );
-
-        $magicLinkUrl = url('/auth/acesso') . '?t=' . $plainToken;
+        $magicLinkUrl = MagicLink::generateUrlFor($collaborator, 'collaborator_training', expiresDays: 30);
 
         try {
             Mail::to($collaborator->email)

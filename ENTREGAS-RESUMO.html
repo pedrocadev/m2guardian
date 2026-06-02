@@ -1,0 +1,107 @@
+﻿<!DOCTYPE html><html lang='pt-BR'><head><meta charset='UTF-8'><title>Entregas — M2 Guardiao Digital</title>
+<style>
+body { font-family: 'Calibri', 'Segoe UI', Arial; color: #1a1a1a; max-width: 820px; margin: 32px auto; padding: 0 24px; line-height: 1.65; }
+h1 { color: #CC0000; border-bottom: 3px solid #CC0000; padding-bottom: 10px; font-size: 30px; }
+h2 { color: #111; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 36px; font-size: 22px; }
+h3 { color: #333; margin-top: 22px; font-size: 17px; }
+table { border-collapse: collapse; width: 100%; margin: 14px 0; }
+th { background: #CC0000; color: #fff; padding: 10px; text-align: left; font-weight: 700; }
+td { padding: 9px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+tr:nth-child(even) td { background: #fafafa; }
+code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', monospace; font-size: 13px; color: #c7254e; }
+strong { color: #CC0000; }
+hr { border: none; border-top: 1px solid #ddd; margin: 28px 0; }
+em { color: #888; font-size: 12px; }
+ul, ol { padding-left: 24px; }
+li { margin-bottom: 4px; }
+</style></head><body><p><h1>Entregas — M2 Guardião Digital</h1></p>
+<p><strong>Data:</strong> Junho 2026</p>
+<p><strong>Autor:</strong> Pedro · M2 Cloud & Security</p>
+<p><hr></p>
+<p><h2>Novas funcionalidades para o colaborador</h2></p>
+<p><h3>1. Jornada de boas-vindas guiada (3 telas novas)</h3></p>
+<li>Tela inicial "Bem-vindo ao Guardião Digital"</li>
+<li>Overlay com mascote explicando a importância do treinamento (estilo Duolingo, 10 segundos)</li>
+<li>Tela "Como a jornada funciona" com os 5 passos visuais do treinamento</li>
+<p><h3>2. Cenários no formato "missão" (gamificação)</h3></p>
+<li>Em vez de listar todos os cenários, mostra <strong>um por vez</strong> como missão</li>
+<li>Card animado com efeito de pop-in e barra de progresso visual (✓ ✓ ● ○ ○)</li>
+<li>Tela de transição entre cenários (ex: ao terminar WhatsApp, aparece "Agora é hora do Microsoft Teams" com confete e contagem regressiva de 5 segundos)</li>
+<p><h3>3. Chat com scroll suave automático</h3></p>
+<li>Ao responder uma pergunta, a tela desce sozinha (1,2 segundos) até a próxima</li>
+<li>Antes o usuário precisava rolar manualmente para perceber que havia mais perguntas</li>
+<p><h3>4. Classificação por nível na conclusão (5 patentes)</h3></p>
+<table>
+<tr><th>Nível</th><th>Faixa</th><th>Patente</th></tr>
+<tr><td>N1</td><td>menos de 50%</td><td>Em Alerta</td></tr>
+<tr><td>N2</td><td>50 a 69%</td><td>Aprendiz Guardião</td></tr>
+<tr><td>N3</td><td>70 a 84%</td><td>Guardião Atento</td></tr>
+<tr><td>N4</td><td>85 a 99%</td><td>Guardião Estratégico</td></tr>
+<tr><td>N5</td><td>100%</td><td>Guardião Digital Certificado</td></tr>
+</table>
+<p>Cada nível tem cor, ícone, mascote e mensagem específica.</p>
+<p><hr></p>
+<p><h2>Melhorias visuais</h2></p>
+<li><strong>Logo profissional</strong> substituindo emoji + texto no header das telas de treinamento</li>
+<li><strong>Sidebar do painel admin</strong> com texto branco bem legível (antes ficava apagado, dificultando leitura)</li>
+<li><strong>Item selecionado no menu</strong> com destaque branco / texto vermelho M2 (em vez de apagado)</li>
+<p><hr></p>
+<p><h2>Bugs corrigidos em produção</h2></p>
+<table>
+<tr><th>Bug encontrado</th><th>Solução aplicada</th></tr>
+<tr><td>Erro 500 (servidor) ao criar líder com email duplicado</td><td>Validação amigável: "Já existe um líder com este e-mail para a empresa"</td></tr>
+<tr><td>Botão "Copiar Link" não copiava de verdade — só mostrava</td><td>Agora copia automaticamente para a área de transferência</td></tr>
+<tr><td>F5 (recarregar) no meio do cenário pulava perguntas restantes</td><td>Respostas anteriores ficam travadas; usuário continua de onde parou</td></tr>
+<tr><td>Campo "Slug (URL)" enganoso no cadastro de empresa</td><td>Removido do formulário (continua sendo gerado automaticamente para uso interno)</td></tr>
+</table>
+<p><hr></p>
+<p><h2>Encurtamento do magic link (URL 49% menor)</h2></p>
+<p><strong>ANTES (91 caracteres):</strong></p>
+<p><code>https://guardiao.m2cloud.com.br/auth/acesso?t=AbCdEf...48chars...</code></p>
+<p><strong>DEPOIS (46 caracteres):</strong></p>
+<p><code>https://guardiao.m2cloud.com.br/m/aB3xY7zP9qK2</code></p>
+<p>Praticamente metade do tamanho. Melhor para colar em WhatsApp, SMS e e-mail.</p>
+<li>Links antigos continuam funcionando (compatibilidade total)</li>
+<li>Segurança preservada: token de 71 bits + rate-limit + expiração + uso único</li>
+<p><hr></p>
+<p><h2>Melhorias internas (clean code)</h2></p>
+<li><strong>CSS do tema admin</strong> refatorado de 241 para 137 linhas (43% menor) sem perda de funcionalidade</li>
+<li><strong>Geração de magic link</strong> centralizada: 8 lugares duplicados consolidados em 1 método</li>
+<li><strong>Imports órfãos e código morto removidos</strong></li>
+<li><strong>Logo duplicada apagada</strong> (havia 2 cópias no repositório)</li>
+<li><strong>2 testes automatizados novos</strong> garantindo que a URL curta funcione</li>
+<p><hr></p>
+<p><h2>Ferramentas operacionais criadas</h2></p>
+<p>5 agentes automatizados para o dia-a-dia de operação:</p>
+<table>
+<tr><th>Comando</th><th>Função</th></tr>
+<tr><td><code>/test-local</code></td><td>12 testes funcionais no ambiente local antes de subir código</td></tr>
+<tr><td><code>/test-prod</code></td><td>11 testes funcionais em produção após deploy</td></tr>
+<tr><td><code>/test-security</code></td><td>11 testes defensivos (HTTPS, headers, SQL injection, XSS)</td></tr>
+<tr><td><code>/db-health</code></td><td>Diagnóstico do banco em produção (tamanho, integridade, backups)</td></tr>
+<tr><td><code>/clean-code</code></td><td>Revisão automática de código procurando lixo / duplicação</td></tr>
+</table>
+<p><hr></p>
+<p><h2>Documentação operacional</h2></p>
+<p>Criado o <strong>Guia de Deploy</strong> em 3 formatos (Word, HTML, Markdown) cobrindo:</p>
+<li>Como subir código pro Git (multi-push para os 2 repositórios)</li>
+<li>Como fazer deploy na VM Oracle Cloud</li>
+<li>Como validar se a produção está saudável</li>
+<li>Como fazer rollback de emergência em até 3 minutos</li>
+<p><hr></p>
+<p><h2>Validação antes da entrega</h2></p>
+<p>Antes de finalizar, foram executados:</p>
+<li><strong>11/11</strong> testes funcionais em produção (todos verdes)</li>
+<li><strong>11/11</strong> testes de segurança em produção (certificado válido até agosto/2026, todos os arquivos sensíveis bloqueados, SQL injection rejeitado, XSS escapado, cookies com flags HttpOnly + Secure + SameSite)</li>
+<li><strong>8/8</strong> testes automatizados Pest da suíte de magic link</li>
+<li><strong>11/12</strong> testes funcionais locais (1 falha não-crítica de cache do Livewire local)</li>
+<p><hr></p>
+<p><h2>Números</h2></p>
+<li><strong>12 arquivos</strong> modificados</li>
+<li><strong>9 arquivos novos</strong> (agentes, skills, documentação)</li>
+<li><strong>Saldo: -31 linhas</strong> (mais funcionalidade entregue com menos código)</li>
+<li><strong>2 testes automatizados</strong> novos</li>
+<li><strong>0 falhas críticas</strong> detectadas</li>
+<p><hr></p>
+<p><em>M2 Cloud & Security · Guardião Digital · Junho 2026</em></p>
+</body></html>

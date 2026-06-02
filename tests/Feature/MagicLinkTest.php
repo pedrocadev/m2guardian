@@ -70,3 +70,19 @@ test('missing token redirects to invalid page', function () {
 test('completely invalid token redirects to invalid page', function () {
     $this->get('/auth/acesso?t=totally-fake-token')->assertRedirect(route('magic-link.invalid'));
 });
+
+test('short url route /m/{token} authenticates and redirects correctly', function () {
+    ['plain_token' => $token] = MagicLink::generateFor($this->leader, 'leader_login', expiresDays: 7);
+
+    $response = $this->get('/m/' . $token);
+
+    $response->assertRedirect(route('leader.dashboard'));
+    $this->assertAuthenticatedAs($this->leader, 'leader');
+});
+
+test('generateUrlFor returns short route format', function () {
+    $url = MagicLink::generateUrlFor($this->collaborator, 'collaborator_training', expiresDays: 30);
+
+    expect($url)->toContain('/m/');
+    expect($url)->not->toContain('/auth/acesso');
+});

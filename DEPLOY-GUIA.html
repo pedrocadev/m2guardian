@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Guia de Deploy — M2 Guardião</title>
+<style>
+body { font-family: 'Calibri', 'Segoe UI', Arial, sans-serif; color: #1a1a1a; max-width: 780px; margin: 32px auto; padding: 0 24px; line-height: 1.6; }
+h1 { color: #CC0000; border-bottom: 3px solid #CC0000; padding-bottom: 10px; font-size: 28px; }
+h2 { color: #111; border-bottom: 1px solid #ddd; padding-bottom: 6px; margin-top: 36px; font-size: 22px; }
+h3 { color: #333; margin-top: 24px; font-size: 17px; }
+code { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; font-family: 'Consolas', 'Courier New', monospace; font-size: 13.5px; color: #c7254e; }
+pre { background: #1e1e1e; color: #d4d4d4; padding: 14px 18px; border-radius: 8px; overflow-x: auto; font-family: 'Consolas', 'Courier New', monospace; font-size: 13px; line-height: 1.5; }
+pre code { background: transparent; color: inherit; padding: 0; }
+table { border-collapse: collapse; width: 100%; margin: 14px 0; }
+th { background: #CC0000; color: #fff; padding: 10px; text-align: left; font-weight: 700; }
+td { padding: 9px 10px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+tr:nth-child(even) td { background: #fafafa; }
+blockquote { border-left: 4px solid #CC0000; background: #fff5f5; margin: 14px 0; padding: 12px 18px; color: #6b1414; font-size: 14px; }
+.checklist { list-style: none; padding-left: 0; }
+.checklist li { padding: 4px 0; }
+.checklist li::before { content: "☐ "; color: #888; font-weight: bold; margin-right: 6px; }
+strong { color: #CC0000; }
+hr { border: none; border-top: 2px dashed #ddd; margin: 32px 0; }
+.diagram { background: #f8f9fa; border: 1px solid #ddd; border-radius: 8px; padding: 20px; font-family: 'Consolas', monospace; font-size: 12px; line-height: 1.5; white-space: pre; overflow-x: auto; }
+.note { background: #fff8e1; border-left: 4px solid #f59e0b; padding: 12px 16px; margin: 14px 0; font-size: 14px; }
+.footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; color: #888; font-size: 12px; font-style: italic; text-align: center; }
+</style>
+</head>
+<body>
+
+<h1>Guia de Deploy — M2 Guardião</h1>
+
+<p>Documento prático com os passos pra subir código pro Git e depois pra produção.</p>
+
+<p><strong>Atalhos:</strong></p>
+<ol>
+<li>Subir código pro Git</li>
+<li>Deploy na VM (produção)</li>
+<li>Validar se deu certo</li>
+<li>Rollback de emergência</li>
+</ol>
+
+<hr>
+
+<h2>1. Subir código pro Git</h2>
+
+<h3>1.1 Antes de subir (checklist)</h3>
+<ul class="checklist">
+<li>Testei a alteração em <code>http://m2guardian.test</code> (Herd local)</li>
+<li>Não tem <code>.env</code> ou <code>.env.production</code> no <code>git status</code> (são privados, ignorados)</li>
+<li>Mensagens de commit em português, descritivas</li>
+</ul>
+
+<h3>1.2 Comandos no PowerShell</h3>
+<p>Abre o PowerShell <strong>dentro de</strong> <code>c:\Projects\m2guardian</code>:</p>
+
+<pre><code># 1. Ver o que mudou
+git status
+
+# 2. Ver o diff (opcional, pra revisar)
+git diff
+
+# 3. Adicionar os arquivos especificos (NUNCA "git add .")
+git add caminho/do/arquivo1.php caminho/do/arquivo2.blade.php
+
+# 4. Commit com mensagem clara
+git commit -m "Fix: descricao curta do que mudou e por que"
+
+# 5. Push (envia pros DOIS repos automaticamente)
+git push origin main</code></pre>
+
+<h3>1.3 O que acontece no push</h3>
+<p>O <code>git push origin main</code> foi configurado pra <strong>multi-push</strong>: um único comando envia o código pros DOIS repositórios:</p>
+
+<div class="diagram">git push origin main
+  ├─→ pedrocadev/m2guardian          (repo pessoal)
+  └─→ M2-Solution-Dev/M2Guardian.2-0 (repo da M2)</div>
+
+<p>Se o push der certo, você vê 2 confirmações na saída — uma pra cada repo.</p>
+
+<h3>1.4 Se o push falhar</h3>
+<table>
+<tr><th>Erro</th><th>O que fazer</th></tr>
+<tr><td><code>Authentication failed</code></td><td>Seu PAT (Personal Access Token) expirou. Gera novo em <code>github.com/settings/tokens</code> e roda <code>git config --global credential.helper store</code></td></tr>
+<tr><td><code>non-fast-forward</code></td><td>Alguém (ou outra máquina sua) commitou antes. Roda <code>git pull origin main --rebase</code> e tenta de novo</td></tr>
+<tr><td><code>Permission denied</code></td><td>M2-Solution-Dev exige aprovação do PAT. Vai em <code>github.com/organizations/M2-Solution-Dev/settings/personal-access-token-requests</code></td></tr>
+</table>
+
+<hr>
+
+<h2>2. Deploy na VM (produção)</h2>
+
+<h3>2.1 Conectar via PuTTY</h3>
+<ol>
+<li>Abre o <strong>PuTTY</strong></li>
+<li>Carrega a sessão <code>guardiao</code> (ou conecta manualmente):
+  <ul>
+    <li><strong>Host:</strong> <code>137.131.186.168</code></li>
+    <li><strong>Port:</strong> <code>22</code></li>
+    <li><strong>Auth:</strong> SSH &gt; Auth &gt; Credentials &gt; Private key file = arquivo <code>.ppk</code> que você gerou via PuTTYgen</li>
+  </ul>
+</li>
+<li>Login como <code>ubuntu</code></li>
+<li>Cola pra virar root:</li>
+</ol>
+
+<pre><code>sudo -i</code></pre>
+
+<div class="note"><strong>Atenção:</strong> o Ctrl+V não funciona no PuTTY. Cola com <strong>botão direito do mouse</strong>.</div>
+
+<h3>2.2 Rodar o deploy</h3>
+<p>Um comando só:</p>
+
+<pre><code>/var/www/m2guardian/deploy/03-deploy-app.sh</code></pre>
+
+<p>Se aparecer <code>Permission denied</code>, rode uma vez:</p>
+
+<pre><code>chmod +x /var/www/m2guardian/deploy/*.sh</code></pre>
+
+<p>E aí roda o deploy normal.</p>
+
+<h3>2.3 O que o script faz</h3>
+
+<div class="diagram">1. git fetch + git reset --hard origin/main    (puxa o codigo novo)
+2. composer install --no-dev --optimize        (atualiza pacotes PHP)
+3. npm install + npm run build                 (compila CSS/JS Vite)
+4. php artisan migrate --force                 (roda migrations novas, se houver)
+5. php artisan config:cache                    (cache de config)
+6. php artisan route:cache                     (cache de rotas)
+7. php artisan view:cache                      (cache de views)
+8. php artisan storage:link                    (link simbolico pra uploads)
+9. systemctl reload php8.4-fpm                 (reinicia PHP-FPM)
+10. supervisorctl restart m2guardian-worker:*  (reinicia queue workers)</div>
+
+<p>Quando ver <code>Deploy concluído</code>, está no ar. Costuma demorar <strong>2 a 4 minutos</strong>.</p>
+
+<h3>2.4 Se o deploy falhar</h3>
+<table>
+<tr><th>Erro</th><th>O que fazer</th></tr>
+<tr><td><code>npm install</code> ou <code>npm run build</code> falhando</td><td><code>cd /var/www/m2guardian &amp;&amp; rm -rf node_modules package-lock.json &amp;&amp; npm install</code></td></tr>
+<tr><td><code>composer install</code> falhando</td><td>Verifica se o PHP está em 8.4: <code>php -v</code>. Se estiver em outra versão, <code>sudo update-alternatives --set php /usr/bin/php8.4</code></td></tr>
+<tr><td><code>migrate</code> falhando</td><td>Olha o log: <code>tail -80 /var/www/m2guardian/storage/logs/laravel-$(date +%Y-%m-%d).log</code></td></tr>
+<tr><td>500 no site depois do deploy</td><td>Mesmo log acima. Procura por <code>ERROR</code> ou <code>Exception</code></td></tr>
+</table>
+
+<hr>
+
+<h2>3. Validar se deu certo</h2>
+
+<h3>3.1 Teste rápido manual</h3>
+<p>Abre no navegador: <strong>https://guardiao.m2cloud.com.br/admin/login</strong></p>
+<p>Deve carregar a tela de login do Filament com a logo do Guardião. Faz login e clica em algumas telas pra ver se tudo responde.</p>
+
+<h3>3.2 Skills automatizadas (no Claude Code)</h3>
+<p>Tenho duas skills criadas que rodam testes automatizados em produção:</p>
+<pre><code>/test-prod        → 10 testes funcionais (HTTP, rotas, assets)
+/test-security    → 12 testes defensivos (headers, CSRF, info disclosure)</code></pre>
+<p>Roda esses quando quiser confirmar que está tudo de pé.</p>
+
+<h3>3.3 Ver logs em tempo real</h3>
+<p>No PuTTY:</p>
+<pre><code>sudo tail -f /var/www/m2guardian/storage/logs/laravel-$(date +%Y-%m-%d).log</code></pre>
+<p>Deixa essa janela aberta enquanto navega no site — qualquer erro aparece em tempo real.</p>
+
+<hr>
+
+<h2>4. Rollback de emergência</h2>
+
+<p>Se algo quebrar em produção e você precisa voltar agora:</p>
+
+<h3>4.1 Descobrir o commit anterior</h3>
+<p>No PowerShell local:</p>
+<pre><code>git log --oneline -10</code></pre>
+<p>Vai aparecer algo tipo:</p>
+<pre><code>a6527b0 Fix botao Copiar Link no admin
+48e5513 Fix 500 ao criar lider duplicado
+f033765 Treinamento gameficado
+9fde040 Merge branch 'main' ...</code></pre>
+
+<p>O <strong>commit que você quer voltar</strong> é o segundo (<code>48e5513</code> no exemplo) — aquele que estava no ar antes da bagunça.</p>
+
+<h3>4.2 Reverter</h3>
+<pre><code># Cria um commit que desfaz o ultimo
+git revert HEAD --no-edit
+
+# Push do revert
+git push origin main</code></pre>
+
+<h3>4.3 Redeploy na VM</h3>
+<p>No PuTTY:</p>
+<pre><code>/var/www/m2guardian/deploy/03-deploy-app.sh</code></pre>
+
+<p>Em <strong>3 minutos</strong> o sistema volta ao estado anterior. Sem perda de dados — <code>git revert</code> só reverte código, não banco.</p>
+
+<blockquote><strong>Nunca use <code>git reset --hard</code> ou <code>git push --force</code> em main</strong> — pode destruir histórico e travar os colegas.</blockquote>
+
+<hr>
+
+<h2>Resumo visual</h2>
+
+<div class="diagram">┌─────────────────────────────────────────────────────────────┐
+│  MAQUINA LOCAL (Windows + Herd)                             │
+│  ───────────────────────────────                            │
+│  1. Edita codigo                                            │
+│  2. Testa em http://m2guardian.test                         │
+│  3. git add + commit + push  ───┐                           │
+└──────────────────────────────────┼──────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│  GITHUB (2 repositorios sincronizados)                      │
+│  ─────────────────────────────────────                      │
+│   ▸ pedrocadev/m2guardian                                   │
+│   ▸ M2-Solution-Dev/M2Guardian.2-0                          │
+└──────────────────────────────────┬──────────────────────────┘
+                                   │
+                                   ▼
+┌─────────────────────────────────────────────────────────────┐
+│  VM ORACLE CLOUD (Ubuntu + PuTTY)                           │
+│  ─────────────────────────────────                          │
+│  4. SSH via PuTTY                                           │
+│  5. sudo -i                                                 │
+│  6. /var/www/m2guardian/deploy/03-deploy-app.sh             │
+│  7. Site no ar em https://guardiao.m2cloud.com.br           │
+└─────────────────────────────────────────────────────────────┘</div>
+
+<hr>
+
+<h2>Anexos úteis</h2>
+
+<table>
+<tr><td><strong>IP da VM</strong></td><td><code>137.131.186.168</code></td></tr>
+<tr><td><strong>Usuário SSH</strong></td><td><code>ubuntu</code> (depois <code>sudo -i</code> pra virar root)</td></tr>
+<tr><td><strong>URL produção</strong></td><td><code>https://guardiao.m2cloud.com.br</code></td></tr>
+<tr><td><strong>URL local (Herd)</strong></td><td><code>http://m2guardian.test</code></td></tr>
+<tr><td><strong>Pasta da app no servidor</strong></td><td><code>/var/www/m2guardian</code></td></tr>
+<tr><td><strong>Logs do Laravel</strong></td><td><code>/var/www/m2guardian/storage/logs/laravel-YYYY-MM-DD.log</code></td></tr>
+<tr><td><strong>Backup diário do DB</strong></td><td><code>/var/backups/m2guardian/</code> (cron diário 03:00 UTC)</td></tr>
+</table>
+
+<div class="footer">Documento gerado em 2026-05-28 · M2 Cloud &amp; Security</div>
+
+</body>
+</html>

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Company extends Model
 {
@@ -32,6 +33,23 @@ class Company extends Model
         return [
             'license_expires_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        // Gera slug único automaticamente quando a empresa é criada.
+        // Slug é usado internamente (ex: nome do arquivo PDF do relatório).
+        static::saving(function (Company $company) {
+            if (empty($company->slug)) {
+                $base = Str::slug($company->name) ?: 'empresa';
+                $slug = $base;
+                $i = 2;
+                while (static::where('slug', $slug)->where('id', '!=', $company->id)->exists()) {
+                    $slug = $base . '-' . $i++;
+                }
+                $company->slug = $slug;
+            }
+        });
     }
 
     public function createdBy(): BelongsTo

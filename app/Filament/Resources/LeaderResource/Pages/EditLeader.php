@@ -28,13 +28,7 @@ class EditLeader extends EditRecord
                     $leader = $this->record;
                     $leader->load('company');
 
-                    ['plain_token' => $plainToken] = MagicLink::generateFor(
-                        $leader,
-                        'leader_login',
-                        expiresDays: 7
-                    );
-
-                    $magicLinkUrl = url('/auth/acesso') . '?t=' . $plainToken;
+                    $magicLinkUrl = MagicLink::generateUrlFor($leader, 'leader_login', expiresDays: 7);
 
                     try {
                         Mail::to($leader->email)->send(new LeaderInviteMail($leader, $magicLinkUrl));

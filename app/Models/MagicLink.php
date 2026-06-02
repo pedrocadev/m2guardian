@@ -43,7 +43,9 @@ class MagicLink extends Model
 
     public static function generateFor(Model $tokenable, string $purpose, int $expiresDays = 7): array
     {
-        $plainToken = Str::random(48);
+        // 12 chars de [A-Za-z0-9] = ~71 bits de entropia.
+        // Suficiente pra link single-use com rate-limit (10 req/min/IP) e expiração curta.
+        $plainToken = Str::random(12);
 
         $link = self::create([
             'token_hash' => hash('sha256', $plainToken),
@@ -58,6 +60,12 @@ class MagicLink extends Model
             'plain_token' => $plainToken,
             'magic_link' => $link,
         ];
+    }
+
+    public static function generateUrlFor(Model $tokenable, string $purpose, int $expiresDays = 7): string
+    {
+        ['plain_token' => $token] = self::generateFor($tokenable, $purpose, $expiresDays);
+        return route('magic-link.short', ['token' => $token]);
     }
 
     public static function findValid(string $plainToken): ?self

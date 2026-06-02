@@ -135,11 +135,7 @@ class CollaboratorResource extends Resource
                             return;
                         }
 
-                        ['plain_token' => $plainToken] = MagicLink::generateFor(
-                            $record, 'collaborator_training', expiresDays: 30
-                        );
-
-                        $url = url('/auth/acesso') . '?t=' . $plainToken;
+                        $url = MagicLink::generateUrlFor($record, 'collaborator_training', expiresDays: 30);
 
                         try {
                             Mail::to($record->email)->send(new CollaboratorInviteMail($record, $leader, $url));
@@ -155,10 +151,7 @@ class CollaboratorResource extends Resource
                     ->color('gray')
                     ->visible(fn (Collaborator $record) => $record->completed_at === null)
                     ->action(function (Collaborator $record, $livewire) {
-                        ['plain_token' => $plainToken] = MagicLink::generateFor(
-                            $record, 'collaborator_training', expiresDays: 30
-                        );
-                        $url = url('/auth/acesso') . '?t=' . $plainToken;
+                        $url = MagicLink::generateUrlFor($record, 'collaborator_training', expiresDays: 30);
 
                         // Tenta copiar via Clipboard API; fallback pra textarea + execCommand
                         // (cobre HTTPS, HTTP local, e navegadores antigos)
@@ -215,10 +208,7 @@ class CollaboratorResource extends Resource
                             $leader = $record->invitedBy;
                             if (!$leader) { $failed++; continue; }
 
-                            ['plain_token' => $plainToken] = MagicLink::generateFor(
-                                $record, 'collaborator_training', expiresDays: 30
-                            );
-                            $url = url('/auth/acesso') . '?t=' . $plainToken;
+                            $url = MagicLink::generateUrlFor($record, 'collaborator_training', expiresDays: 30);
 
                             try {
                                 Mail::to($record->email)->send(new CollaboratorInviteMail($record, $leader, $url));

@@ -11,8 +11,9 @@ Route::get('/', function () {
     return redirect('/admin');
 });
 
-// Magic link (rate limited)
+// Magic link (rate limited) — rota curta `/m/{token}` e legado `/auth/acesso?t=...`
 Route::middleware('throttle:magic-link')->group(function () {
+    Route::get('/m/{token}', [MagicLinkController::class, 'consume'])->name('magic-link.short');
     Route::get('/auth/acesso', [MagicLinkController::class, 'consume'])->name('magic-link.consume');
 });
 Route::get('/auth/link-invalido', [MagicLinkController::class, 'invalid'])->name('magic-link.invalid');

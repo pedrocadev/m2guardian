@@ -9,9 +9,10 @@ use Illuminate\Support\Facades\Auth;
 
 class MagicLinkController extends Controller
 {
-    public function consume(Request $request)
+    public function consume(Request $request, ?string $token = null)
     {
-        $token = $request->query('t');
+        // Aceita token via path (/m/{token}) ou query string (/auth/acesso?t=...)
+        $token = $token ?? $request->query('t');
 
         if (!$token) {
             return redirect()->route('magic-link.invalid');

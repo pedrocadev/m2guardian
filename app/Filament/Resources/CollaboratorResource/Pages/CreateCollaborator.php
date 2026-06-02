@@ -31,11 +31,7 @@ class CreateCollaborator extends CreateRecord
 
         if (!$leader) return;
 
-        ['plain_token' => $plainToken] = MagicLink::generateFor(
-            $collaborator, 'collaborator_training', expiresDays: 30
-        );
-
-        $url = url('/auth/acesso') . '?t=' . $plainToken;
+        $url = MagicLink::generateUrlFor($collaborator, 'collaborator_training', expiresDays: 30);
 
         try {
             Mail::to($collaborator->email)->send(new CollaboratorInviteMail($collaborator, $leader, $url));

@@ -6,12 +6,10 @@ use App\Filament\Resources\CompanyResource\Pages;
 use App\Models\Company;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\HtmlString;
-use Illuminate\Support\Str;
 
 class CompanyResource extends Resource
 {
@@ -29,22 +27,11 @@ class CompanyResource extends Resource
                 Forms\Components\TextInput::make('name')
                     ->label('Nome da Empresa')
                     ->required()
-                    ->maxLength(180)
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(function (Set $set, ?string $state) {
-                        $set('slug', Str::slug($state ?? ''));
-                    }),
+                    ->maxLength(180),
                 Forms\Components\TextInput::make('cnpj')
                     ->label('CNPJ')
                     ->mask('99.999.999/9999-99')
                     ->maxLength(14),
-                Forms\Components\TextInput::make('slug')
-                    ->label('Slug (URL)')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(60)
-                    ->helperText('Gerado automaticamente a partir do nome. Pode editar se necessário.')
-                    ->prefix('m2guardian.com.br/'),
             ])->columns(2),
 
             Forms\Components\Section::make('Licença')->schema([
