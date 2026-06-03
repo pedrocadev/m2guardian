@@ -116,6 +116,29 @@ Campos `email`, `phone`, `role_label`, senha continuam editáveis. No UI Filamen
 
 **CNPJ é único (incluindo arquivados).** O `unique()` no form NÃO filtra `whereNull('deleted_at')` — porque a UNIQUE constraint do banco abrange registros trashed também. Tentar criar com CNPJ duplicado mostra mensagem amigável sugerindo verificar o filtro "Arquivadas" + desarquivar.
 
+### Release notes popup (atualizações no admin)
+
+Popup que aparece **uma vez por sessão** (a cada login) na home `/admin/dashboard` mostrando a release publicada mais recente. Inspirado no aviso de atualização do Milvus.
+
+**Tabela `releases`** (id, title, released_at, content markdown, published bool). Gerenciada via `ReleaseResource` em **Configurações → Atualizações**.
+
+**Trigger por sessão (não por DB):** o blade [resources/views/filament/release-popup.blade.php](resources/views/filament/release-popup.blade.php) é injetado via `panels::body.end` render hook em [AdminPanelProvider.php](app/Providers/Filament/AdminPanelProvider.php). Lógica:
+
+1. Só renderiza se `request()->routeIs('filament.admin.pages.dashboard')`
+2. Se `session('release_popup_shown')` já existe → return (já viu nesta sessão)
+3. Busca `Release::latestPublished()` — se null, return
+4. Side-effect: `session(['release_popup_shown' => true])` durante o render
+5. Renderiza HTML do popup com fechamento JS (sem backend)
+
+**Logout** invalida a sessão → `release_popup_shown` some → próximo login mostra de novo. **Não há** controller de dismiss — o botão "OK, entendi" é só JS (`document.getElementById(...).remove()`).
+
+**Placeholders no `content`** (substituídos antes do markdown via `strtr`):
+- `{nome}` → primeiro nome do admin logado
+- `{nome_completo}` → nome completo
+- `{email}` → email
+
+CSS no [public/css/filament-theme.css](public/css/filament-theme.css) bloco "Release notes popup" — badge "🎉 NOVIDADE" + gradiente vermelho M2 + animação pop-in cubic-bezier.
+
 ### Filament closure-parameter gotcha (important!)
 
 Filament resolves closures via **parameter name reflection**, NOT positional binding. `modifyQueryUsing()` on `Tab` binds `$query` specifically. **Using `$q` (or any other name) throws `BindingResolutionException: [$q] was unresolvable`.** Always:

@@ -151,3 +151,148 @@ body.fi-body,
 .dark .fi-fo-component-ctn {
     background-color: #1a1a1a !important;
 }
+
+/* ─── Release notes popup (atualizações do dia) ───────── */
+.release-popup-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    padding: 24px;
+    animation: rpFadeIn 0.3s ease;
+}
+@keyframes rpFadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.release-popup-card {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 560px;
+    max-height: 85vh;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    animation: rpSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    border-top: 4px solid #CC0000;
+}
+@keyframes rpSlideIn {
+    from { opacity: 0; transform: translateY(30px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.release-popup-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 24px 0;
+}
+.release-popup-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #CC0000, #aa0000);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    box-shadow: 0 3px 10px rgba(204, 0, 0, 0.3);
+}
+.release-popup-close {
+    background: transparent;
+    border: none;
+    font-size: 18px;
+    color: #888;
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    transition: background 0.15s ease;
+}
+.release-popup-close:hover { background: #f3f4f6; color: #111; }
+
+.release-popup-body {
+    padding: 16px 28px 22px;
+    overflow-y: auto;
+}
+.release-popup-meta {
+    font-size: 12px;
+    color: #888;
+    margin-bottom: 8px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+.release-popup-date { color: #CC0000; font-weight: 700; }
+.release-popup-sep { margin: 0 6px; opacity: 0.5; }
+.release-popup-brand { letter-spacing: 1px; }
+
+.release-popup-title {
+    font-size: 22px;
+    font-weight: 900;
+    color: #111;
+    line-height: 1.25;
+    margin-bottom: 16px;
+}
+
+.release-popup-content {
+    font-size: 14.5px;
+    line-height: 1.7;
+    color: #333;
+}
+.release-popup-content p { margin-bottom: 10px; }
+.release-popup-content ul,
+.release-popup-content ol { margin: 10px 0 14px 22px; }
+.release-popup-content li { margin-bottom: 6px; }
+.release-popup-content strong { color: #CC0000; }
+.release-popup-content code {
+    background: #f3f4f6;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: Consolas, monospace;
+    font-size: 13px;
+    color: #c7254e;
+}
+.release-popup-content h3 {
+    font-size: 15px;
+    font-weight: 800;
+    color: #111;
+    margin-top: 14px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.release-popup-footer {
+    padding: 16px 28px 22px;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+    text-align: center;
+}
+.release-popup-btn {
+    background: linear-gradient(135deg, #CC0000, #aa0000);
+    color: #fff;
+    border: none;
+    padding: 12px 36px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(204, 0, 0, 0.3);
+    transition: all 0.15s ease;
+}
+.release-popup-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(204, 0, 0, 0.4);
+}
+
+@media (max-width: 600px) {
+    .release-popup-card { max-height: 90vh; }
+    .release-popup-title { font-size: 18px; }
+    .release-popup-body { padding: 14px 20px 18px; }
+    .release-popup-footer { padding: 14px 20px 18px; }
+}
