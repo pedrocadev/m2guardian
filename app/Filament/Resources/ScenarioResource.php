@@ -20,7 +20,7 @@ class ScenarioResource extends Resource
     protected static ?string $navigationLabel = 'Cenários';
     protected static ?string $modelLabel = 'Cenário';
     protected static ?string $pluralModelLabel = 'Cenários';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 4;
 
     public static function form(Form $form): Form
     {

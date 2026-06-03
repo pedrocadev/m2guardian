@@ -42,24 +42,29 @@ test('unauthenticated collaborator is redirected from training', function () {
 test('authenticated collaborator can access training index', function () {
     $this->actingAs($this->collaborator, 'collaborator');
 
-    $this->get(route('training.index'))->assertOk();
+    $this->withSession(['training.welcome_seen' => true])
+        ->get(route('training.index'))
+        ->assertOk();
 });
 
 test('training index shows scenarios for demo company', function () {
     $this->actingAs($this->collaborator, 'collaborator');
 
-    $response = $this->get(route('training.index'));
+    $response = $this->withSession(['training.welcome_seen' => true])
+        ->get(route('training.index'));
 
     $response->assertOk();
     $response->assertViewHas('scenarios');
 });
 
 test('completing training marks collaborator as done', function () {
-    $this->actingAs($this->collaborator, 'collaborator');
+    $this->actingAs($this->collaborator, 'collaborator')
+        ->withSession(['training.welcome_seen' => true]);
 
     $scenarios = Scenario::where('demo_eligible', true)->get();
 
-    $this->get(route('training.index'));
+    $this->withSession(['training.welcome_seen' => true])
+        ->get(route('training.index'));
 
     foreach ($scenarios as $i => $scenario) {
         $questions = collect($scenario->content['messages'])->where('type', 'question');

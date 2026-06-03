@@ -94,10 +94,27 @@ Mounted at `/admin`, uses `admin` guard. Config in `app/Providers/Filament/Admin
 
 Resources auto-discovered from `app/Filament/Resources/`. Key resources:
 - `AdminResource` — super-admin only (`canAccess()` checks `isSuper()`)
-- `CompanyResource` — includes a "Ver Resultados" modal showing per-company stats
+- `CompanyResource` — campo CNPJ obrigatório com **lookup live na BrasilAPI** (via [CnpjService](app/Services/CnpjService.php)) que preenche a razão social automaticamente; campo "Apelido" obrigatório; CNPJ **não editável após salvar** (`->disabledOn('edit')`); inclui modal "Ver Resultados" com stats por empresa
 - `LeaderResource` — actions: `Gerar/Resetar Senha`, `Mostrar Credenciais` (modal with working JS clipboard), `Enviar por E-mail`
 - `CollaboratorResource` — actions: `Enviar Convite`, `Copiar Link`, bulk invite
 - `ScenarioResource` — visual editor with nested Repeaters; **5 tabs** by platform in `ListScenarios::getTabs()`
+
+### Cadastro de empresa: regras fortes
+
+**Empresa só nasce com líder.** O form de criar empresa tem uma seção "Líder Principal" (visível apenas em create via `->visibleOn('create')`). O `CreateCompany::handleRecordCreation()` envolve a criação de **empresa + líder em uma única transação DB** — se um falha, o outro é revertido. Não é possível criar empresa sem líder.
+
+**Empresa nunca é deletada — só arquivada.** Tanto `Company` quanto `Leader` usam `SoftDeletes`. A `DeleteAction` foi renomeada pra "Arquivar" e o `BulkDeleteAction` foi removido. Filtro `TrashedFilter` mostra arquivadas. `RestoreAction` desarquiva. `forceDelete()` continua possível via tinker pra casos extremos, mas não pelo painel.
+
+**Empresa nunca fica sem líder.** O `Leader::booted()` observa o evento `deleting` e lança `RuntimeException` se o líder em questão for o último ativo da empresa. Camada de UI (`->before()` nas DeleteActions de `LeaderResource` e `EditLeader`) faz check via `$leader->canBeArchived()` e mostra notification amigável antes de chamar a ação — mas o Model é o último guard contra deletes via tinker/API.
+
+**Líder principal (`is_primary`).** O líder cadastrado **junto com a empresa** via `CreateCompany` recebe `is_primary = true` automaticamente. Esse líder tem 3 proteções fortes:
+- Não pode ser **arquivado** nunca (`canBeArchived()` retorna false; `booted::deleting` lança exception específica)
+- Não pode ter **`company_id` alterado** (`booted::saving` bloqueia — vínculo com a empresa é permanente)
+- Não pode ter **`name` alterado** (mesmo guard)
+
+Campos `email`, `phone`, `role_label`, senha continuam editáveis. No UI Filament (`LeaderResource`), os campos imutáveis aparecem `->disabled()` com helperText explicando. A coluna "Nome" mostra "★ Líder Principal" em negrito como descrição. Backfill na migration: o líder mais antigo (menor `id`) de cada empresa foi marcado como primary pra empresas pré-existentes.
+
+**CNPJ é único (incluindo arquivados).** O `unique()` no form NÃO filtra `whereNull('deleted_at')` — porque a UNIQUE constraint do banco abrange registros trashed também. Tentar criar com CNPJ duplicado mostra mensagem amigável sugerindo verificar o filtro "Arquivadas" + desarquivar.
 
 ### Filament closure-parameter gotcha (important!)
 
@@ -173,6 +190,12 @@ When adding `timestamp NOT NULL` columns in migrations, **always chain `->useCur
 
 Several `update()` calls have silently failed in the past because the column wasn't in `$fillable`. When adding new columns via migration, **always** also add them to the corresponding model's `$fillable` (especially `Admin::$fillable` for the brute-force lockout fields and `Collaborator::$fillable` for `completed_at`, `score`, `total_questions`).
 
+### Services (`app/Services/`)
+
+- [`CnpjService`](app/Services/CnpjService.php) — validação de CNPJ (algoritmo dos 2 dígitos verificadores, offline) e consulta à [BrasilAPI](https://brasilapi.com.br) pra trazer razão social. Métodos estáticos:
+  - `CnpjService::validate(string $cnpj): bool` — funciona com ou sem máscara
+  - `CnpjService::lookup(string $cnpj): ?array` — retorna `['razao_social' => ..., 'nome_fantasia' => ...]` ou `null` se inválido/timeout/não encontrado. Timeout 8s, falhas são logadas em `Log::warning`. Form não trava se API estiver fora — apenas mostra notification e deixa o admin preencher manualmente.
+
 ### Email (local vs production)
 
 - **Local dev:** `MAIL_MAILER=log` — emails go to `storage/logs/laravel.log`. Queue driver is `database` — run `php artisan queue:work` to actually process the job.
@@ -195,7 +218,7 @@ Production-side: `server_tokens off` in Nginx (hides version), HTTP→HTTPS redi
 - **Pest 3** (PHPUnit 11 under the hood)
 - `phpunit.xml` sets `DB_CONNECTION=sqlite` + `DB_DATABASE=:memory:` — tests do NOT touch the local MariaDB
 - Run `php artisan test` from project root
-- 17 tests across `MagicLinkTest`, `TrainingFlowTest`, `AdminBruteForceTest`, `ExampleTest`
+- 22 tests across `MagicLinkTest`, `TrainingFlowTest`, `CompanyCreationTest` (CNPJ + last-leader guard), `AdminBruteForceTest`, `ExampleTest`
 
 If you add tests that need a model, the factory is probably already in `database/factories/` (`AdminFactory`, `CompanyFactory`, `LeaderFactory`, `CollaboratorFactory`, `ScenarioFactory`).
 
@@ -227,9 +250,13 @@ sudo bash /var/www/m2guardian/deploy/03-deploy-app.sh
 
 ## Reference Documents
 
-- **`STATUS.md`** — feature inventory & stack breakdown for leadership/stakeholders
-- **`DEPLOY-REPORT.md`** — full implementation report (Oracle Cloud setup, 9 deployment bugs fixed in repo, hardening applied, backlog, commit timeline)
-- **`deploy/DEPLOY.md`** — operational playbook for deploying to a fresh VM
+Toda documentação narrativa fica em [docs/](docs/):
+
+- **[docs/STATUS.md](docs/STATUS.md)** — feature inventory & stack breakdown for leadership/stakeholders
+- **[docs/DEPLOY-GUIA.md](docs/DEPLOY-GUIA.md)** — operational playbook for Git → VM deploys (with .docx version for sharing)
+- **[docs/DEPLOY-REPORT.md](docs/DEPLOY-REPORT.md)** — full implementation report (Oracle Cloud setup, 9 deployment bugs fixed in repo, hardening applied, backlog, commit timeline)
+- **[docs/ENTREGAS-RESUMO.md](docs/ENTREGAS-RESUMO.md)** — sumário de entregas por ciclo (presentation format)
+- **`deploy/`** — scripts (`01-server-setup.sh`, `02-database-setup.sh`, `03-deploy-app.sh`) + nginx configs
 - All planned phases complete (database, auth, invites, training, dashboard, scenario editor, PDF, hardening)
 - 13 production-ready scenarios seeded (6 WhatsApp + 4 Teams + 3 Email)
 

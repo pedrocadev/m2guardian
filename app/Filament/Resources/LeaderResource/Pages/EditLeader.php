@@ -47,7 +47,24 @@ class EditLeader extends EditRecord
                     }
                 }),
 
-            Actions\DeleteAction::make()->label('Excluir'),
+            Actions\DeleteAction::make()
+                ->label('Arquivar')
+                ->icon('heroicon-o-archive-box')
+                ->color('warning')
+                ->modalHeading('Arquivar líder?')
+                ->modalDescription('O líder será arquivado (soft delete). Os dados continuam preservados.')
+                ->modalSubmitActionLabel('Arquivar')
+                ->before(function (Actions\DeleteAction $action) {
+                    if (!$this->record->canBeArchived()) {
+                        Notification::make()
+                            ->title('Bloqueado: último líder da empresa')
+                            ->body('Esta empresa precisa ter pelo menos um líder. Cadastre outro líder antes de arquivar este.')
+                            ->danger()
+                            ->persistent()
+                            ->send();
+                        $action->halt();
+                    }
+                }),
         ];
     }
 

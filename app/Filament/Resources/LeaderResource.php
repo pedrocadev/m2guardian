@@ -11,8 +11,9 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Str;
 
 class LeaderResource extends Resource
 {
@@ -32,11 +33,19 @@ class LeaderResource extends Resource
                     ->relationship('company', 'name')
                     ->searchable()
                     ->preload()
-                    ->required(),
+                    ->required()
+                    ->disabled(fn (?Leader $record) => $record?->is_primary === true)
+                    ->helperText(fn (?Leader $record) => $record?->is_primary
+                        ? 'Líder principal — vínculo com a empresa é permanente.'
+                        : null),
                 Forms\Components\TextInput::make('name')
                     ->label('Nome')
                     ->required()
-                    ->maxLength(120),
+                    ->maxLength(120)
+                    ->disabled(fn (?Leader $record) => $record?->is_primary === true)
+                    ->helperText(fn (?Leader $record) => $record?->is_primary
+                        ? 'Nome do líder principal não pode ser alterado.'
+                        : null),
                 Forms\Components\TextInput::make('email')
                     ->label('E-mail (usuário de acesso)')
                     ->email()
@@ -81,7 +90,9 @@ class LeaderResource extends Resource
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nome')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->description(fn (Leader $record) => $record->is_primary ? '★ Líder Principal' : null)
+                    ->weight(fn (Leader $record) => $record->is_primary ? 'bold' : 'normal'),
                 Tables\Columns\TextColumn::make('email')
                     ->label('E-mail')
                     ->searchable()
@@ -231,9 +242,42 @@ class LeaderResource extends Resource
                     }),
 
                 Tables\Actions\EditAction::make()->label('Editar'),
-                Tables\Actions\DeleteAction::make()->label('Excluir'),
+
+                Tables\Actions\DeleteAction::make()
+                    ->label('Arquivar')
+                    ->icon('heroicon-o-archive-box')
+                    ->color('warning')
+                    ->modalHeading('Arquivar líder?')
+                    ->modalDescription('O líder será arquivado (soft delete). Os dados continuam preservados e podem ser restaurados depois.')
+                    ->modalSubmitActionLabel('Arquivar')
+                    ->visible(fn (Leader $record) => !$record->trashed())
+                    ->before(function (Leader $record, Tables\Actions\DeleteAction $action) {
+                        if (!$record->canBeArchived()) {
+                            Notification::make()
+                                ->title('Bloqueado: último líder da empresa')
+                                ->body('Esta empresa precisa ter pelo menos um líder. Cadastre outro líder antes de arquivar este.')
+                                ->danger()
+                                ->persistent()
+                                ->send();
+                            $action->halt();
+                        }
+                    }),
+
+                Tables\Actions\RestoreAction::make()
+                    ->label('Desarquivar')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('success'),
+            ])
+            ->filters([
+                Tables\Filters\TrashedFilter::make()->label('Arquivados'),
             ])
             ->defaultSort('created_at', 'desc');
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 
     public static function generatePassword(): string

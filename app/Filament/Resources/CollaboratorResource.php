@@ -22,7 +22,7 @@ class CollaboratorResource extends Resource
     protected static ?string $navigationLabel = 'Colaboradores';
     protected static ?string $modelLabel = 'Colaborador';
     protected static ?string $pluralModelLabel = 'Colaboradores';
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {

@@ -4,11 +4,16 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CompanyResource\Pages;
 use App\Models\Company;
+use App\Services\CnpjService;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Set;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\HtmlString;
 
 class CompanyResource extends Resource
@@ -24,15 +29,87 @@ class CompanyResource extends Resource
     {
         return $form->schema([
             Forms\Components\Section::make('Dados da Empresa')->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Nome da Empresa')
-                    ->required()
-                    ->maxLength(180),
                 Forms\Components\TextInput::make('cnpj')
                     ->label('CNPJ')
+                    ->required()
                     ->mask('99.999.999/9999-99')
-                    ->maxLength(14),
+                    ->stripCharacters(['.', '/', '-'])
+                    ->extraInputAttributes(['maxlength' => 18])
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages([
+                        'unique' => 'Este CNPJ já está cadastrado no sistema (pode estar arquivado). Verifique o filtro "Arquivadas" antes de tentar criar novamente.',
+                    ])
+                    ->live(onBlur: true)
+                    ->disabledOn('edit')
+                    ->dehydrated()
+                    ->helperText('Após salvar, o CNPJ não pode mais ser alterado.')
+                    ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                        $digits = preg_replace('/\D/', '', $value ?? '');
+                        if (strlen($digits) !== 14) {
+                            $fail('CNPJ deve ter 14 dígitos.');
+                            return;
+                        }
+                        if (!CnpjService::validate($digits)) {
+                            $fail('CNPJ inválido (dígitos verificadores não conferem).');
+                        }
+                    })
+                    ->afterStateUpdated(function (?string $state, Set $set) {
+                        $digits = preg_replace('/\D/', '', $state ?? '');
+                        if (strlen($digits) !== 14 || !CnpjService::validate($digits)) {
+                            return;
+                        }
+                        $data = CnpjService::lookup($digits);
+                        if ($data && !empty($data['razao_social'])) {
+                            $set('name', $data['razao_social']);
+                            Notification::make()
+                                ->title('Razão social carregada do CNPJ')
+                                ->body($data['razao_social'])
+                                ->success()
+                                ->send();
+                        } else {
+                            Notification::make()
+                                ->title('CNPJ válido, mas não encontrado na base pública')
+                                ->body('Preencha a razão social manualmente.')
+                                ->warning()
+                                ->send();
+                        }
+                    }),
+                Forms\Components\TextInput::make('name')
+                    ->label('Razão Social')
+                    ->required()
+                    ->maxLength(180)
+                    ->helperText('Preenchida automaticamente ao informar um CNPJ válido.'),
+                Forms\Components\TextInput::make('nickname')
+                    ->label('Apelido')
+                    ->required()
+                    ->maxLength(80)
+                    ->placeholder('Ex: M2, ACME, Banco X')
+                    ->helperText('Nome curto/informal pra referência interna.'),
             ])->columns(2),
+
+            Forms\Components\Section::make('Líder Principal')
+                ->description('Toda empresa precisa de pelo menos um líder responsável.')
+                ->schema([
+                    Forms\Components\TextInput::make('leader_name')
+                        ->label('Nome do líder')
+                        ->required()
+                        ->maxLength(120),
+                    Forms\Components\TextInput::make('leader_email')
+                        ->label('E-mail do líder')
+                        ->required()
+                        ->email()
+                        ->maxLength(180)
+                        ->helperText('Será o login do líder no painel.'),
+                    Forms\Components\TextInput::make('leader_phone')
+                        ->label('Telefone')
+                        ->maxLength(20),
+                    Forms\Components\TextInput::make('leader_role')
+                        ->label('Cargo')
+                        ->maxLength(60)
+                        ->placeholder('Ex: Diretor de TI'),
+                ])
+                ->columns(2)
+                ->visibleOn('create'),
 
             Forms\Components\Section::make('Licença')->schema([
                 Forms\Components\Select::make('license')
@@ -154,6 +231,8 @@ class CompanyResource extends Resource
                         'suspended' => 'Suspenso',
                         'expired' => 'Expirado',
                     ]),
+                Tables\Filters\TrashedFilter::make()
+                    ->label('Arquivadas'),
             ])
             ->actions([
                 Tables\Actions\Action::make('results')
@@ -226,14 +305,29 @@ class CompanyResource extends Resource
                     ->modalCancelActionLabel('Fechar'),
 
                 Tables\Actions\EditAction::make()->label('Editar'),
-                Tables\Actions\DeleteAction::make()->label('Excluir'),
+
+                Tables\Actions\DeleteAction::make()
+                    ->label('Arquivar')
+                    ->icon('heroicon-o-archive-box')
+                    ->color('warning')
+                    ->modalHeading('Arquivar empresa?')
+                    ->modalDescription('A empresa será arquivada (soft delete). Os dados continuam preservados e podem ser restaurados depois. Nenhum registro é apagado.')
+                    ->modalSubmitActionLabel('Arquivar')
+                    ->visible(fn (Company $record) => !$record->trashed()),
+
+                Tables\Actions\RestoreAction::make()
+                    ->label('Desarquivar')
+                    ->icon('heroicon-o-arrow-uturn-left')
+                    ->color('success'),
             ])
-            ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                ]),
-            ])
+            ->bulkActions([])
             ->defaultSort('created_at', 'desc');
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->withoutGlobalScopes([SoftDeletingScope::class]);
     }
 
     public static function getRelations(): array
@@ -248,11 +342,5 @@ class CompanyResource extends Resource
             'create' => Pages\CreateCompany::route('/create'),
             'edit' => Pages\EditCompany::route('/{record}/edit'),
         ];
-    }
-
-    public static function mutateFormDataBeforeCreate(array $data): array
-    {
-        $data['created_by_admin_id'] = auth('admin')->id();
-        return $data;
     }
 }
