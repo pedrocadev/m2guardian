@@ -13,7 +13,7 @@
             min-height: 100vh;
             display: flex;
             flex-direction: column;
-            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-image: url('/images/backgrounds/training-show.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -209,14 +209,14 @@
 
 <div class="chat-area" id="chatArea">
     <div class="mascote-intro">
-        <img src="/images/mascote/guardiao-ola.png" alt="Guardião">
+        <img src="/images/mascots/training-show-greeting.png" alt="Guardião">
         <div class="intro-text">
             <strong>Atenção!</strong> Este é um cenário simulado. Leia as mensagens com calma e tome a decisão mais segura possível. Estou aqui para te ajudar! 🛡️
         </div>
     </div>
 </div>
 
-<img src="/images/mascote/guardiao-parado.png" alt="" class="mascote-fixo">
+<img src="/images/mascots/training-show-sidebar.png" alt="Mascote Guardião" class="mascote-fixo">
 
 <div class="bottom-spacer"></div>
 
@@ -385,8 +385,8 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
         const mascotWrap = card.querySelector('.feedback-mascot-wrap');
         const mascotImg = mascotWrap.querySelector('img');
         mascotImg.src = isCorrect
-            ? '/images/mascote/guardiao-vitoria.png'
-            : '/images/mascote/guardiao-explicando.png';
+            ? '/images/mascots/training-show-correct.png'
+            : '/images/mascots/training-show-wrong.png';
         mascotImg.alt = isCorrect ? 'Acertou!' : 'Vamos aprender';
         mascotWrap.style.display = 'flex';
 
@@ -458,8 +458,8 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
                 const mascotWrap = card.querySelector('.feedback-mascot-wrap');
                 const mascotImg = mascotWrap.querySelector('img');
                 mascotImg.src = data.is_correct
-                    ? '/images/mascote/guardiao-vitoria.png'
-                    : '/images/mascote/guardiao-explicando.png';
+                    ? '/images/mascots/training-show-correct.png'
+                    : '/images/mascots/training-show-wrong.png';
                 mascotImg.alt = data.is_correct ? 'Acertou!' : 'Vamos aprender';
                 mascotWrap.style.display = 'flex';
 

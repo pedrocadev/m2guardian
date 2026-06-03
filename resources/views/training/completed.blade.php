@@ -14,7 +14,7 @@
             align-items: center;
             justify-content: center;
             padding: 32px 24px;
-            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-image: url('/images/backgrounds/training-completed.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -241,7 +241,7 @@
             'shadow'      => 'rgba(220, 38, 38, 0.35)',
             'title'       => 'Treinamento concluído',
             'message'     => 'Você já iniciou sua jornada, mas ainda precisa fortalecer sua atenção diante de riscos digitais. Revise os cenários onde errou e fique atento nas próximas semanas — os atacantes exploram exatamente esses pontos.',
-            'mascot'      => 'guardiao-explicando.png',
+            'mascot'      => 'completion-n1.png',
         ],
         'n2' => [
             'tag'         => 'NÍVEL 2',
@@ -252,7 +252,7 @@
             'shadow'      => 'rgba(234, 88, 12, 0.35)',
             'title'       => 'Bom começo! 👍',
             'message'     => 'Você reconhece alguns sinais de risco, mas ainda pode evoluir em situações de pressão. Continue praticando — quanto mais você treina, mais natural fica identificar as armadilhas.',
-            'mascot'      => 'guardiao-correndo.png',
+            'mascot'      => 'completion-n2.png',
         ],
         'n3' => [
             'tag'         => 'NÍVEL 3',
@@ -263,7 +263,7 @@
             'shadow'      => 'rgba(202, 138, 4, 0.35)',
             'title'       => 'Bom trabalho! 🛡️',
             'message'     => 'Você demonstra boa postura e toma decisões seguras na maior parte dos cenários. Mantenha esse padrão e fique atento aos detalhes — pequenos sinais fazem diferença.',
-            'mascot'      => 'guardiao-vitoria.png',
+            'mascot'      => 'completion-n3.png',
         ],
         'n4' => [
             'tag'         => 'NÍVEL 4',
@@ -274,7 +274,7 @@
             'shadow'      => 'rgba(22, 163, 74, 0.35)',
             'title'       => 'Excelente! ⚔️',
             'message'     => 'Você identifica riscos com clareza, valida informações e protege dados com consistência. Sua postura é referência para o time — continue assim.',
-            'mascot'      => 'guardiao-guerreiro.png',
+            'mascot'      => 'completion-n4.png',
         ],
         'n5' => [
             'tag'         => 'NÍVEL 5',
@@ -285,7 +285,7 @@
             'shadow'      => 'rgba(204, 0, 0, 0.45)',
             'title'       => 'Parabéns! Você é referência. 🏆',
             'message'     => 'Você concluiu todas as etapas com alto desempenho e demonstrou postura segura diante de diferentes ameaças. Compartilhe o que aprendeu — você é exemplo de cultura de segurança.',
-            'mascot'      => 'guardiao-medalha.png',
+            'mascot'      => 'completion-n5.png',
         ],
     ];
 
@@ -293,7 +293,7 @@
 @endphp
 
 <div class="mascot-celebration">
-    <img src="/images/mascote/{{ $L['mascot'] }}" alt="Treinamento concluído!">
+    <img src="/images/mascots/{{ $L['mascot'] }}" alt="Treinamento concluído!">
 </div>
 
 <div class="card" style="

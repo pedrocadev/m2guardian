@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             color: #111;
             min-height: 100vh;
-            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-image: url('/images/backgrounds/training-transition.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -298,7 +298,7 @@
 <body>
 <div class="header">
     <div class="brand-logo">
-        <img src="/images/logo-guardiao.png" alt="Guardião Digital — by M2 Cloud & Security"
+        <img src="/images/brand/logo.png" alt="Guardião Digital — by M2 Cloud & Security"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
         <div class="brand-fallback">
             <span style="font-size:22px;">🛡️</span>
@@ -331,15 +331,15 @@
 
         // Mascote alterna por plataforma pra dar variedade
         $mascotes = [
-            'wapp'  => 'guardiao-defendendo.png',
-            'teams' => 'guardiao-guerreiro.png',
-            'email' => 'guardiao-explicando.png',
+            'wapp'  => 'training-transition-wapp.png',
+            'teams' => 'training-transition-teams.png',
+            'email' => 'training-transition-email.png',
         ];
-        $mascote = $mascotes[$scenario->platform] ?? 'guardiao-correndo.png';
+        $mascote = $mascotes[$scenario->platform] ?? 'training-transition-fallback.png';
     @endphp
 
     <div class="mascote-celebra">
-        <img src="/images/mascote/{{ $mascote }}" alt="Guardião Digital">
+        <img src="/images/mascots/{{ $mascote }}" alt="Guardião Digital">
     </div>
 
     @if($previousScenario)

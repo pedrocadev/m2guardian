@@ -78,7 +78,7 @@ Esperado: `200`, tamanho > 100000 bytes.
 
 ### Teste 9 — Logo do header
 ```bash
-curl -s -o /dev/null -w "Logo: %{http_code} (size: %{size_download})\n" http://m2guardian.test/images/logo-guardiao.png
+curl -s -o /dev/null -w "Logo: %{http_code} (size: %{size_download})\n" http://m2guardian.test/images/brand/logo.png
 ```
 Esperado: `200`, tamanho > 1000 bytes. Se 404, logo não foi salva corretamente — fallback emoji ativa.
 

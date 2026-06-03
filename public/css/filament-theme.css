@@ -119,33 +119,22 @@ a.fi-link {
 }
 
 /* ─── Background temático com circuitos M2 ──────────── */
-/* Técnica: gradient empilhado sobre imagem (sem pseudo-elementos
-   nem z-index, evita quebrar dropdowns Floating UI). */
-body.fi-body,
-.fi-simple-layout {
+/* Aplicado no painel admin (dashboard, resources, etc.) — NÃO se aplica
+   ao login custom (.fi-simple-layout) que tem seu próprio gradient. */
+body.fi-body {
     background-image:
         linear-gradient(rgba(255, 255, 255, 0.92), rgba(255, 255, 255, 0.92)),
-        url('/images/mascote/bg-circuito.jpg') !important;
+        url('/images/backgrounds/admin-bg.jpg') !important;
     background-size: cover !important;
     background-position: center !important;
     background-attachment: fixed !important;
     background-repeat: no-repeat !important;
 }
-.dark body.fi-body,
-.dark .fi-simple-layout {
+.dark body.fi-body {
     background-image:
         linear-gradient(rgba(17, 17, 17, 0.92), rgba(17, 17, 17, 0.92)),
-        url('/images/mascote/bg-circuito.jpg') !important;
+        url('/images/backgrounds/admin-bg.jpg') !important;
 }
-
-/* Card de login centralizado */
-.fi-simple-main {
-    background-color: #ffffff !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
-    border-radius: 16px !important;
-    padding: 2rem !important;
-}
-.dark .fi-simple-main,
 .dark .fi-section,
 .dark .fi-ta-ctn,
 .dark .fi-fo-component-ctn {

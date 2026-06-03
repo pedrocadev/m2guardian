@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             color: #111;
             min-height: 100vh;
-            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-image: url('/images/backgrounds/training-index.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -337,7 +337,7 @@
 <body>
 <div class="header">
     <div class="brand-logo">
-        <img src="/images/logo-guardiao.png" alt="Guardião Digital — by M2 Cloud & Security"
+        <img src="/images/brand/logo.png" alt="Guardião Digital — by M2 Cloud & Security"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
         <div class="brand-fallback">
             <span style="font-size:22px;">🛡️</span>
@@ -366,20 +366,20 @@
 
         // Mensagem do mascote contextual
         if ($completed === 0) {
-            $mascote = 'guardiao-correndo.png';
+            $mascote = 'training-index-start.png';
             $speech = "Pronto, <strong>{$firstName}</strong>? Sua primeira missão chegou! 🛡️";
         } elseif (!$allDone) {
-            $mascote = 'guardiao-vitoria.png';
+            $mascote = 'training-index-progress.png';
             $remaining = $totalScenarios - $completed;
             $speech = "Mandou bem, <strong>{$firstName}</strong>! Próxima missão na área. Faltam <strong>{$remaining}</strong>. 💪";
         } else {
-            $mascote = 'guardiao-medalha.png';
+            $mascote = 'training-index-done.png';
             $speech = "Parabéns, <strong>{$firstName}</strong>! Você concluiu todas as missões! 🏆";
         }
     @endphp
 
     <div class="mascote-hero">
-        <img src="/images/mascote/{{ $mascote }}" alt="Guardião Digital">
+        <img src="/images/mascots/{{ $mascote }}" alt="Guardião Digital">
         <div class="speech">{!! $speech !!}</div>
     </div>
 

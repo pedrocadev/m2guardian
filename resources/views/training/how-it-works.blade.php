@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             color: #111;
             min-height: 100vh;
-            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-image: url('/images/backgrounds/training-how-it-works.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -213,7 +213,7 @@
 <body>
 <div class="header">
     <div class="brand-logo">
-        <img src="/images/logo-guardiao.png" alt="Guardião Digital — by M2 Cloud & Security"
+        <img src="/images/brand/logo.png" alt="Guardião Digital — by M2 Cloud & Security"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
         <div class="brand-fallback">
             <span style="font-size:22px;">🛡️</span>

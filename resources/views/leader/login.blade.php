@@ -4,63 +4,151 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Acesso do Líder — Guardião Digital</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-        body { font-family: Arial, sans-serif; background: #0f0f0f; color: #eee; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
-        .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-top: 3px solid #CC0000; border-radius: 12px; padding: 40px; max-width: 420px; width: 100%; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
-        .logo { display: flex; align-items: center; gap: 12px; margin-bottom: 28px; }
-        .logo-icon { font-size: 28px; }
-        .logo-text { font-weight: 900; font-size: 15px; letter-spacing: 1px; }
-        .logo-sub { font-size: 10px; color: #666; letter-spacing: 0.5px; }
-        h1 { font-size: 20px; font-weight: 800; margin-bottom: 6px; }
-        .subtitle { color: #888; font-size: 13px; margin-bottom: 28px; line-height: 1.5; }
-        label { font-size: 11px; font-weight: 700; color: #666; text-transform: uppercase; letter-spacing: 0.6px; display: block; margin-bottom: 6px; margin-top: 14px; }
-        input[type=email], input[type=password] { width: 100%; background: #0a0a0a; border: 1px solid #333; color: #eee; padding: 13px 14px; border-radius: 8px; font-size: 14px; outline: none; transition: border-color 0.15s; }
-        input:focus { border-color: #CC0000; }
-        .remember-row { display: flex; align-items: center; gap: 8px; margin: 16px 0 22px; font-size: 12px; color: #aaa; }
-        .remember-row input { width: auto; }
-        button { width: 100%; background: #CC0000; color: #fff; border: none; padding: 14px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; letter-spacing: 0.5px; transition: background 0.15s; }
-        button:hover { background: #aa0000; }
-        .error { background: #3b0000; border: 1px solid #7f1d1d; color: #fca5a5; padding: 10px 14px; border-radius: 6px; font-size: 13px; margin-bottom: 14px; }
-        .footer-note { text-align: center; margin-top: 24px; font-size: 11px; color: #555; line-height: 1.6; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            color: #111111;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* ===== Estilos específicos do form do líder ===== */
+        .leader-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .leader-error svg { width: 16px; height: 16px; flex-shrink: 0; }
+
+        .leader-form label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #444;
+            display: block;
+            margin-bottom: 6px;
+            margin-top: 16px;
+        }
+        .leader-form label:first-of-type { margin-top: 0; }
+
+        .leader-form input[type=email],
+        .leader-form input[type=password] {
+            width: 100%;
+            background: #ffffff;
+            border: 1.5px solid #e5e5e5;
+            color: #111;
+            padding: 12px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .leader-form input:focus {
+            border-color: #CC0000;
+            box-shadow: 0 0 0 3px rgba(204, 0, 0, 0.1);
+        }
+
+        .leader-remember-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 18px 0 24px;
+        }
+        .leader-remember-row input { width: 16px; height: 16px; accent-color: #CC0000; cursor: pointer; }
+        .leader-remember-row label {
+            font-size: 13px;
+            color: #555;
+            font-weight: 500;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .leader-form button[type=submit] {
+            width: 100%;
+            background: #CC0000;
+            color: #fff;
+            border: none;
+            padding: 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: inherit;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: background 0.15s, transform 0.05s;
+        }
+        .leader-form button[type=submit]:hover { background: #a30000; }
+        .leader-form button[type=submit]:active { transform: scale(0.99); }
+
+        .leader-footer-note {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 22px;
+            border-top: 1px solid #eee;
+            font-size: 12px;
+            color: #888;
+            line-height: 1.6;
+        }
+        .leader-footer-note strong { color: #555; }
     </style>
 </head>
 <body>
-<div class="card">
-    <div class="logo">
-        <div class="logo-icon">🛡️</div>
-        <div>
-            <div class="logo-text">GUARDIÃO DIGITAL</div>
-            <div class="logo-sub">by M2 Cloud & Security</div>
-        </div>
-    </div>
 
-    <h1>Painel do Líder</h1>
-    <div class="subtitle">Insira suas credenciais fornecidas pela equipe M2 para acessar o painel da sua empresa.</div>
-
+<x-auth-layout
+    title="Eleve a maturidade"
+    title-highlight="da sua equipe."
+    lead="Acompanhe campanhas de phishing, métricas por colaborador e a evolução da consciência de segurança da sua empresa em tempo real."
+    :features="[
+        'Cenários realistas em WhatsApp, Teams e E-mail',
+        'Métricas granulares por colaborador',
+        'Evidências para LGPD e ISO 27001',
+    ]"
+    mascot="login-leader.png"
+    form-title="Entrar como Líder"
+    form-subtitle="Acesse o painel da sua empresa com as credenciais fornecidas pela equipe M2."
+>
     @if($errors->any())
-    <div class="error">{{ $errors->first() }}</div>
+        <div class="leader-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            {{ $errors->first() }}
+        </div>
     @endif
 
-    <form method="POST" action="{{ route('leader.login') }}">
+    <form method="POST" action="{{ route('leader.login') }}" class="leader-form">
         @csrf
-        <label>E-mail Corporativo</label>
-        <input type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email">
+        <label for="email">E-mail corporativo</label>
+        <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus autocomplete="email" placeholder="voce@suaempresa.com.br">
 
-        <label>Senha</label>
-        <input type="password" name="password" required autocomplete="current-password">
+        <label for="password">Senha</label>
+        <input id="password" type="password" name="password" required autocomplete="current-password" placeholder="••••••••">
 
-        <div class="remember-row">
+        <div class="leader-remember-row">
             <input type="checkbox" name="remember" id="remember" value="1">
-            <label for="remember" style="margin:0; text-transform:none; letter-spacing:0; font-weight:normal; color:#aaa; font-size:12px;">Manter conectado neste dispositivo</label>
+            <label for="remember">Manter conectado neste dispositivo</label>
         </div>
 
-        <button type="submit">Acessar Painel →</button>
+        <button type="submit">Acessar painel</button>
     </form>
 
-    <div class="footer-note">
-        Esqueceu sua senha? Entre em contato com seu gestor M2 para receber novas credenciais.
+    <div class="leader-footer-note">
+        Não recebeu acesso? Fale com seu <strong>contato M2</strong> para receber suas credenciais.
     </div>
-</div>
+</x-auth-layout>
+
 </body>
 </html>

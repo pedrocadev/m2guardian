@@ -10,7 +10,7 @@
             font-family: Arial, sans-serif;
             color: #111;
             min-height: 100vh;
-            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-image: url('/images/backgrounds/training-welcome.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -154,7 +154,7 @@
         .duo-overlay {
             position: fixed;
             inset: 0;
-            background-image: url('/images/mascote/bg-circuito.jpg');
+            background-image: url('/images/backgrounds/training-welcome.jpg');
             background-size: cover;
             background-position: center;
             background-attachment: fixed;
@@ -316,7 +316,7 @@
 <body>
 <div class="header">
     <div class="brand-logo">
-        <img src="/images/logo-guardiao.png" alt="Guardião Digital — by M2 Cloud & Security"
+        <img src="/images/brand/logo.png" alt="Guardião Digital — by M2 Cloud & Security"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
         <div style="display:none; align-items:center; gap:10px;">
             <span style="font-size:22px;">🛡️</span>
@@ -335,7 +335,7 @@
 <div class="main" id="welcome-main">
     <div class="hero">
         <div class="hero-mascote">
-            <img src="/images/mascote/guardiao-ola.png" alt="Guardião Digital">
+            <img src="/images/mascots/training-welcome-greeting.png" alt="Guardião Digital">
         </div>
         <div class="hero-text">
             <div class="subtitle">Sua jornada começa aqui</div>
@@ -367,7 +367,7 @@
 <div class="duo-overlay" id="duo-overlay">
     <div class="duo-stage">
         <div class="duo-mascote">
-            <img src="/images/mascote/guardiao-explicando.png" alt="Guardião">
+            <img src="/images/mascots/training-welcome-explain.png" alt="Guardião">
         </div>
         <div class="duo-speech">
             <p>Não se preocupe: aqui o <strong>erro também ensina</strong>.</p>

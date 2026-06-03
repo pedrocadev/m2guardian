@@ -157,10 +157,10 @@ Do **NOT** use a fixed `body::before` overlay with `position: relative; z-index:
 **Use stacked CSS backgrounds instead** (current technique in `public/css/filament-theme.css`):
 
 ```css
-body.fi-body, .fi-simple-layout {
+body.fi-body {
     background-image:
         linear-gradient(rgba(255,255,255,0.92), rgba(255,255,255,0.92)),
-        url('/images/mascote/bg-circuito.jpg') !important;
+        url('/images/backgrounds/admin-bg.jpg') !important;
     background-attachment: fixed !important;
 }
 ```
@@ -277,11 +277,26 @@ Toda documentação narrativa fica em [docs/](docs/):
 
 - **[docs/STATUS.md](docs/STATUS.md)** — feature inventory & stack breakdown for leadership/stakeholders
 - **[docs/DEPLOY-GUIA.md](docs/DEPLOY-GUIA.md)** — operational playbook for Git → VM deploys (with .docx version for sharing)
+- **[docs/HOMOLOG-SETUP.md](docs/HOMOLOG-SETUP.md)** — one-time setup do ambiente de homologação (homolog.guardiao.m2cloud.com.br)
 - **[docs/DEPLOY-REPORT.md](docs/DEPLOY-REPORT.md)** — full implementation report (Oracle Cloud setup, 9 deployment bugs fixed in repo, hardening applied, backlog, commit timeline)
 - **[docs/ENTREGAS-RESUMO.md](docs/ENTREGAS-RESUMO.md)** — sumário de entregas por ciclo (presentation format)
-- **`deploy/`** — scripts (`01-server-setup.sh`, `02-database-setup.sh`, `03-deploy-app.sh`) + nginx configs
+- **`deploy/`** — scripts (`01-server-setup.sh`, `02-database-setup.sh`, `03-deploy-app.sh`, `04-deploy-homolog.sh`) + nginx configs (prod + homolog) + `.env.production`/`.env.homolog` templates
 - All planned phases complete (database, auth, invites, training, dashboard, scenario editor, PDF, hardening)
 - 13 production-ready scenarios seeded (6 WhatsApp + 4 Teams + 3 Email)
+
+## Ambientes (prod + homolog)
+
+| Item | Produção | Homologação |
+|------|----------|-------------|
+| URL | guardiao.m2cloud.com.br | homolog.guardiao.m2cloud.com.br |
+| Pasta na VM | `/var/www/m2guardian` | `/var/www/m2guardian-homolog` |
+| Branch git | `main` | `develop` |
+| Banco | `m2guardian` | `m2guardian_homolog` |
+| Deploy script | `03-deploy-app.sh` | `04-deploy-homolog.sh` |
+| Workers (queue) | Supervisor (2 processos) | `sync` (executa inline) |
+| Indexação Google | Permitida | Bloqueada via `X-Robots-Tag noindex` no nginx |
+
+**Workflow:** push → `develop` → deploy homolog → testar → merge `develop` → `main` → deploy prod. Detalhes em [docs/HOMOLOG-SETUP.md](docs/HOMOLOG-SETUP.md).
 
 ## Known Backlog (post-launch)
 
