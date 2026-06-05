@@ -3,13 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\Models\Answer;
-use App\Models\Scenario;
+use App\Models\Collaborator;
+use App\Services\ScoreService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class LeaderController extends Controller
 {
-    public function dashboard()
+    public function dashboard(ScoreService $scoreService)
     {
         $leader = Auth::guard('leader')->user();
         $leader->load('company.collaborators.trainingSession');
@@ -64,6 +65,7 @@ class LeaderController extends Controller
         }
 
         $isPro = $company->isPro();
+        $companyScore = $scoreService->forCompany($company);
 
         return view('leader.dashboard', compact(
             'leader',
@@ -75,8 +77,22 @@ class LeaderController extends Controller
             'avgScore',
             'departmentStats',
             'scenarioStats',
-            'isPro'
+            'isPro',
+            'companyScore'
         ));
+    }
+
+    public function collaboratorScore(int $id, ScoreService $scoreService)
+    {
+        $leader = Auth::guard('leader')->user();
+        $collaborator = Collaborator::with('trainingSession', 'company')
+            ->where('id', $id)
+            ->where('company_id', $leader->company_id)
+            ->firstOrFail();
+
+        $scoreData = $scoreService->forCollaborator($collaborator);
+
+        return view('leader.collaborator-score', compact('leader', 'collaborator', 'scoreData'));
     }
 
     public function logout(Request $request)

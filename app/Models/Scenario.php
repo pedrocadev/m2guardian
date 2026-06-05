@@ -16,6 +16,7 @@ class Scenario extends Model
     protected $fillable = [
         'company_id',
         'platform',
+        'category',
         'slug',
         'label',
         'avatar',
@@ -41,6 +42,15 @@ class Scenario extends Model
         'juridico'     => 'Jurídico / Compliance',
         'operacional'  => 'Operacional / Logística',
         'compras'      => 'Compras / Suprimentos',
+    ];
+
+    public const CATEGORIES = [
+        'validacao_links'              => 'Validação de links',
+        'atencao_remetentes'           => 'Atenção a remetentes',
+        'solicitacoes_urgentes'        => 'Solicitações urgentes',
+        'compartilhamento_informacoes' => 'Compartilhamento de informações',
+        'cuidado_senhas'               => 'Cuidado com senhas e credenciais',
+        'anexos_downloads'             => 'Anexos e downloads suspeitos',
     ];
 
     protected function casts(): array

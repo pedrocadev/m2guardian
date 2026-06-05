@@ -35,6 +35,15 @@ class ScenarioResource extends Resource
                         'heroicon-m-information-circle',
                         tooltip: 'Plataforma onde o ataque é simulado. Define o visual do chat (cores, layout, ícones do WhatsApp/Teams/E-mail) que o colaborador vai ver durante o treinamento.'
                     ),
+                Forms\Components\Select::make('category')
+                    ->label('Categoria comportamental')
+                    ->options(\App\Models\Scenario::CATEGORIES)
+                    ->required()
+                    ->searchable()
+                    ->hintIcon(
+                        'heroicon-m-information-circle',
+                        tooltip: 'Habilidade comportamental que este cenário testa. Usada no relatório de "Pontos fortes" e "Pontos de evolução" do colaborador. Escolha a categoria que melhor representa o desafio principal do cenário (ex: cenário com link suspeito → Validação de links; cenário com pressão de tempo → Solicitações urgentes).'
+                    ),
                 Forms\Components\TextInput::make('slug')
                     ->label('Slug')
                     ->required()

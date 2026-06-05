@@ -36,6 +36,7 @@ Route::prefix('lider')->name('leader.')->group(function () {
 // Área do líder (autenticada)
 Route::middleware('auth.leader')->prefix('lider')->name('leader.')->group(function () {
     Route::get('/dashboard', [LeaderController::class, 'dashboard'])->name('dashboard');
+    Route::get('/colaborador/{id}/postura', [LeaderController::class, 'collaboratorScore'])->name('collaborator.score');
     Route::get('/relatorio/pdf', [\App\Http\Controllers\ReportController::class, 'downloadPdf'])->name('report.pdf');
     Route::middleware('throttle:invite')->group(function () {
         Route::get('/convidar', [\App\Http\Controllers\LeaderInviteController::class, 'index'])->name('invite.index');

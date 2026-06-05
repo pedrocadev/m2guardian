@@ -187,6 +187,20 @@ class CollaboratorResource extends Resource
                             ->send();
                     }),
 
+                Tables\Actions\Action::make('posture')
+                    ->label('Postura')
+                    ->icon('heroicon-o-shield-check')
+                    ->color('success')
+                    ->visible(fn (Collaborator $record) => $record->completed_at !== null)
+                    ->modalHeading(fn (Collaborator $record) => 'Postura — ' . ($record->name ?? $record->email))
+                    ->modalSubmitAction(false)
+                    ->modalCancelActionLabel('Fechar')
+                    ->modalWidth('3xl')
+                    ->modalContent(fn (Collaborator $record) => view('filament.modals.collaborator-posture', [
+                        'collaborator' => $record,
+                        'scoreData' => app(\App\Services\ScoreService::class)->forCollaborator($record),
+                    ])),
+
                 Tables\Actions\EditAction::make()->label('Editar'),
             ])
             ->bulkActions([

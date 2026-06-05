@@ -94,6 +94,60 @@
 
         .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
         @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+
+        /* Postura corporativa */
+        .posture-panel { padding: 20px 24px; }
+        .posture-overview {
+            display: flex; align-items: center; justify-content: space-between;
+            gap: 16px; padding-bottom: 16px; border-bottom: 1px solid #eee; margin-bottom: 16px;
+        }
+        .posture-badge {
+            color: #fff; font-weight: 800; font-size: 13px; letter-spacing: 0.3px;
+            padding: 8px 16px; border-radius: 999px;
+            display: inline-flex; align-items: center; gap: 8px;
+        }
+        .posture-pct { font-size: 32px; font-weight: 900; color: #111; line-height: 1; }
+        .posture-bars { display: flex; flex-direction: column; gap: 12px; }
+        .posture-bar-row {
+            display: grid; grid-template-columns: 1fr 220px; gap: 16px; align-items: center;
+        }
+        .posture-bar-name { font-size: 13px; color: #333; font-weight: 600; }
+        @media (max-width: 640px) {
+            .posture-bar-row { grid-template-columns: 1fr; gap: 6px; }
+            .posture-overview { flex-direction: column; align-items: flex-start; gap: 10px; }
+        }
+
+        /* Link de drill-down "Ver postura" */
+        .btn-view-posture {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #f4f5f7; border: 1px solid #e0e0e0;
+            color: #444; font-size: 11px; font-weight: 700;
+            padding: 4px 10px; border-radius: 999px;
+            text-decoration: none; transition: all 0.15s;
+        }
+        .btn-view-posture:hover { background: #CC0000; color: #fff; border-color: #CC0000; }
+
+        /* Cenários problemáticos */
+        .problem-list { display: flex; flex-direction: column; gap: 10px; }
+        .problem-item {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            gap: 14px;
+            align-items: center;
+            background: #fef2f2;
+            border-left: 4px solid #dc2626;
+            border-radius: 8px;
+            padding: 12px 16px;
+        }
+        .problem-icon { font-size: 24px; line-height: 1; }
+        .problem-label { font-size: 14px; color: #111; font-weight: 600; }
+        .problem-platform { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 3px; }
+        .problem-rate {
+            font-size: 14px; font-weight: 800; color: #b91c1c;
+            background: rgba(220, 38, 38, 0.12);
+            padding: 5px 12px; border-radius: 999px;
+            white-space: nowrap;
+        }
     </style>
 </head>
 <body>
@@ -249,6 +303,96 @@
         </div>
     </div>
 
+    {{-- Postura corporativa por Categoria (Pro) --}}
+    <div class="pro-section">
+        <div class="section-title">🎯 Postura da Equipe por Categoria</div>
+        @if(!$isPro)<div class="pro-blur">@endif
+        <div class="table-card">
+            @if(!empty($companyScore['by_category']))
+                <div class="posture-panel">
+                    <div class="posture-overview">
+                        <div class="posture-badge" style="background: {{ $companyScore['posture_color'] }};">
+                            <span>{{ $companyScore['posture_icon'] }}</span>
+                            <span>{{ $companyScore['posture_name'] }}</span>
+                        </div>
+                        <div>
+                            <div class="posture-pct">{{ $companyScore['percentage'] }}%</div>
+                            <div style="font-size:11px; color:#888; margin-top:2px;">{{ $companyScore['total_answers'] }} respostas · {{ $companyScore['completed_count'] }} concluintes</div>
+                        </div>
+                    </div>
+
+                    @include('partials.thermometer', ['thermometer' => $companyScore['thermometer'], 'variant' => 'corporate'])
+
+                    <div class="posture-bars">
+                        @foreach($companyScore['by_category'] as $cat)
+                            <div class="posture-bar-row">
+                                <div class="posture-bar-name">{{ $cat['label'] }}</div>
+                                <div class="score-bar">
+                                    <div class="score-bar-track">
+                                        <div class="score-bar-fill {{ $cat['percentage'] >= 80 ? 'green' : ($cat['percentage'] >= 50 ? 'yellow' : 'red') }}"
+                                            style="width: {{ $cat['percentage'] }}%"></div>
+                                    </div>
+                                    <span class="score-text">{{ $cat['percentage'] }}%</span>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @else
+                <div class="empty-state">
+                    <div class="icon">🎯</div>
+                    Sem dados suficientes para postura por categoria.<br>
+                    <span style="font-size:12px;">Aguardando colaboradores concluírem o treinamento.</span>
+                </div>
+            @endif
+        </div>
+        @if(!$isPro)</div>
+        <div class="pro-overlay">
+            <div class="pro-lock-card">
+                <div class="lock-icon">🔒</div>
+                <h3>Recurso Pro</h3>
+                <p>Veja a postura comportamental<br>da sua equipe por habilidade</p>
+                <a href="mailto:suporte@m2cloud.com.br" class="btn-upgrade">Fazer upgrade →</a>
+            </div>
+        </div>
+        @endif
+    </div>
+
+    {{-- Cenários problemáticos (Pro) --}}
+    @if(!empty($companyScore['problem_scenarios']))
+        <div class="pro-section">
+            <div class="section-title">⚠️ Cenários com Maior Taxa de Erro</div>
+            @if(!$isPro)<div class="pro-blur">@endif
+            <div class="table-card" style="padding: 18px 22px;">
+                <div class="problem-list">
+                    @foreach($companyScore['problem_scenarios'] as $scn)
+                        <div class="problem-item">
+                            <div class="problem-icon">{{ $scn['avatar'] }}</div>
+                            <div>
+                                <div class="problem-label">{{ $scn['label'] }}</div>
+                                <div class="problem-platform">{{ strtoupper($scn['platform']) }} · {{ $scn['total'] }} respostas</div>
+                            </div>
+                            <div class="problem-rate">{{ $scn['error_rate'] }}% erro</div>
+                        </div>
+                    @endforeach
+                </div>
+                <div style="font-size: 11px; color: #888; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                    💡 Esses cenários revelam padrões que sua equipe ainda precisa fortalecer. Considere reforço dirigido para esses temas.
+                </div>
+            </div>
+            @if(!$isPro)</div>
+            <div class="pro-overlay">
+                <div class="pro-lock-card">
+                    <div class="lock-icon">🔒</div>
+                    <h3>Recurso Pro</h3>
+                    <p>Veja onde sua equipe mais erra</p>
+                    <a href="mailto:suporte@m2cloud.com.br" class="btn-upgrade">Fazer upgrade →</a>
+                </div>
+            </div>
+            @endif
+        </div>
+    @endif
+
     {{-- Desempenho por Cenário (Pro) --}}
     <div class="pro-section">
         <div class="section-title">📊 Desempenho por Cenário</div>
@@ -313,7 +457,7 @@
                     <th>E-mail</th>
                     <th>Concluído em</th>
                     <th>Pontuação</th>
-                    <th>Status</th>
+                    <th>Postura</th>
                 </tr>
             </thead>
             <tbody>
@@ -336,7 +480,11 @@
                             —
                         @endif
                     </td>
-                    <td><span class="pill pill-done">Concluído</span></td>
+                    <td>
+                        <a href="{{ route('leader.collaborator.score', $collab->id) }}" class="btn-view-posture">
+                            🎯 Ver postura
+                        </a>
+                    </td>
                 </tr>
                 @endforeach
             </tbody>
