@@ -128,7 +128,7 @@ Quando ver `Deploy concluído`, está no ar. Costuma demorar **2 a 4 minutos**.
 
 ### 3.1 Teste rápido manual
 
-Abre no navegador: **https://guardiao.m2cloud.com.br/admin/login**
+Abre no navegador: **https://m2guardiao.com.br/admin/login**
 
 Deve carregar a tela de login do Filament com a logo do Guardião. Faz login e clica em algumas telas pra ver se tudo responde.
 
@@ -228,7 +228,7 @@ Em **3 minutos** o sistema volta ao estado anterior. Sem perda de dados — `git
 │  4. SSH via PuTTY                                           │
 │  5. sudo -i                                                 │
 │  6. /var/www/m2guardian/deploy/03-deploy-app.sh             │
-│  7. Site no ar em https://guardiao.m2cloud.com.br           │
+│  7. Site no ar em https://m2guardiao.com.br           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -238,7 +238,7 @@ Em **3 minutos** o sistema volta ao estado anterior. Sem perda de dados — `git
 
 **IP da VM:** `137.131.186.168`
 **Usuário SSH:** `ubuntu` (depois `sudo -i` pra virar root)
-**URL produção:** `https://guardiao.m2cloud.com.br`
+**URL produção:** `https://m2guardiao.com.br`
 **URL local (Herd):** `http://m2guardian.test`
 **Pasta da app no servidor:** `/var/www/m2guardian`
 **Logs do Laravel:** `/var/www/m2guardian/storage/logs/laravel-YYYY-MM-DD.log`

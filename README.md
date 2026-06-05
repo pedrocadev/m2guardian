@@ -2,7 +2,7 @@
 
 Plataforma B2B de **treinamento de segurança da informação** para colaboradores corporativos. Empresas-cliente convidam seus funcionários, que passam por cenários simulados de ataque (WhatsApp, e-mail, Teams) e aprendem a identificar ameaças.
 
-🌐 **Produção:** [guardiao.m2cloud.com.br](https://guardiao.m2cloud.com.br)
+🌐 **Produção:** [m2guardiao.com.br](https://m2guardiao.com.br)
 
 ## Stack
 

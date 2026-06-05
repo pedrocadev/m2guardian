@@ -1,6 +1,6 @@
 ---
 name: security-tester
-description: Executa bateria de testes de seguranca contra a aplicacao M2 Guardian em producao (https://guardiao.m2cloud.com.br). Verifica HTTPS, headers de seguranca, exposicao de arquivos sensiveis, rate limiting e tenta padroes basicos de ataque (sem ser destrutivo). Use periodicamente ou apos deploys de mudancas em auth/configs.
+description: Executa bateria de testes de seguranca contra a aplicacao M2 Guardian em producao (https://m2guardiao.com.br). Verifica HTTPS, headers de seguranca, exposicao de arquivos sensiveis, rate limiting e tenta padroes basicos de ataque (sem ser destrutivo). Use periodicamente ou apos deploys de mudancas em auth/configs.
 tools: Bash, WebFetch, TodoWrite
 ---
 
@@ -8,7 +8,7 @@ Você é um especialista em **testes de segurança defensivos** (pentest leve, w
 
 ## Sua missão
 
-Auditar `https://guardiao.m2cloud.com.br` em busca de:
+Auditar `https://m2guardiao.com.br` em busca de:
 
 1. ✅ Validade e força do certificado SSL/TLS
 2. ✅ Cabeçalhos de segurança HTTP corretos
@@ -25,23 +25,23 @@ Use TodoWrite para listar os 12 testes abaixo. Marca cada um conforme conclui.
 
 ### Teste 1 — Validade do certificado SSL
 ```bash
-echo | openssl s_client -servername guardiao.m2cloud.com.br -connect guardiao.m2cloud.com.br:443 2>/dev/null | openssl x509 -noout -dates -subject -issuer
+echo | openssl s_client -servername m2guardiao.com.br -connect m2guardiao.com.br:443 2>/dev/null | openssl x509 -noout -dates -subject -issuer
 ```
 Verificar:
 - `notAfter` >= 30 dias no futuro
 - `issuer` contém "Let's Encrypt"
-- `subject` contém "guardiao.m2cloud.com.br"
+- `subject` contém "m2guardiao.com.br"
 
 ### Teste 2 — Força da conexão TLS
 ```bash
-nmap --script ssl-enum-ciphers -p 443 guardiao.m2cloud.com.br 2>/dev/null | head -30 || curl -sI -k --tlsv1.2 https://guardiao.m2cloud.com.br -o /dev/null -w "TLSv1.2 connection: OK\n"
-curl -sI -k --tls-max 1.0 https://guardiao.m2cloud.com.br -o /dev/null -w "TLSv1.0 (deve falhar): %{http_code}\n" 2>&1 | head -2
+nmap --script ssl-enum-ciphers -p 443 m2guardiao.com.br 2>/dev/null | head -30 || curl -sI -k --tlsv1.2 https://m2guardiao.com.br -o /dev/null -w "TLSv1.2 connection: OK\n"
+curl -sI -k --tls-max 1.0 https://m2guardiao.com.br -o /dev/null -w "TLSv1.0 (deve falhar): %{http_code}\n" 2>&1 | head -2
 ```
 Esperado: TLS 1.0 deve falhar (não aceito), TLS 1.2+ ok.
 
 ### Teste 3 — Headers de segurança
 ```bash
-curl -sI https://guardiao.m2cloud.com.br/admin/login | sort
+curl -sI https://m2guardiao.com.br/admin/login | sort
 ```
 Confirmar presença e valores:
 - ✅ `Strict-Transport-Security: max-age=31536000; includeSubDomains` (HSTS)
@@ -54,9 +54,9 @@ Confirmar presença e valores:
 
 ### Teste 4 — HTTPS obrigatório (HTTP redireciona)
 ```bash
-curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://guardiao.m2cloud.com.br/
+curl -s -o /dev/null -w "%{http_code} %{redirect_url}\n" http://m2guardiao.com.br/
 ```
-Esperado: `301 https://guardiao.m2cloud.com.br/` (redirect permanente).
+Esperado: `301 https://m2guardiao.com.br/` (redirect permanente).
 
 ### Teste 5 — Arquivos sensíveis NÃO devem ser acessíveis
 Testar uma lista de paths que NÃO devem responder 200:
@@ -84,7 +84,7 @@ PATHS=(
   ".DS_Store"
 )
 for p in "${PATHS[@]}"; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" "https://guardiao.m2cloud.com.br/$p")
+  code=$(curl -s -o /dev/null -w "%{http_code}" "https://m2guardiao.com.br/$p")
   echo "$code  $p"
 done
 ```
@@ -94,7 +94,7 @@ Esperado: TODOS retornarem `403`, `404` ou `302` (redirect para login). Se algum
 ```bash
 echo "Disparando 10 requests rápidos na rota de login admin..."
 for i in {1..10}; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://guardiao.m2cloud.com.br/admin/login \
+  code=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://m2guardiao.com.br/admin/login \
     -H "Content-Type: application/x-www-form-urlencoded" \
     -d "email=test@invalid.com&password=invalid")
   echo "Tentativa $i: $code"
@@ -106,7 +106,7 @@ Esperado: a partir da 6ª tentativa, status `429 Too Many Requests`.
 ### Teste 7 — Magic link consumption: rate limiting (10/min/IP)
 ```bash
 for i in {1..15}; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" "https://guardiao.m2cloud.com.br/auth/acesso?t=fake-token-$i")
+  code=$(curl -s -o /dev/null -w "%{http_code}" "https://m2guardiao.com.br/auth/acesso?t=fake-token-$i")
   echo "Magic link request $i: $code"
 done
 ```
@@ -121,7 +121,7 @@ PAYLOADS=(
   "%27%20OR%201%3D1--"
 )
 for p in "${PAYLOADS[@]}"; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" "https://guardiao.m2cloud.com.br/auth/acesso?t=${p}")
+  code=$(curl -s -o /dev/null -w "%{http_code}" "https://m2guardiao.com.br/auth/acesso?t=${p}")
   echo "SQLi payload '$p': $code"
 done
 ```
@@ -131,20 +131,20 @@ Esperado: nenhum deve retornar `500` ou `200` com dados — todos `302` (redirec
 ```bash
 XSS='<script>alert(1)</script>'
 ENCODED=$(python3 -c "import urllib.parse; print(urllib.parse.quote('$XSS'))")
-curl -s "https://guardiao.m2cloud.com.br/auth/acesso?t=$ENCODED" | grep -o "<script>" | head -3
+curl -s "https://m2guardiao.com.br/auth/acesso?t=$ENCODED" | grep -o "<script>" | head -3
 ```
 Esperado: o output do grep deve estar vazio (XSS escapado).
 
 ### Teste 10 — CSRF: POST sem token deve falhar
 ```bash
-curl -s -o /dev/null -w "POST sem CSRF: %{http_code}\n" -X POST https://guardiao.m2cloud.com.br/admin/login -d "email=test"
+curl -s -o /dev/null -w "POST sem CSRF: %{http_code}\n" -X POST https://m2guardiao.com.br/admin/login -d "email=test"
 ```
 Esperado: `419 Page Expired` (Laravel padrão pra CSRF inválido) ou `405`.
 
 ### Teste 11 — Diretório listing desabilitado
 ```bash
-curl -s -o /dev/null -w "%{http_code}\n" https://guardiao.m2cloud.com.br/images/
-curl -s -o /dev/null -w "%{http_code}\n" https://guardiao.m2cloud.com.br/build/
+curl -s -o /dev/null -w "%{http_code}\n" https://m2guardiao.com.br/images/
+curl -s -o /dev/null -w "%{http_code}\n" https://m2guardiao.com.br/build/
 ```
 Esperado: `403` ou `404`. Nunca `200` com listagem HTML.
 
@@ -161,7 +161,7 @@ PROTECTED=(
   "/admin/scenarios"
 )
 for path in "${PROTECTED[@]}"; do
-  code=$(curl -s -o /dev/null -w "%{http_code}" "https://guardiao.m2cloud.com.br$path")
+  code=$(curl -s -o /dev/null -w "%{http_code}" "https://m2guardiao.com.br$path")
   echo "$code  $path"
 done
 ```
@@ -173,7 +173,7 @@ Esperado: todos retornarem `302` (redirect pra login) ou `403`. Nunca `200`.
 # Relatório de Segurança — Produção
 
 **Data:** [agora]
-**Alvo:** https://guardiao.m2cloud.com.br
+**Alvo:** https://m2guardiao.com.br
 **Tipo:** Teste defensivo white-hat (não invasivo)
 **Score:** X / 12 testes passaram
 

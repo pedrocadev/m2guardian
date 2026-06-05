@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **M2 Guardião Digital** is a **B2B SaaS** for corporate security-awareness training. M2 admins provision client companies; each company has leaders (managers) who invite collaborators (employees) to take phishing/BEC/social-engineering training scenarios. Two license tiers (Demo: 3 collaborators / 3 scenarios; Pro: configurable / all 13 scenarios).
 
-**Production status (deployed 2026-05-28):** Live at **https://guardiao.m2cloud.com.br** on Oracle Cloud Always Free (ARM Ampere, Ubuntu 22.04 LTS, 8GB RAM). HTTPS via Let's Encrypt with auto-renewal. Cost: R$ 0/month.
+**Production status (deployed 2026-05-28):** Live at **https://m2guardiao.com.br** on Oracle Cloud Always Free (ARM Ampere, Ubuntu 22.04 LTS, 8GB RAM). HTTPS via Let's Encrypt with auto-renewal. Cost: R$ 0/month.
 
 The dev workflow is **local-first** (Herd on Windows) with **git-deployed production** (Ubuntu VPS via scripts in `deploy/`). Never edit code directly on the production server — always commit and run `deploy/03-deploy-app.sh`.
 
@@ -61,7 +61,7 @@ php artisan tinker
 
 Two specialized subagents live in `.claude/agents/` with thin slash-command wrappers in `.claude/commands/`:
 
-- **`/test-prod`** → invokes the `production-tester` subagent. Runs 10 HTTP smoke tests against `https://guardiao.m2cloud.com.br` (status codes, redirects, asset loads, auth-required routes, response headers). Returns a markdown report with pass/fail + severity. Use after every production deploy.
+- **`/test-prod`** → invokes the `production-tester` subagent. Runs 10 HTTP smoke tests against `https://m2guardiao.com.br` (status codes, redirects, asset loads, auth-required routes, response headers). Returns a markdown report with pass/fail + severity. Use after every production deploy.
 - **`/test-security`** → invokes the `security-tester` subagent. Runs 12 defensive (white-hat, non-invasive) checks: TLS cert validity, security headers, 19 sensitive file paths blocked, rate-limit functioning, CSRF enforced, SQL/XSS pattern rejection, directory listing disabled, auth on protected routes. Returns a 0-100 score with OWASP-mapped findings.
 
 Both agents run **purely via HTTP** — no SSH, no code modifications, no rate-limit breaching. Safe to invoke any time.
@@ -289,7 +289,7 @@ Toda documentação narrativa fica em [docs/](docs/):
 
 - **[docs/STATUS.md](docs/STATUS.md)** — feature inventory & stack breakdown for leadership/stakeholders
 - **[docs/DEPLOY-GUIA.md](docs/DEPLOY-GUIA.md)** — operational playbook for Git → VM deploys (with .docx version for sharing)
-- **[docs/HOMOLOG-SETUP.md](docs/HOMOLOG-SETUP.md)** — one-time setup do ambiente de homologação (homolog.guardiao.m2cloud.com.br)
+- **[docs/HOMOLOG-SETUP.md](docs/HOMOLOG-SETUP.md)** — one-time setup do ambiente de homologação (homolog.m2guardiao.com.br)
 - **[docs/DEPLOY-REPORT.md](docs/DEPLOY-REPORT.md)** — full implementation report (Oracle Cloud setup, 9 deployment bugs fixed in repo, hardening applied, backlog, commit timeline)
 - **[docs/ENTREGAS-RESUMO.md](docs/ENTREGAS-RESUMO.md)** — sumário de entregas por ciclo (presentation format)
 - **`deploy/`** — scripts (`01-server-setup.sh`, `02-database-setup.sh`, `03-deploy-app.sh`, `04-deploy-homolog.sh`) + nginx configs (prod + homolog) + `.env.production`/`.env.homolog` templates
@@ -300,7 +300,7 @@ Toda documentação narrativa fica em [docs/](docs/):
 
 | Item | Produção | Homologação |
 |------|----------|-------------|
-| URL | guardiao.m2cloud.com.br | homolog.guardiao.m2cloud.com.br |
+| URL | m2guardiao.com.br | homolog.m2guardiao.com.br |
 | Pasta na VM | `/var/www/m2guardian` | `/var/www/m2guardian-homolog` |
 | Branch git | `main` | `develop` |
 | Banco | `m2guardian` | `m2guardian_homolog` |

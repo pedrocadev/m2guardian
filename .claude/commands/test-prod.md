@@ -2,7 +2,7 @@
 description: Testa funcionalmente a aplicacao M2 Guardian em producao (smoke tests via HTTP). Use apos cada deploy.
 ---
 
-Use o subagent **production-tester** para executar a bateria completa de testes funcionais contra `https://guardiao.m2cloud.com.br`.
+Use o subagent **production-tester** para executar a bateria completa de testes funcionais contra `https://m2guardiao.com.br`.
 
 Após o agente terminar, mostre o relatório dele aqui de forma resumida (escreva apenas o veredito principal + lista de falhas, se houver). Se houve falhas críticas, recomende rollback do último deploy via:
 

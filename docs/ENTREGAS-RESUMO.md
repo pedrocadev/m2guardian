@@ -60,10 +60,10 @@ Cada nível tem cor, ícone, mascote e mensagem específica.
 ## Encurtamento do magic link (URL 49% menor)
 
 **ANTES (91 caracteres):**
-`https://guardiao.m2cloud.com.br/auth/acesso?t=AbCdEf...48chars...`
+`https://m2guardiao.com.br/auth/acesso?t=AbCdEf...48chars...`
 
 **DEPOIS (46 caracteres):**
-`https://guardiao.m2cloud.com.br/m/aB3xY7zP9qK2`
+`https://m2guardiao.com.br/m/aB3xY7zP9qK2`
 
 Praticamente metade do tamanho. Melhor para colar em WhatsApp, SMS e e-mail.
 
