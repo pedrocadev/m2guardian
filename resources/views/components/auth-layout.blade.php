@@ -64,7 +64,9 @@
 
     .m2-hero-content {
         display: flex; flex-direction: column; gap: 28px;
-        max-width: 520px;
+        max-width: 440px;
+        position: relative;
+        z-index: 2;
     }
     .m2-hero-pill {
         display: inline-flex; align-items: center; gap: 8px;
@@ -108,15 +110,19 @@
 
     .m2-hero-mascot {
         position: absolute;
-        right: 40px;
+        right: 30px;
         bottom: 140px;
-        width: 320px;
-        opacity: 0.95;
+        width: 230px;
+        opacity: 0.92;
         pointer-events: none;
         filter: drop-shadow(0 20px 40px rgba(0,0,0,0.5));
+        z-index: 1;
     }
-    @media (max-width: 1280px) {
-        .m2-hero-mascot { width: 260px; right: 30px; bottom: 160px; }
+    @media (max-width: 1440px) {
+        .m2-hero-mascot { width: 190px; right: 24px; bottom: 160px; }
+    }
+    @media (max-width: 1180px) {
+        .m2-hero-mascot { display: none; }
     }
 
     .m2-hero-stats {
