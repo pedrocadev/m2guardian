@@ -258,13 +258,17 @@ body.fi-body {
     padding: 16px 28px 22px;
     border-top: 1px solid #f0f0f0;
     background: #fafafa;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
 }
 .release-popup-btn {
     background: linear-gradient(135deg, #CC0000, #aa0000);
     color: #fff;
     border: none;
-    padding: 12px 36px;
+    padding: 12px 28px;
     border-radius: 10px;
     font-size: 14px;
     font-weight: 800;
@@ -273,10 +277,26 @@ body.fi-body {
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(204, 0, 0, 0.3);
     transition: all 0.15s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 .release-popup-btn:hover {
     transform: translateY(-2px);
     box-shadow: 0 8px 20px rgba(204, 0, 0, 0.4);
+}
+.release-popup-btn-secondary {
+    background: #fff;
+    color: #444;
+    border: 1.5px solid #e0e0e0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+.release-popup-btn-secondary:hover {
+    background: #f4f5f7;
+    color: #111;
+    border-color: #ccc;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
 }
 
 @media (max-width: 600px) {
@@ -284,4 +304,5 @@ body.fi-body {
     .release-popup-title { font-size: 18px; }
     .release-popup-body { padding: 14px 20px 18px; }
     .release-popup-footer { padding: 14px 20px 18px; }
+    .release-popup-btn { padding: 11px 20px; font-size: 13px; }
 }

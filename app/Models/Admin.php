@@ -64,11 +64,6 @@ class Admin extends Authenticatable implements FilamentUser
         if ($this->status !== 'active') return false;
         if ($this->isLocked()) return false;
 
-        // Reset failed_attempts on successful access
-        if ($this->failed_attempts > 0) {
-            $this->updateQuietly(['failed_attempts' => 0, 'locked_until' => null]);
-        }
-
         return true;
     }
 

@@ -49,9 +49,12 @@
         </div>
 
         <div class="release-popup-footer">
-            <button type="button" class="release-popup-btn" onclick="document.getElementById('release-popup-overlay').remove()">
+            <button type="button" class="release-popup-btn release-popup-btn-secondary" onclick="document.getElementById('release-popup-overlay').remove()">
                 OK, entendi
             </button>
+            <a href="{{ route('filament.admin.resources.releases.index') }}" class="release-popup-btn" onclick="document.getElementById('release-popup-overlay').remove()">
+                Ver atualizações →
+            </a>
         </div>
     </div>
 </div>

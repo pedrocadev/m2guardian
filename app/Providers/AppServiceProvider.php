@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Admin;
 use App\Models\AuditLog;
 use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Event;
@@ -66,6 +67,20 @@ class AppServiceProvider extends ServiceProvider
             }
 
             $admin->update($data);
+        });
+
+        // Track successful admin login → register last_login_at + reset brute-force counters
+        Event::listen(Login::class, function (Login $event) {
+            if ($event->guard !== 'admin' || !($event->user instanceof Admin)) {
+                return;
+            }
+
+            $event->user->forceFill([
+                'last_login_at'    => now(),
+                'last_login_ip'    => request()->ip(),
+                'failed_attempts'  => 0,
+                'locked_until'     => null,
+            ])->save();
         });
     }
 }

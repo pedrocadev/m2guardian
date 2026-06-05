@@ -219,6 +219,18 @@ Several `update()` calls have silently failed in the past because the column was
   - `CnpjService::validate(string $cnpj): bool` — funciona com ou sem máscara
   - `CnpjService::lookup(string $cnpj): ?array` — retorna `['razao_social' => ..., 'nome_fantasia' => ...]` ou `null` se inválido/timeout/não encontrado. Timeout 8s, falhas são logadas em `Log::warning`. Form não trava se API estiver fora — apenas mostra notification e deixa o admin preencher manualmente.
 
+- [`ScoreService`](app/Services/ScoreService.php) — calcula score/postura comportamental individual e corporativa. Lógica centralizada — qualquer view de score consome este service. Métodos públicos:
+  - `forCollaborator(Collaborator $c): array` — nível N1-N5 (`<50`/`50-69`/`70-84`/`85-99`/`100`), %, pontos fortes (≥80%), pontos de evolução (<60%), breakdown por categoria, termômetro.
+  - `forCompany(Company $c): array` — % geral, classificação corporativa (`Postura Inicial <30`, `Em Evolução 30-49`, `Atenta 50-69`, `Madura 70-99`, `Guardiã 100`), breakdown por categoria, top 3 cenários problemáticos (erro ≥30% com ≥2 respostas), nº de concluintes, termômetro.
+  - `buildThermometer(int $pct, string $type): array` — gera estrutura do termômetro gameficado (`'level'` ou `'posture'`). Consumido pelo partial `resources/views/partials/thermometer.blade.php`.
+
+  **Categorização dos cenários:** coluna `scenarios.category` armazena uma das 6 chaves em `Scenario::CATEGORIES`: `validacao_links`, `atencao_remetentes`, `solicitacoes_urgentes`, `compartilhamento_informacoes`, `cuidado_senhas`, `anexos_downloads`. Cenários sem categoria são silenciosamente ignorados no cálculo (não quebra).
+
+  **Onde aparece no produto:**
+  - Painel admin (Filament): ação **"Postura"** no `CollaboratorResource` (modal), modal **"Ver Resultados"** ampliado no `CompanyResource`.
+  - Painel líder (Blade): seção **"Postura por Categoria"** + **"Cenários com Maior Taxa de Erro"** no dashboard, rota `/lider/colaborador/{id}/postura` (drill-down individual).
+  - Partial reutilizável `resources/views/partials/posture-detail.blade.php` compartilhado entre modal admin e drill-down do líder.
+
 ### Email (local vs production)
 
 - **Local dev:** `MAIL_MAILER=log` — emails go to `storage/logs/laravel.log`. Queue driver is `database` — run `php artisan queue:work` to actually process the job.
@@ -253,7 +265,7 @@ Self-contained scripts in `deploy/` (Oracle Cloud Ubuntu 22.04 ARM-compatible):
 
 - `01-server-setup.sh` — provisions PHP 8.4, Nginx, MariaDB, Node 20, Supervisor, Certbot, UFW
 - `02-database-setup.sh` — creates DB + user with random password (uses `openssl rand` to avoid `pipefail+SIGPIPE` bug), writes optimized MariaDB config
-- `02b-github-deploy-key.sh` — generates SSH deploy key (UNUSED in current production — M2-Solution-Dev org bans deploy keys; we use HTTPS+PAT instead, see DEPLOY.md section A.6)
+- `02b-github-deploy-key.sh` — generates SSH deploy key (UNUSED in current production — `M2-Cloud-Dev` org bans deploy keys; we use HTTPS+PAT instead). PAT is stored in `/root/.git-credentials` on the VM (chmod 600) under user `pedrocadev`. Regenerate at https://github.com/settings/tokens → scope `repo`. See `reference_vm_git_auth` memory for the full reset procedure.
 - `03-deploy-app.sh` — **idempotent**; on first run does `git init + remote add + fetch + reset --hard` (works in existing non-empty dir, unlike `git clone`); on subsequent runs does `git pull` + composer + npm install + migrations + cache + service restart
 - `nginx-http.conf` / `nginx-https.conf` — server configs (Certbot rewrites these to add SSL block)
 - `.env.production` — template (NOT in `.gitignore` — committed for reference; real `.env` is per-server)
