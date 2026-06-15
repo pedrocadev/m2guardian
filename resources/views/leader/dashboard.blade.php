@@ -149,6 +149,7 @@
             white-space: nowrap;
         }
     </style>
+    <link rel="stylesheet" href="{{ asset('css/leader-tour.css') }}">
 </head>
 <body>
 
@@ -165,6 +166,9 @@
             <strong>{{ $leader->name }}</strong>
             {{ $company->name }}
         </div>
+        <button type="button" class="tour-replay-btn" data-tour-replay title="Refazer tour de boas-vindas">
+            <span>🎯</span> Tour
+        </button>
         <form method="POST" action="{{ route('leader.logout') }}">
             @csrf
             <button type="submit" class="btn-logout">Sair</button>
@@ -181,11 +185,13 @@
         </div>
         <div style="display:flex; align-items:center; gap:12px;">
             <a href="{{ route('leader.invite.index') }}"
+               data-tour="invite-btn"
                style="display:inline-flex; align-items:center; gap:6px; background:#CC0000; color:#fff; padding:8px 16px; border-radius:6px; font-size:12px; font-weight:700; text-decoration:none;">
                 + Convidar Colaboradores
             </a>
             @if($collaborators->count() > 0)
             <a href="{{ route('leader.report.pdf') }}" target="_blank"
+               data-tour="export-pdf"
                style="display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid #ddd; color:#333; padding:7px 14px; border-radius:6px; font-size:12px; font-weight:700; text-decoration:none;">
                 ⬇ Exportar PDF
             </a>
@@ -204,7 +210,7 @@
     @endif
 
     {{-- Stats --}}
-    <div class="stats">
+    <div class="stats" data-tour="stats">
         <div class="stat-card blue">
             <div class="stat-label">Colaboradores</div>
             <div class="stat-value">{{ $collaborators->count() }}</div>
@@ -304,7 +310,7 @@
     </div>
 
     {{-- Postura corporativa por Categoria (Pro) --}}
-    <div class="pro-section">
+    <div class="pro-section" data-tour="posture">
         <div class="section-title">🎯 Postura da Equipe por Categoria</div>
         @if(!$isPro)<div class="pro-blur">@endif
         <div class="table-card">
@@ -360,7 +366,7 @@
 
     {{-- Cenários problemáticos (Pro) --}}
     @if(!empty($companyScore['problem_scenarios']))
-        <div class="pro-section">
+        <div class="pro-section" data-tour="problems">
             <div class="section-title">⚠️ Cenários com Maior Taxa de Erro</div>
             @if(!$isPro)<div class="pro-blur">@endif
             <div class="table-card" style="padding: 18px 22px;">
@@ -481,7 +487,8 @@
                         @endif
                     </td>
                     <td>
-                        <a href="{{ route('leader.collaborator.score', $collab->id) }}" class="btn-view-posture">
+                        <a href="{{ route('leader.collaborator.score', $collab->id) }}" class="btn-view-posture"
+                            @if($loop->first) data-tour="ver-postura" @endif>
                             🎯 Ver postura
                         </a>
                     </td>
@@ -532,5 +539,7 @@
     </div>
 
 </div>
+
+<script src="{{ asset('js/leader-tour.js') }}" defer></script>
 </body>
 </html>
