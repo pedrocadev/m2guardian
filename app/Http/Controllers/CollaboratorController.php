@@ -45,6 +45,22 @@ class CollaboratorController extends Controller
         return view('training.index', compact('collaborator', 'scenarios', 'session', 'answeredIds', 'nextScenario'));
     }
 
+    public function intro()
+    {
+        $collaborator = Auth::guard('collaborator')->user()->load('company', 'trainingSession');
+
+        if ($collaborator->hasCompleted()) {
+            return redirect()->route('training.completed');
+        }
+
+        // Se já começou (tem session) → vai direto pro index, sem mostrar intro de novo
+        if ($collaborator->trainingSession) {
+            return redirect()->route('training.index');
+        }
+
+        return view('training.intro', compact('collaborator'));
+    }
+
     public function welcome()
     {
         $collaborator = Auth::guard('collaborator')->user()->load('company', 'trainingSession');
@@ -59,21 +75,6 @@ class CollaboratorController extends Controller
         }
 
         return view('training.welcome', compact('collaborator'));
-    }
-
-    public function howItWorks()
-    {
-        $collaborator = Auth::guard('collaborator')->user()->load('company', 'trainingSession');
-
-        if ($collaborator->hasCompleted()) {
-            return redirect()->route('training.completed');
-        }
-
-        if ($collaborator->trainingSession) {
-            return redirect()->route('training.index');
-        }
-
-        return view('training.how-it-works', compact('collaborator'));
     }
 
     public function startJourney(Request $request)

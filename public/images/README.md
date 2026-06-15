@@ -13,6 +13,7 @@ public/images/
 │   ├── login-leader.png
 │   ├── training-welcome-greeting.png
 │   ├── training-welcome-explain.png
+│   ├── training-welcome-guardian.png
 │   ├── training-index-start.png
 │   ├── training-index-progress.png
 │   ├── training-index-done.png
@@ -31,8 +32,8 @@ public/images/
 │   └── completion-n5.png
 └── backgrounds/                 ← um background por contexto
     ├── admin-bg.jpg
+    ├── login-leader.jpg
     ├── training-welcome.jpg
-    ├── training-how-it-works.jpg
     ├── training-index.jpg
     ├── training-show.jpg
     ├── training-transition.jpg
@@ -67,8 +68,9 @@ A imagem aparece automaticamente no contexto certo, **sem afetar outros lugares*
 |---------|--------------|
 | `login-admin.png` | Tela de login do admin (lado escuro) |
 | `login-leader.png` | Tela de login do líder (lado escuro) |
-| `training-welcome-greeting.png` | Welcome — primeiro mascote (boas-vindas) |
-| `training-welcome-explain.png` | Welcome — segundo mascote (mensagem de apoio) |
+| `training-welcome-guardian.png` | Welcome — mascote principal (guardião com escudo) |
+| `training-welcome-greeting.png` | Tour do líder — passo 1 (boas-vindas) |
+| `training-welcome-explain.png` | Tour do líder — passo 2 (explicação dos stats) |
 | `training-index-start.png` | Index — usuário ainda não começou |
 | `training-index-progress.png` | Index — em progresso |
 | `training-index-done.png` | Index — concluiu tudo |
@@ -91,8 +93,8 @@ A imagem aparece automaticamente no contexto certo, **sem afetar outros lugares*
 | Arquivo | Onde aparece |
 |---------|--------------|
 | `admin-bg.jpg` | Pano de fundo do painel admin (Filament `simple-layout`) |
+| `login-leader.jpg` | Pano de fundo do lado esquerdo da tela de login do líder |
 | `training-welcome.jpg` | Tela welcome do colaborador |
-| `training-how-it-works.jpg` | Tela "como funciona" |
 | `training-index.jpg` | Tela index de cenários |
 | `training-show.jpg` | Tela do chat durante o cenário |
 | `training-transition.jpg` | Tela de transição entre cenários |

@@ -61,7 +61,7 @@ class MagicLinkController extends Controller
 
         if ($guard === 'collaborator') {
             $user->update(['first_access_at' => $user->first_access_at ?? now()]);
-            return redirect()->route('training.index');
+            return redirect()->route('training.intro');
         }
 
         return redirect('/');
