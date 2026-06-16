@@ -66,27 +66,27 @@ A imagem aparece automaticamente no contexto certo, **sem afetar outros lugares*
 
 | Arquivo | Onde aparece |
 |---------|--------------|
-| `login-admin.png` | Tela de login do admin (lado escuro) |
-| `login-leader.png` | Tela de login do líder (lado escuro) |
-| `training-welcome-guardian.png` | Welcome — mascote principal (guardião com escudo) |
-| `training-welcome-greeting.png` | Tour do líder — passo 1 (boas-vindas) |
-| `training-welcome-explain.png` | Tour do líder — passo 2 (explicação dos stats) |
-| `training-index-start.png` | Index — usuário ainda não começou |
-| `training-index-progress.png` | Index — em progresso |
-| `training-index-done.png` | Index — concluiu tudo |
-| `training-show-greeting.png` | Show — mascote de boas-vindas no chat |
-| `training-show-sidebar.png` | Show — mascote lateral fixo durante o chat |
-| `training-show-correct.png` | Show — feedback quando acerta uma pergunta |
-| `training-show-wrong.png` | Show — feedback quando erra uma pergunta |
-| `training-transition-wapp.png` | Transição — cenário WhatsApp |
-| `training-transition-teams.png` | Transição — cenário Microsoft Teams |
-| `training-transition-email.png` | Transição — cenário E-mail |
-| `training-transition-fallback.png` | Transição — fallback (plataforma desconhecida) |
-| `completion-n1.png` | Conclusão — Nível 1 (Aprendiz Iniciante) |
-| `completion-n2.png` | Conclusão — Nível 2 (Aprendiz Guardião) |
-| `completion-n3.png` | Conclusão — Nível 3 (Guardião Atento) |
-| `completion-n4.png` | Conclusão — Nível 4 (Guardião Estratégico) |
-| `completion-n5.png` | Conclusão — Nível 5 (Guardião Certificado) |
+| `login-admin.png` | Tela de login do admin (mascote positivo, joinha) |
+| `login-leader.png` | Tela de login do líder (mascote positivo, joinha) |
+| `training-welcome-guardian.png` | Welcome — mascote principal (mascote positivo, joinha) |
+| `training-welcome-greeting.png` | Tour do líder — passo 1 (mascote pensativo) |
+| `training-welcome-explain.png` | Tour do líder — passo 2 (mascote pensativo) |
+| `training-index-start.png` | Index — não começou (mascote correndo) |
+| `training-index-progress.png` | Index — em progresso (mascote pensativo) |
+| `training-index-done.png` | Index — concluiu tudo (mascote comemorando) |
+| `training-show-greeting.png` | Show — saudação inicial (mascote pensativo, analítico) |
+| `training-show-sidebar.png` | Show — mascote lateral fixo (mascote positivo, joinha) |
+| `training-show-correct.png` | Show — feedback de acerto (mascote comemorando) |
+| `training-show-wrong.png` | Show — feedback de erro (mascote triste) |
+| `training-transition-wapp.png` | Transição — cenário WhatsApp (mascote correndo) |
+| `training-transition-teams.png` | Transição — cenário Microsoft Teams (mascote correndo) |
+| `training-transition-email.png` | Transição — cenário E-mail (mascote correndo) |
+| `training-transition-fallback.png` | Transição — fallback (mascote correndo) |
+| `completion-n1.png` | Conclusão — Nível 1 (Aprendiz Iniciante, mascote pensativo) |
+| `completion-n2.png` | Conclusão — Nível 2 (Aprendiz Guardião, mascote correndo) |
+| `completion-n3.png` | Conclusão — Nível 3 (Guardião Atento, mascote positivo) |
+| `completion-n4.png` | Conclusão — Nível 4 (Guardião Estratégico, mascote comemorando) |
+| `completion-n5.png` | Conclusão — Nível 5 (Guardião Certificado, mascote comemorando) |
 
 ### Backgrounds
 
