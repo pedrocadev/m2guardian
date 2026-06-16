@@ -9,9 +9,8 @@
         body { font-family: Arial, sans-serif; background: #f4f5f7; color: #111; min-height: 100vh; }
 
         .header { background: #111; border-bottom: 3px solid #CC0000; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; height: 60px; }
-        .header-brand { display: flex; align-items: center; gap: 10px; }
-        .brand-name { color: #fff; font-weight: 900; font-size: 15px; letter-spacing: 1px; }
-        .brand-sub { color: #888; font-size: 10px; letter-spacing: 0.5px; display: block; }
+        .header-brand { display: flex; align-items: center; }
+        .header-brand img { height: 44px; width: auto; display: block; filter: drop-shadow(0 4px 14px rgba(204, 0, 0, 0.35)); }
         .header-right { display: flex; align-items: center; gap: 20px; }
         .header-user { color: #ccc; font-size: 13px; text-align: right; }
         .header-user strong { color: #fff; display: block; }
@@ -155,11 +154,7 @@
 
 <div class="header">
     <div class="header-brand">
-        <span style="font-size:22px;">🛡️</span>
-        <div>
-            <span class="brand-name">GUARDIÃO DIGITAL</span>
-            <span class="brand-sub">by M2 Cloud & Security</span>
-        </div>
+        <img src="{{ asset('images/backgrounds/Logo_guardiao.png') }}" alt="Guardião Digital">
     </div>
     <div class="header-right">
         <div class="header-user">

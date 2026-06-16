@@ -41,12 +41,10 @@
         }
         .brand-logo { display: flex; align-items: center; flex: 0 0 auto; }
         .brand-logo img {
-            height: 130px;
+            height: 64px;
             width: auto;
             display: block;
-            mix-blend-mode: lighten;
-            filter: drop-shadow(0 0 10px rgba(204, 0, 0, 0.25));
-            margin: -25px 0;
+            filter: drop-shadow(0 4px 14px rgba(204, 0, 0, 0.35));
         }
         .brand-fallback { display: none; align-items: center; gap: 10px; }
         .brand-name { color: #fff; font-weight: 900; font-size: 15px; letter-spacing: 1px; }
@@ -284,7 +282,7 @@
 
         @media (max-width: 720px) {
             .header { min-height: 70px; padding: 6px 16px; flex-direction: column; gap: 4px; }
-            .brand-logo img { height: 90px; margin: -15px 0; }
+            .brand-logo img { height: 48px; }
             .header-user { text-align: center; }
 
             .main { padding: 36px 18px; }
@@ -298,7 +296,7 @@
 <body>
 <div class="header">
     <div class="brand-logo">
-        <img src="/images/brand/logo.png" alt="Guardião Digital — by M2 Cloud & Security"
+        <img src="/images/backgrounds/Logo_guardiao.png" alt="Guardião Digital — by M2 Cloud & Security"
              onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
         <div class="brand-fallback">
             <span style="font-size:22px;">🛡️</span>

@@ -33,7 +33,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->brandName('Guardião Digital')
             ->brandLogo(fn () => view('filament.brand'))
-            ->brandLogoHeight('3.5rem')
+            ->brandLogoHeight('4rem')
             ->favicon(asset('favicon.ico'))
             ->darkMode(false)
             ->sidebarWidth('16rem')

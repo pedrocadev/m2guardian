@@ -18,9 +18,8 @@
             display: flex; align-items: center; justify-content: space-between;
             border-bottom: 3px solid #CC0000;
         }
-        .header-brand { display: flex; align-items: center; gap: 10px; }
-        .brand-name { font-weight: 800; font-size: 13px; letter-spacing: 1px; display:block; }
-        .brand-sub { font-size: 10px; color: #888; letter-spacing: 0.5px; }
+        .header-brand { display: flex; align-items: center; }
+        .header-brand img { height: 44px; width: auto; display: block; filter: drop-shadow(0 4px 14px rgba(204, 0, 0, 0.35)); }
         .back-link {
             color: #ccc; text-decoration: none; font-size: 12px;
             display: inline-flex; align-items: center; gap: 6px;
@@ -50,11 +49,7 @@
 
 <div class="header">
     <div class="header-brand">
-        <span style="font-size:22px;">🛡️</span>
-        <div>
-            <span class="brand-name">GUARDIÃO DIGITAL</span>
-            <span class="brand-sub">by M2 Cloud &amp; Security</span>
-        </div>
+        <img src="{{ asset('images/backgrounds/Logo_guardiao.png') }}" alt="Guardião Digital">
     </div>
     <a href="{{ route('leader.dashboard') }}" class="back-link">← Voltar ao Dashboard</a>
 </div>
