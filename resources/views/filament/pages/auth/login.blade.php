@@ -35,6 +35,7 @@
             'Evidências para LGPD e ISO 27001',
         ]"
         mascot="login-admin.png"
+        brand-logo="backgrounds/Logo_guardiao.png"
         form-title="Entrar — Equipe M2"
         form-subtitle="Acesse o painel administrativo do Guardião Digital com suas credenciais."
     >

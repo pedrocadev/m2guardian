@@ -66,8 +66,8 @@ A imagem aparece automaticamente no contexto certo, **sem afetar outros lugares*
 
 | Arquivo | Onde aparece |
 |---------|--------------|
-| `login-admin.png` | Tela de login do admin (mascote positivo, joinha) |
-| `login-leader.png` | Tela de login do líder (mascote positivo, joinha) |
+| `login-admin.png` | Tela de login do admin (mascote de corpo inteiro, sem moldura) |
+| `login-leader.png` | Tela de login do líder (mascote de corpo inteiro, sem moldura) |
 | `training-welcome-guardian.png` | Welcome — mascote principal (mascote positivo, joinha) |
 | `training-welcome-greeting.png` | Tour do líder — passo 1 (mascote pensativo) |
 | `training-welcome-explain.png` | Tour do líder — passo 2 (mascote pensativo) |
