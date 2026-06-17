@@ -31,42 +31,16 @@
         /* ── Header ─────────────────────────────────────── */
         .brand-header {
             display: flex;
-            align-items: center;
             justify-content: center;
-            gap: 14px;
             padding: 32px 24px 24px;
             position: relative;
             z-index: 2;
         }
-        .brand-icon {
-            width: 52px; height: 52px;
-            background: linear-gradient(135deg, #CC0000 0%, #8a0000 100%);
-            border-radius: 12px;
-            display: grid; place-items: center;
-            box-shadow: 0 4px 20px rgba(204, 0, 0, 0.4);
-        }
-        .brand-icon svg { width: 28px; height: 28px; fill: #fff; }
-        .brand-name {
-            font-size: 32px; font-weight: 800; color: #e8edf2;
-            line-height: 1.1; display: flex; align-items: center; gap: 14px;
-            flex-wrap: wrap;
-        }
-        .brand-by {
-            font-size: 16px; color: #aaa; font-weight: 500;
-            display: inline-flex; align-items: center; gap: 6px;
-        }
-        .brand-by-logo {
-            width: 18px; height: 18px;
-            background: linear-gradient(135deg, #ccc, #888);
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .brand-tagline {
-            text-align: center;
-            font-size: 14px;
-            color: #999;
-            letter-spacing: 5px;
-            margin-top: 6px;
+        .brand-header img {
+            height: clamp(72px, 8vw, 120px);
+            width: auto;
+            display: block;
+            filter: drop-shadow(0 6px 22px rgba(204, 0, 0, 0.45));
         }
 
         /* ── Container principal ───────────────────────── */
@@ -297,8 +271,6 @@
             .features { grid-template-columns: repeat(2, 1fr); }
         }
         @media (max-width: 500px) {
-            .brand-name { font-size: 20px; }
-            .brand-by { display: none; }
             .features { grid-template-columns: 1fr; }
             .card h1 { font-size: 24px; }
         }
@@ -307,21 +279,7 @@
 <body>
 
 <header class="brand-header">
-    <div class="brand-icon">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z"/>
-        </svg>
-    </div>
-    <div>
-        <div class="brand-name">
-            Guardião Digital
-            <span class="brand-by">
-                <span class="brand-by-logo"></span>
-                by <strong style="color:#ddd; font-weight:600;">M2 CLOUD</strong>
-            </span>
-        </div>
-        <div class="brand-tagline">SEGURANÇA COMEÇA NA DECISÃO</div>
-    </div>
+    <img src="{{ asset('images/backgrounds/Logo_guardiao.png') }}" alt="Guardião Digital">
 </header>
 
 <main class="main">

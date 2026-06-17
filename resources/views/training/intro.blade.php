@@ -28,13 +28,12 @@
             top: 0; left: 0; right: 0;
             z-index: 10;
         }
-        .intro-brand { display: flex; align-items: center; gap: 10px; }
-        .intro-brand-icon { font-size: 22px; }
-        .intro-brand-text {
-            font-weight: 800;
-            font-size: 13px;
-            letter-spacing: 1px;
-            color: #fff;
+        .intro-brand { display: flex; align-items: center; }
+        .intro-brand img {
+            height: 48px;
+            width: auto;
+            display: block;
+            filter: drop-shadow(0 4px 14px rgba(204, 0, 0, 0.35));
         }
 
         /* Botão pular — desabilitado até 50% */
@@ -134,8 +133,7 @@
 
 <div class="intro-header">
     <div class="intro-brand">
-        <span class="intro-brand-icon">🛡️</span>
-        <span class="intro-brand-text">GUARDIÃO DIGITAL</span>
+        <img src="{{ asset('images/backgrounds/Logo_guardiao.png') }}" alt="Guardião Digital">
     </div>
     <a href="{{ route('training.welcome') }}" id="skip-btn" class="skip-btn" aria-disabled="true">
         <span id="skip-label">Pular em <span class="skip-countdown" id="skip-counter">3</span>s</span>
