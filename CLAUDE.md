@@ -31,6 +31,41 @@ Single `git push origin main` deploys to **both repositories simultaneously** vi
 
 Production VM pulls from M2-Solution-Dev/M2Guardian.2-0 via HTTPS with a PAT stored in `/var/www/m2guardian/.git-credentials` (chmod 600). Org bans Deploy Keys, so PAT is the only option.
 
+## Checkpoints (git tags)
+
+Marcos estáveis usados para rollback rápido antes de refatorações grandes. Cada tag é **anotada** (contém metadados) e replicada nos 2 remotes.
+
+| Tag | Commit | Data | Estado preservado |
+|-----|--------|------|-------------------|
+| `checkpoint-pre-quiz-refactor` | `1afb4a6` | 2026-07-02 | Login/mascotes/logo novos deployados; painel do líder com editar e-mail + scroll horizontal; chat com barra de progresso colorida. **Estado imediatamente anterior à refatoração da aba de perguntas do usuário final (`training/show.blade.php`).** |
+
+**Voltar a um checkpoint (não-destrutivo, cria detached HEAD):**
+```bash
+git checkout <nome-da-tag>
+```
+
+**Voltar destrutivamente (⚠️ perde commits posteriores da main):**
+```bash
+git reset --hard <nome-da-tag>
+git push origin main --force-with-lease  # só se realmente for necessário
+```
+
+**Deploy a partir de um checkpoint na VM:**
+```bash
+cd /var/www/m2guardian
+sudo -u m2guardian git fetch --tags
+sudo -u m2guardian git checkout <nome-da-tag>
+sudo -u m2guardian php artisan optimize:clear
+sudo systemctl restart php8.4-fpm
+```
+
+**Criar novo checkpoint antes de refactor grande:**
+```bash
+git tag -a <nome> -m "descrição detalhada do estado preservado"
+git push origin <nome>
+```
+Depois adicione uma linha nova na tabela acima.
+
 ## Common Commands
 
 ```powershell
