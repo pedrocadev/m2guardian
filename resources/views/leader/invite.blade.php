@@ -50,6 +50,16 @@
         tbody tr:last-child td { border-bottom: none; }
         tbody tr:hover td { background: #fafafa; }
 
+        .table-scroll {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        .table-scroll table { min-width: 720px; }
+        .table-scroll::-webkit-scrollbar { height: 8px; }
+        .table-scroll::-webkit-scrollbar-track { background: #f5f5f5; }
+        .table-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+        .table-scroll::-webkit-scrollbar-thumb:hover { background: #999; }
+
         .pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
         .pill-done { background: #dcfce7; color: #16a34a; }
         .pill-pending { background: #fef9c3; color: #854d0e; }
@@ -59,6 +69,37 @@
         .btn-copy { background: #111; border: none; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; }
         .btn-copy:hover { background: #333; }
         .btn-copy.copied { background: #16a34a; }
+        .btn-edit { background: transparent; border: 1px solid #ddd; color: #666; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 700; cursor: pointer; }
+        .btn-edit:hover { border-color: #2563eb; color: #2563eb; }
+
+        /* Modal de edição de e-mail */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .modal-overlay.show { display: flex; animation: fadeIn 0.15s; }
+        .modal-box {
+            background: #fff;
+            border-radius: 12px;
+            padding: 28px 32px;
+            width: 100%; max-width: 460px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        .modal-box h3 { font-size: 17px; font-weight: 800; margin-bottom: 6px; }
+        .modal-info { font-size: 13px; color: #666; margin-bottom: 20px; }
+        .modal-info strong { color: #111; }
+        .modal-box label { display: block; font-size: 12px; font-weight: 700; color: #555; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+        .modal-box input[type=email] { width: 100%; border: 1px solid #ddd; border-radius: 6px; padding: 10px 12px; font-size: 14px; color: #111; outline: none; }
+        .modal-box input[type=email]:focus { border-color: #CC0000; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
+        .modal-actions button { border: none; border-radius: 6px; padding: 9px 20px; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .modal-cancel { background: #f0f0f0; color: #444; }
+        .modal-cancel:hover { background: #e0e0e0; }
+        .modal-save { background: #CC0000; color: #fff; }
+        .modal-save:hover { background: #aa0000; }
 
         .empty-state { text-align: center; padding: 40px; color: #aaa; font-size: 14px; }
 
@@ -141,6 +182,7 @@
             <span style="background:#f0f0f0; color:#666; font-size:11px; font-weight:700; padding:2px 8px; border-radius:20px; margin-left:8px;">{{ $collaborators->count() }}</span>
         </div>
         @if($collaborators->count() > 0)
+        <div class="table-scroll">
         <table>
             <thead>
                 <tr>
@@ -171,6 +213,10 @@
                     </td>
                     <td style="white-space:nowrap;">
                         @if(!$collab->completed_at)
+                        <button type="button" class="btn-edit"
+                            onclick="openEditEmailModal({{ $collab->id }}, @js($collab->email), @js($collab->name ?? ''))">
+                            ✏️ Editar e-mail
+                        </button>
                         <form method="POST" action="{{ route('leader.invite.resend', $collab->id) }}" style="display:inline;">
                             @csrf
                             <button type="submit" class="btn-resend">Reenviar e-mail</button>
@@ -187,6 +233,7 @@
                 @endforeach
             </tbody>
         </table>
+        </div>
         @else
         <div class="empty-state">
             Nenhum colaborador convidado ainda. Use o formulário acima para começar.
@@ -197,7 +244,51 @@
 
 <div class="toast" id="toast">✅ Link copiado para a área de transferência!</div>
 
+<div class="modal-overlay" id="editEmailModal" role="dialog" aria-modal="true" aria-labelledby="editEmailTitle">
+    <div class="modal-box">
+        <h3 id="editEmailTitle">Editar e-mail do colaborador</h3>
+        <p class="modal-info">Colaborador: <strong id="editEmailName">—</strong></p>
+        <form id="editEmailForm" method="POST">
+            @csrf
+            @method('PATCH')
+            <label for="editEmailInput">Novo e-mail</label>
+            <input type="email" name="email" id="editEmailInput" required maxlength="180" autocomplete="off">
+            <div class="modal-actions">
+                <button type="button" class="modal-cancel" onclick="closeEditEmailModal()">Cancelar</button>
+                <button type="submit" class="modal-save">Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
+function openEditEmailModal(collaboratorId, currentEmail, name) {
+    const modal = document.getElementById('editEmailModal');
+    const form = document.getElementById('editEmailForm');
+    const input = document.getElementById('editEmailInput');
+    const nameEl = document.getElementById('editEmailName');
+
+    form.action = `/lider/convidar/${collaboratorId}/email`;
+    input.value = currentEmail;
+    nameEl.textContent = name || currentEmail;
+    modal.classList.add('show');
+    setTimeout(() => { input.focus(); input.select(); }, 50);
+}
+
+function closeEditEmailModal() {
+    document.getElementById('editEmailModal').classList.remove('show');
+}
+
+document.getElementById('editEmailModal').addEventListener('click', function(e) {
+    if (e.target === this) closeEditEmailModal();
+});
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('editEmailModal').classList.contains('show')) {
+        closeEditEmailModal();
+    }
+});
+
 async function copyLink(btn) {
     btn.textContent = '⏳ Gerando...';
     btn.disabled = true;

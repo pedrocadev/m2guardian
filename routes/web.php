@@ -43,6 +43,7 @@ Route::middleware('auth.leader')->prefix('lider')->name('leader.')->group(functi
         Route::post('/convidar', [\App\Http\Controllers\LeaderInviteController::class, 'store'])->name('invite.store');
         Route::post('/convidar/{collaborator}/reenviar', [\App\Http\Controllers\LeaderInviteController::class, 'resend'])->name('invite.resend');
         Route::post('/convidar/{collaborator}/gerar-link', [\App\Http\Controllers\LeaderInviteController::class, 'generateLink'])->name('invite.generate-link');
+        Route::patch('/convidar/{collaborator}/email', [\App\Http\Controllers\LeaderInviteController::class, 'updateEmail'])->name('invite.update-email');
     });
     Route::post('/logout', [LeaderAuthController::class, 'logout'])->name('logout');
 });

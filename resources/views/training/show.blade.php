@@ -32,8 +32,31 @@
 
         .header { background: #111; border-bottom: 3px solid #CC0000; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; flex-shrink: 0; }
         .brand-name { color: #fff; font-weight: 900; font-size: 14px; letter-spacing: 1px; }
-        .progress-info { color: #888; font-size: 13px; }
-        .progress-info strong { color: #fff; }
+        .progress-info {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 5px;
+            color: #888;
+            font-size: 12px;
+            min-width: 140px;
+        }
+        .progress-info strong { color: #fff; font-weight: 800; }
+        .progress-track {
+            width: 140px;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.4s ease;
+        }
+        .progress-fill.red    { background: linear-gradient(90deg, #dc2626, #ef4444); }
+        .progress-fill.yellow { background: linear-gradient(90deg, #d97706, #f59e0b); }
+        .progress-fill.green  { background: linear-gradient(90deg, #16a34a, #22c55e); }
 
         .scenario-bar { background: #fff; border-bottom: 1px solid #eee; padding: 12px 24px; display: flex; align-items: center; gap: 14px; flex-shrink: 0; }
         .s-avatar { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
@@ -195,7 +218,16 @@
 
 <div class="header">
     <div class="brand-name">🛡️ GUARDIÃO DIGITAL</div>
-    <div class="progress-info">Cenário <strong>{{ $position }}</strong> de <strong>{{ $total }}</strong></div>
+    @php
+        $progressPercent = $total > 0 ? round(($position / $total) * 100) : 0;
+        $progressColor = $progressPercent < 33 ? 'red' : ($progressPercent < 66 ? 'yellow' : 'green');
+    @endphp
+    <div class="progress-info">
+        <span>Cenário <strong>{{ $position }}</strong> de <strong>{{ $total }}</strong></span>
+        <div class="progress-track">
+            <div class="progress-fill {{ $progressColor }}" style="width: {{ $progressPercent }}%;"></div>
+        </div>
+    </div>
 </div>
 
 <div class="scenario-bar">

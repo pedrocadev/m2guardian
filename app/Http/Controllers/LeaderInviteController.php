@@ -98,4 +98,35 @@ class LeaderInviteController extends Controller
             return back()->with('warning', "Erro ao reenviar: {$e->getMessage()}");
         }
     }
+
+    public function updateEmail(Request $request, Collaborator $collaborator)
+    {
+        $leader = Auth::guard('leader')->user();
+
+        if ($collaborator->company_id !== $leader->company_id) {
+            abort(403);
+        }
+
+        if ($collaborator->completed_at) {
+            return back()->with('warning', 'Não é possível alterar o e-mail: colaborador já concluiu o treinamento.');
+        }
+
+        $validated = $request->validate([
+            'email' => ['required', 'email', 'max:180'],
+        ]);
+
+        $duplicate = Collaborator::where('company_id', $leader->company_id)
+            ->where('email', $validated['email'])
+            ->where('id', '!=', $collaborator->id)
+            ->exists();
+
+        if ($duplicate) {
+            return back()->with('warning', 'Este e-mail já está em uso por outro colaborador desta empresa.');
+        }
+
+        $oldEmail = $collaborator->email;
+        $collaborator->update(['email' => $validated['email']]);
+
+        return back()->with('success', "E-mail atualizado de {$oldEmail} para {$validated['email']}.");
+    }
 }
