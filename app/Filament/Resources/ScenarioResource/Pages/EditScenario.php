@@ -14,6 +14,12 @@ class EditScenario extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\Action::make('save_top')
+                ->label('Salvar')
+                ->icon('heroicon-o-check')
+                ->color('primary')
+                ->action('save'),
+
             Actions\Action::make('view_versions')
                 ->label('Histórico de versões')
                 ->icon('heroicon-o-clock')
@@ -51,6 +57,7 @@ class EditScenario extends EditRecord
             'content_snapshot'  => $this->record->content,
             'edited_by_admin_id' => auth('admin')->id(),
             'edit_summary'      => 'Editado via painel admin',
+            'created_at'        => now(),
         ]);
     }
 }

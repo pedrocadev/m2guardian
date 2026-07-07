@@ -141,6 +141,37 @@ class ScenarioResource extends Resource
                     ),
             ])->columns(2),
 
+            Forms\Components\Section::make('Cabeçalho do e-mail')
+                ->description('Como o e-mail aparece pro colaborador (linha "De:", assunto). Só aparece quando a plataforma é E-mail.')
+                ->visible(fn (Get $get) => $get('platform') === 'email')
+                ->schema([
+                    Forms\Components\TextInput::make('content.email_from_name')
+                        ->label('Nome do remetente (De:)')
+                        ->placeholder('Bradesco Empresas — E-mail')
+                        ->maxLength(120)
+                        ->hintIcon(
+                            'heroicon-m-information-circle',
+                            tooltip: 'Nome exibido como remetente do e-mail. Se deixar vazio, usa o "Título do cenário" como fallback.'
+                        ),
+                    Forms\Components\TextInput::make('content.email_from_address')
+                        ->label('Endereço de e-mail')
+                        ->placeholder('bradesco.empresas.-.e-mail@bradescoempresasemail.com')
+                        ->maxLength(180)
+                        ->hintIcon(
+                            'heroicon-m-information-circle',
+                            tooltip: 'Endereço mostrado entre "< >" na linha do remetente. Deixe vazio pra o sistema gerar um endereço fake baseado no nome. Use pra simular domínios suspeitos (típico de phishing).'
+                        ),
+                    Forms\Components\TextInput::make('content.email_subject')
+                        ->label('Assunto do e-mail')
+                        ->placeholder('[URGENTE] Token RSA desatualizado — Acesso será suspenso em 24h')
+                        ->maxLength(200)
+                        ->columnSpanFull()
+                        ->hintIcon(
+                            'heroicon-m-information-circle',
+                            tooltip: 'Título grande no topo do e-mail aberto. Se deixar vazio, usa a "Descrição prévia" da seção Identificação.'
+                        ),
+                ])->columns(2),
+
             Forms\Components\Section::make('Editor de Mensagens')
                 ->description('Monte o roteiro do cenário. Alterne entre mensagens de texto e perguntas.')
                 ->schema([
@@ -175,7 +206,8 @@ class ScenarioResource extends Resource
 
                             Forms\Components\Textarea::make('body')
                                 ->label('Texto da mensagem')
-                                ->rows(2)
+                                ->rows(12)
+                                ->autosize()
                                 ->required()
                                 ->visible(fn (Get $get) => $get('type') === 'text')
                                 ->columnSpanFull()
