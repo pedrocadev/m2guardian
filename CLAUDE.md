@@ -2,6 +2,155 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+---
+
+## 🚀 Onboarding — Setup para novo desenvolvedor
+
+Passos completos pra um novo dev clonar e rodar o projeto localmente do zero.
+
+### Pré-requisitos (Windows)
+
+1. **Laravel Herd** — https://herd.laravel.com/windows (grátis)
+   - Instala PHP 8.4 + Nginx + MariaDB automaticamente
+   - Cria domínio `.test` local (o projeto será acessado em `http://m2guardian.test`)
+
+2. **Node.js 20+** — https://nodejs.org
+
+3. **Composer** — vem com o Herd
+
+4. **Git** — https://git-scm.com/download/win
+
+5. **Editor** — VS Code recomendado (existe extensão do Filament e Laravel)
+
+### Passo 1 — Clonar o repositório
+
+Você precisa acesso aos repos GitHub. Se está tomando este projeto do Pedro, peça:
+- Acesso ao **M2-Cloud-Dev/M2Guardian** (privado, source de produção)
+- Opcionalmente acesso ao **pedrocadev/m2guardian** (público, espelho pessoal do Pedro)
+
+```powershell
+cd C:\Projects   # ou qualquer pasta que preferir
+git clone https://github.com/M2-Cloud-Dev/M2Guardian.git m2guardian
+cd m2guardian
+```
+
+### Passo 2 — Configurar Herd
+
+1. Abre o Herd
+2. **Sites** → **Park directory** → aponta pra `C:\Projects` (isso faz o Herd escanear e criar `.test` automaticamente pra cada pasta que tem `public/index.php`)
+3. Verifica que `m2guardian.test` aparece na lista de sites
+4. **Services** → confirma que **MariaDB** está rodando
+
+### Passo 3 — Adicionar PHP no PATH da sessão
+
+Todo terminal novo precisa disso (Herd não seta globalmente):
+
+```powershell
+$env:PATH = "C:\Users\<SEU-USUARIO>\.config\herd\bin;$env:PATH"
+```
+
+Substitui `<SEU-USUARIO>` pelo nome do usuário Windows. Dica: coloca isso no perfil do PowerShell (`$PROFILE`) pra automatizar.
+
+### Passo 4 — Instalar dependências
+
+```powershell
+composer install
+npm install
+```
+
+### Passo 5 — Configurar `.env`
+
+```powershell
+Copy-Item .env.example .env
+php artisan key:generate
+```
+
+Edita `.env`:
+```env
+APP_URL=http://m2guardian.test
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=m2guardian
+DB_USERNAME=root
+DB_PASSWORD=          # deixa vazio — Herd MariaDB roda sem senha em dev
+```
+
+### Passo 6 — Criar o banco
+
+Abre o **HeidiSQL** (ou outro cliente MySQL apontando pra `127.0.0.1:3306`, user `root`, sem senha) e executa:
+```sql
+CREATE DATABASE m2guardian CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+### Passo 7 — Rodar migrations + seeders
+
+```powershell
+php artisan migrate --seed
+```
+
+Isso vai:
+- Criar todas as tabelas
+- Popular 13 cenários de treinamento default
+- Criar um super admin: `suporte@m2cloud.com.br` / `M2Guardian@2026`
+
+### Passo 8 — Compilar assets
+
+```powershell
+npm run build
+# OU pra dev com hot-reload:
+npm run dev
+```
+
+### Passo 9 — Acessar
+
+Abre no navegador:
+- **Admin panel:** http://m2guardian.test/admin (login com `suporte@m2cloud.com.br` / `M2Guardian@2026`)
+- **Login do líder:** http://m2guardian.test/lider/login
+- **Fluxo do colaborador:** só via magic link — gera um pelo admin ou painel do líder
+
+### Passo 10 — Rodar testes
+
+```powershell
+php artisan test
+```
+
+22 testes de smoke. Se todos passarem, seu ambiente está OK.
+
+---
+
+## 🎯 Fluxos principais do sistema (como testar)
+
+### Fluxo 1: Admin cria empresa + líder
+1. Login `/admin/login`
+2. **Empresas** → **Nova empresa**
+3. Preenche CNPJ (a razão social é buscada automaticamente na BrasilAPI)
+4. Aba **Líder Principal** (obrigatório) → nome + e-mail + senha
+5. Salva → empresa + líder criados em uma transação
+
+### Fluxo 2: Líder convida colaborador
+1. Login `/lider/login` com credenciais criadas
+2. **Convidar** → preenche e-mail do colaborador
+3. Clica **Enviar convite** → gera magic link + tenta enviar e-mail
+4. Ou **Copiar link** → pega o URL e envia manualmente
+5. Colaborador clica no link → vê vídeo intro → welcome → chat de treinamento
+
+### Fluxo 3: Colaborador faz treinamento
+1. Abre magic link `/m/{token}` → consome (single-use)
+2. Vídeo intro de 6s (skip após 50%)
+3. Welcome unificado ("Bem-vindo à Jornada Guardião")
+4. Lista de cenários (bloqueados em ordem)
+5. Cenário aberto → chat imersivo estilo plataforma (ver "Modos de plataforma no chat")
+6. Responde perguntas → recebe feedback
+7. Concluiu tudo → tela final com certificado
+
+### Fluxo 4: Líder analisa resultados
+1. Dashboard `/lider/dashboard`
+2. Vê postura corporativa + score por colaborador
+3. Clica em colaborador → drill-down individual `/lider/colaborador/{id}/postura`
+
+---
+
 ## Project Overview
 
 **M2 Guardião Digital** is a **B2B SaaS** for corporate security-awareness training. M2 admins provision client companies; each company has leaders (managers) who invite collaborators (employees) to take phishing/BEC/social-engineering training scenarios. Two license tiers (Demo: 3 collaborators / 3 scenarios; Pro: configurable / all 13 scenarios).
@@ -224,6 +373,60 @@ No pseudo-elements, no z-index manipulation. Equivalent visual result, no JS-bre
 - `MagicLink` — polymorphic (`tokenable_type` + `tokenable_id`)
 - `AuditLog` — written via `AuditLog::record(actor, action, target, payload, ip, ua)` on all sensitive ops
 
+### Modos de plataforma no chat de treinamento (feature nova, ver em `training/show.blade.php`)
+
+Cada cenário tem um campo `platform` (`wapp`, `teams`, `email`, `outro`). O chat de treinamento renderiza **visualmente** o cenário como se fosse a plataforma real, ativado via classe `body.platform-{wapp|teams|email}`. Toda a lógica visual está em `resources/views/training/show.blade.php`.
+
+#### Modo WhatsApp Web (`platform=wapp`)
+- Layout 2 colunas: sidebar de conversas + chat principal
+- Header verde do WhatsApp (`#075E54`) com avatar redondo + nome do contato + "online"
+- Wallpaper bege com padrão de doodles (SVG data-URI)
+- Bolhas com **tail (rabinho)** via `clip-path polygon`
+- Bolha recebida: branco + tail à esquerda
+- Bolha enviada: verde claro `#DCF8C6` + tail à direita
+- Timestamp cinza dentro da bolha + checkmarks azuis (`✓✓`)
+- Fonte: Segoe UI
+- Opções de resposta como **quick-reply verde** empilhadas à direita
+- Feedback como "resposta do sistema" (bolha branca com remetente "Guardião Digital" em verde)
+
+#### Modo Microsoft Teams (`platform=teams`)
+- Mesma estrutura 2-colunas do WhatsApp Web
+- Header verde substituído por **branco** com bordas cinza (`#e1dfdd`)
+- Avatares **redondos** (Teams usa circle)
+- Item ativo na sidebar: **barra vertical roxa (`#6264A7`)** à esquerda + fundo cinza claro
+- Bolhas **sem tail** (cantos arredondados 8px, sombra sutil)
+- Bolha recebida: cinza claro `#f5f5f5`
+- Bolha enviada: lilás roxo claro `#ebebfa`
+- Opções acerto viram roxo Teams `#6264A7`
+- Sem checkmarks visuais (Teams não usa `✓✓` publicamente)
+
+#### Modo E-mail (`platform=email`)
+- Layout DIFERENTE: sidebar estilo **caixa de entrada Outlook** (azul `#0078d4`) + área principal com **envelope de e-mail estático**
+- Envelope contém: assunto grande, barra de metadados (avatar + nome + endereço + data), corpo com parágrafos formatados (não bolhas), botões "Responder / Encaminhar" decorativos
+- Mensagens aparecem **INSTANTANEAMENTE** (sem typing indicator, sem delay entre parágrafos) — e-mail não é conversa em tempo real
+- Opções de resposta como **botões retangulares empilhados verticalmente** (não quick-reply)
+- Assunto/remetente/endereço vêm de campos JSON no `content` (ver abaixo)
+
+#### Sidebar de conversas (compartilhada wapp+teams+email)
+
+Filtra cenários pelo `platform` atual e mostra com 4 estados:
+- **`active`** — cenário atual (fundo destacado, não clicável)
+- **`completed`** — todas perguntas respondidas → clicável (modo revisão, com checkmark azul `✓✓` no preview)
+- **`available`** — em progresso ou próximo pendente → clicável (permite continuar)
+- **`locked`** — futuros, ainda não desbloqueados (cadeado `🔒`, não clicável, opacity 55%)
+
+O controller `CollaboratorController::show()` calcula `$reachableScenarioIds` e faz `abort(403)` se o usuário tentar acessar um cenário locked via URL. Helper `completedScenarioIds()` usa 1 query agregada (GROUP BY + COUNT DISTINCT) pra evitar N+1.
+
+#### Campos do cabeçalho de e-mail (só quando `platform=email`)
+
+Editáveis via Filament (Section "Cabeçalho do e-mail" só aparece se `platform=email`). Armazenados dentro do JSON `content`:
+
+- `content.email_from_name` — nome do remetente (fallback: `$scenario->label`)
+- `content.email_from_address` — endereço fake do e-mail (fallback: gerado do label)
+- `content.email_subject` — assunto do e-mail (fallback: `$scenario->preview`)
+
+Útil pra simular endereços de phishing (ex: `bradesco.empresas.-.e-mail@bradescoempresasemail.com` — domínios estranhos deliberadamente).
+
 ### Scenarios JSON structure (`scenarios.content` column)
 
 ```json
@@ -269,7 +472,21 @@ Several `update()` calls have silently failed in the past because the column was
 ### Email (local vs production)
 
 - **Local dev:** `MAIL_MAILER=log` — emails go to `storage/logs/laravel.log`. Queue driver is `database` — run `php artisan queue:work` to actually process the job.
-- **Production:** Currently `MAIL_MAILER=log` (SMTP M365 deferred — backlog item). When activated, port 587 TLS with M365 App Password. Sent async via Supervisor-managed worker (`deploy/supervisor-worker.conf` — 2 processes running 24/7 in production).
+- **Production:** Currently `MAIL_MAILER=log` — SMTP M365 **em progresso de configuração** (2026-07). Domínio `m2guardiao.com.br` já provisionado no M365, falta criar caixa dedicada e habilitar SMTP AUTH. Roteiro completo detalhado em [docs/EMAIL-SMTP-SETUP.md](docs/EMAIL-SMTP-SETUP.md) OU na memória `project-email-smtp-pendente`. Quando ativado, será port 587 STARTTLS. Emails enviados async via Supervisor-managed worker (`deploy/supervisor-worker.conf` — 2 processes running 24/7 in production).
+
+**Config esperada quando SMTP for ativado (edita `.env` da VM):**
+```env
+MAIL_MAILER=smtp
+MAIL_HOST=smtp.office365.com
+MAIL_PORT=587
+MAIL_USERNAME=<CAIXA>@m2guardiao.com.br
+MAIL_PASSWORD=<APP-PASSWORD>       # NÃO commitar — só na VM
+MAIL_ENCRYPTION=tls
+MAIL_FROM_ADDRESS=<CAIXA>@m2guardiao.com.br
+MAIL_FROM_NAME="Guardião Digital"
+```
+
+Depois de editar `.env`: `sudo -u m2guardian php artisan config:cache && sudo systemctl restart php8.4-fpm`.
 
 ### Hardening summary
 
@@ -345,14 +562,93 @@ Toda documentação narrativa fica em [docs/](docs/):
 
 **Workflow:** push → `develop` → deploy homolog → testar → merge `develop` → `main` → deploy prod. Detalhes em [docs/HOMOLOG-SETUP.md](docs/HOMOLOG-SETUP.md).
 
+## Banco de imagens (`public/images/`)
+
+Convenção de "1 arquivo por uso" — cada referência no código tem sua própria cópia da imagem. Trocar uma imagem específica (ex: mascote do login admin) **não afeta** outros usos (ex: mascote do welcome do colaborador), mesmo que sejam o mesmo arquivo antes.
+
+Estrutura em [public/images/README.md](public/images/README.md):
+```
+public/images/
+├── brand/logo.png                          ← logo unificado (antigo, ainda usado em alguns lugares)
+├── mascots/                                ← 21 slots contextuais (1 por lugar)
+│   ├── login-admin.png / login-leader.png
+│   ├── training-welcome-* (guardian/greeting/explain)
+│   ├── training-index-* (start/progress/done)
+│   ├── training-show-* (greeting/sidebar/correct/wrong)
+│   ├── training-transition-* (wapp/teams/email/fallback)
+│   └── completion-n1.png ... completion-n5.png
+├── backgrounds/                            ← 1 background por contexto
+│   ├── admin-bg.jpg
+│   ├── login-leader.jpg
+│   ├── Logo_guardiao.png                   ← logo nova padronizada em 2026-06-17
+│   └── training-{welcome,index,show,transition,completed}.jpg
+```
+
+**Regra:** ao trocar uma imagem, edita o arquivo específico do contexto (nome contextual). Se outra tela precisa da mesma imagem, é cópia separada.
+
+**Logo Guardião nova (2026-06-17):** `backgrounds/Logo_guardiao.png` (nome "backgrounds" é semanticamente errado mas ficou no repo por escolha do Pedro na época — mover pra `brand/` é um refactor futuro). Ver commit `3d3b108`.
+
+**Mascotes redesenhados (2026-06-17):** todos os 21 slots ganharam nova estética unificada (escudo vermelho M2, robô branco/preto/vermelho). Mapeamento por expressão:
+- **Pensativo** → análise/intro/aprendiz iniciante
+- **Positivo** → acolhimento/sidebar do chat/guardião atento
+- **Comemorando** → acerto/conclusão/estratégico/certificado
+- **Triste** → erro no chat
+- **Correndo** → transição entre cenários/início/guardião
+
+Exceção: `login-admin.png`, `login-leader.png` e `training-welcome-guardian.png` foram **revertidos pro mascote antigo** (corpo inteiro sem moldura circular branca) porque a "bolinha" destoava dos heros escuros dessas telas.
+
+## Estado atual (2026-07-07) — trabalho pendente de commit
+
+⚠️ **IMPORTANTE PRO PRÓXIMO DEV:** o working tree tem **1300+ linhas não commitadas** em 5 arquivos. Antes de fazer alterações grandes, revise e commite ou faça `git stash` do que já está lá pra não perder trabalho.
+
+**Arquivos modificados:**
+```
+M  app/Filament/Resources/ScenarioResource.php
+M  app/Filament/Resources/ScenarioResource/Pages/CreateScenario.php
+M  app/Filament/Resources/ScenarioResource/Pages/EditScenario.php
+M  app/Http/Controllers/CollaboratorController.php
+M  resources/views/training/show.blade.php
+```
+
+**Trabalho pendente contém 2 blocos lógicos separáveis:**
+
+**Bloco 1 — Cenários imersivos por plataforma no chat** (`CollaboratorController.php` + `show.blade.php`):
+- 3 modos de renderização (WhatsApp Web / Teams / E-mail) ativados via `body.platform-*`
+- Sidebar de conversas + 4 estados de cenário (active/completed/available/locked)
+- Helper `completedScenarioIds()` eliminando N+1
+- `abort(403)` contra acesso via URL a cenários locked
+- `.faded` opacity 0.35 nas opções não-escolhidas após responder
+
+**Bloco 2 — Editor de cenário no Filament (admin)** (`ScenarioResource.php` + 2 pages):
+- **Fix bug SQL:** `'created_at' => now()` no `ScenarioVersion::create` do `EditScenario::afterSave` — resolve o erro "`Field 'created_at' doesn't have a default value`" que aparecia ao salvar/trocar plataforma no editor
+- Botão **Salvar** no topo do EditScenario (via `getHeaderActions()` + `->action('save')`)
+- Botão **Criar cenário** no topo do CreateScenario (via `getHeaderActions()` + `->action('create')`)
+- Nova **Section "Cabeçalho do e-mail"** no form, visível apenas se `platform=email`. 3 campos armazenados em `content.email_from_name/address/subject`
+- Textarea "Texto da mensagem": `->rows(2)` → `->rows(12)` + `->autosize()` (antes vinha apertado, agora abre expandido)
+
+Ambos os blocos estão **prontos e passaram por clean-code-reviewer**. Aguardando OK do Pedro pra commit + push + deploy quando ele voltar OU decisão do novo dev.
+
+**Untracked (homolog adiado — NÃO commitar):**
+```
+?? deploy/.env.homolog
+?? deploy/04-deploy-homolog.sh
+?? deploy/nginx-homolog.conf
+?? docs/HOMOLOG-SETUP.md
+```
+
+Homolog está pronto pra ativar mas foi pausado por escolha do Pedro — ver seção Ambientes.
+
 ## Known Backlog (post-launch)
 
-| # | Item | Priority |
-|---|------|----------|
-| 1 | Configure SMTP M365 (email delivery) | High |
-| 2 | Enable 2FA TOTP on super admin | High |
-| 3 | Investigate intermittent dropdown logout bug (Filament user menu, possibly cache-related) | Medium |
-| 4 | Migrate CSP from `Report-Only` to enforced after observation | Medium |
-| 5 | Visual refinements with marketing team | Low |
-| 6 | LGPD legal copy (privacy policy + consent) | Low |
-| 7 | Upgrade Nginx 1.18 → 1.24+ in maintenance window | Low |
+| # | Item | Priority | Status |
+|---|------|----------|--------|
+| 1 | Configure SMTP M365 (email delivery) | High | **Em progresso** — domínio provisionado, roteiro pronto em `docs/EMAIL-SMTP-SETUP.md` OU memória `project-email-smtp-pendente`. Falta criar caixa + habilitar SMTP AUTH + editar `.env` da VM |
+| 2 | Commit + deploy dos 2 blocos pendentes no working tree (cenários imersivos por plataforma + editor de cenário) | High | Prontos e revisados, aguardando OK |
+| 3 | Enable 2FA TOTP on super admin | High | Backlog |
+| 4 | Ativar homologação (`homolog.m2guardiao.com.br`) — 4 arquivos untracked prontos | Medium | Adiado por escolha do Pedro |
+| 5 | Investigate intermittent dropdown logout bug (Filament user menu, possibly cache-related) | Medium | Backlog |
+| 6 | Migrate CSP from `Report-Only` to enforced after observation | Medium | Backlog |
+| 7 | Move `Logo_guardiao.png` de `backgrounds/` pra `brand/` (semanticamente correto) | Low | Cosmético |
+| 8 | Visual refinements with marketing team | Low | Backlog |
+| 9 | LGPD legal copy (privacy policy + consent) | Low | Backlog |
+| 10 | Upgrade Nginx 1.18 → 1.24+ in maintenance window | Low | Backlog |
