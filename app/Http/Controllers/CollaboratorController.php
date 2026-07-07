@@ -7,7 +7,9 @@ use App\Models\Collaborator;
 use App\Models\Scenario;
 use App\Models\TrainingSession;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CollaboratorController extends Controller
 {
@@ -27,18 +29,8 @@ class CollaboratorController extends Controller
         $scenarios = $this->getScenariosFor($collaborator);
         $session = $this->getOrCreateSession($collaborator, $scenarios, request());
 
-        // Conta cenarios FULL completos (todas as perguntas respondidas), nao apenas iniciados
-        $answeredIds = collect();
-        foreach ($scenarios as $s) {
-            $totalQ = collect($s->content['messages'])->where('type', 'question')->count();
-            $doneQ  = Answer::where('training_session_id', $session->id)
-                ->where('scenario_id', $s->id)
-                ->distinct('question_index')
-                ->count('question_index');
-            if ($totalQ > 0 && $doneQ >= $totalQ) {
-                $answeredIds->push($s->id);
-            }
-        }
+        // Cenários FULL completos (todas as perguntas respondidas), não apenas iniciados
+        $answeredIds = $this->completedScenarioIds($session, $scenarios);
 
         $nextScenario = $scenarios->first(fn($s) => !$answeredIds->contains($s->id));
 
@@ -136,21 +128,29 @@ class CollaboratorController extends Controller
             ->get()
             ->keyBy('question_index');
 
-        // Só redireciona pro próximo se TODAS as perguntas deste cenário foram respondidas
-        if ($totalQuestions > 0 && $answers->count() >= $totalQuestions) {
-            $next = $scenarios->first(function ($s) use ($session) {
-                $totalQ = collect($s->content['messages'])->where('type', 'question')->count();
-                $doneQ  = Answer::where('training_session_id', $session->id)
-                    ->where('scenario_id', $s->id)
-                    ->distinct('question_index')
-                    ->count('question_index');
-                return $totalQ === 0 || $doneQ < $totalQ;
-            });
-
-            if ($next) {
-                return redirect()->route('training.transition', $next->id);
+        // Estados dos cenários pra sidebar:
+        // - completed: todas perguntas respondidas → clicável (modo revisão)
+        // - reachable: concluídos + em progresso + primeiro pendente → clicável (continua ou revisa)
+        // - locked (não incluso em reachable): pendentes futuros → não clicável
+        $completedScenarioIds = $this->completedScenarioIds($session, $scenarios);
+        $reachableScenarioIds = collect();
+        $foundNextPending = false;
+        foreach ($scenarios as $s) {
+            if ($completedScenarioIds->contains($s->id)) {
+                $reachableScenarioIds->push($s->id);
+            } elseif (!$foundNextPending) {
+                $reachableScenarioIds->push($s->id);
+                $foundNextPending = true;
             }
-            return redirect()->route('training.completed');
+        }
+
+        // Se o cenário atual já foi concluído: entra em modo revisão (não redireciona).
+        // O redirect pro próximo cenário acontece no answer() quando o usuário RESPONDE a última pergunta.
+
+        // Proteção: bloqueia acesso via URL a cenários "locked" (futuros, ainda não desbloqueados).
+        // Só permite acessar concluídos, em progresso ou o próximo pendente.
+        if (!$reachableScenarioIds->contains($scenario->id)) {
+            abort(403, 'Este cenário ainda não foi liberado. Conclua os anteriores primeiro.');
         }
 
         // Monta map de respostas anteriores pro front: { question_index: { key, is_correct } }
@@ -163,7 +163,7 @@ class CollaboratorController extends Controller
         $total = $scenarios->count();
 
         return view('training.show', compact(
-            'collaborator', 'scenario', 'session', 'position', 'total', 'previousAnswers'
+            'collaborator', 'scenario', 'scenarios', 'session', 'position', 'total', 'previousAnswers', 'completedScenarioIds', 'reachableScenarioIds'
         ));
     }
 
@@ -245,28 +245,15 @@ class CollaboratorController extends Controller
         $nextUrl = null;
 
         if ($scenarioComplete) {
-            $allScenariosDone = $scenarios->every(function ($s) use ($session) {
-                $total = collect($s->content['messages'])->where('type', 'question')->count();
-                $done  = Answer::where('training_session_id', $session->id)
-                    ->where('scenario_id', $s->id)
-                    ->distinct('question_index')
-                    ->count('question_index');
-                return $done >= $total;
-            });
+            $completedIds = $this->completedScenarioIds($session, $scenarios);
+            $allScenariosDone = $completedIds->count() >= $scenarios->count();
 
             if ($allScenariosDone) {
                 $this->completeTraining($collaborator, $session, $scenarios);
                 $trainingComplete = true;
                 $nextUrl = route('training.completed');
             } else {
-                $next = $scenarios->first(function ($s) use ($session) {
-                    $total = collect($s->content['messages'])->where('type', 'question')->count();
-                    $done  = Answer::where('training_session_id', $session->id)
-                        ->where('scenario_id', $s->id)
-                        ->distinct('question_index')
-                        ->count('question_index');
-                    return $done < $total;
-                });
+                $next = $scenarios->first(fn($s) => !$completedIds->contains($s->id));
                 $nextUrl = $next ? route('training.transition', $next->id) : route('training.completed');
             }
         }
@@ -328,6 +315,24 @@ class CollaboratorController extends Controller
         return Scenario::where(function ($q) use ($company) {
             $q->whereNull('company_id')->orWhere('company_id', $company->id);
         })->where('status', 'active')->orderBy('id')->get();
+    }
+
+    /**
+     * IDs dos cenários totalmente concluídos (todas as perguntas respondidas).
+     * Usa 1 query agregada em vez de N queries no loop — evita N+1.
+     */
+    private function completedScenarioIds(TrainingSession $session, $scenarios): Collection
+    {
+        $doneByScenario = Answer::where('training_session_id', $session->id)
+            ->select('scenario_id', DB::raw('COUNT(DISTINCT question_index) as done'))
+            ->groupBy('scenario_id')
+            ->pluck('done', 'scenario_id');
+
+        return $scenarios->filter(function ($s) use ($doneByScenario) {
+            $totalQ = collect($s->content['messages'])->where('type', 'question')->count();
+            $doneQ  = (int) $doneByScenario->get($s->id, 0);
+            return $totalQ > 0 && $doneQ >= $totalQ;
+        })->pluck('id');
     }
 
     private function getOrCreateSession(Collaborator $collaborator, $scenarios, Request $request): TrainingSession
