@@ -337,20 +337,22 @@ class CollaboratorController extends Controller
 
     private function getOrCreateSession(Collaborator $collaborator, $scenarios, Request $request): TrainingSession
     {
-        if ($collaborator->trainingSession) {
-            return $collaborator->trainingSession;
-        }
+        return $collaborator->trainingSession
+            ?? $this->startNewSession($collaborator, $scenarios, $request);
+    }
 
+    private function startNewSession(Collaborator $collaborator, $scenarios, Request $request): TrainingSession
+    {
         $totalQuestions = $scenarios->sum(function ($s) {
             return collect($s->content['messages'])->where('type', 'question')->count();
         });
 
         return TrainingSession::create([
-            'collaborator_id'  => $collaborator->id,
-            'started_at'       => now(),
-            'total_scenarios'  => $scenarios->count(),
-            'total_questions'  => $totalQuestions,
-            'client_ip'        => $request->ip(),
+            'collaborator_id'   => $collaborator->id,
+            'started_at'        => now(),
+            'total_scenarios'   => $scenarios->count(),
+            'total_questions'   => $totalQuestions,
+            'client_ip'         => $request->ip(),
             'client_user_agent' => $request->userAgent(),
         ]);
     }
@@ -361,11 +363,14 @@ class CollaboratorController extends Controller
         $score = $answers->where('is_correct', true)->count();
         $totalQuestions = $answers->count();
         $duration = $session->started_at->diffInSeconds(now());
+        $passed = $totalQuestions > 0
+            && ($score / $totalQuestions * 100) >= TrainingSession::PASS_THRESHOLD;
 
         $session->update([
-            'completed_at'    => now(),
-            'score'           => $score,
-            'total_questions' => $totalQuestions,
+            'completed_at'     => now(),
+            'score'            => $score,
+            'total_questions'  => $totalQuestions,
+            'passed'           => $passed,
             'duration_seconds' => $duration,
         ]);
 
@@ -374,5 +379,70 @@ class CollaboratorController extends Controller
             'score'           => $score,
             'total_questions' => $totalQuestions,
         ]);
+    }
+
+    public function issueCertificate(Request $request)
+    {
+        $collaborator = Auth::guard('collaborator')->user();
+        $session = $collaborator->trainingSession;
+
+        if (!$session || !$session->passed) {
+            abort(403, 'Certificado disponível apenas para tentativas aprovadas.');
+        }
+
+        if ($session->certificate_issued_at) {
+            return redirect()->route('training.certificate');
+        }
+
+        $data = $request->validate([
+            'certificate_name' => ['required', 'string', 'min:3', 'max:60'],
+        ], [
+            'certificate_name.required' => 'Informe o nome que deve aparecer no certificado.',
+            'certificate_name.min'      => 'O nome precisa ter pelo menos 3 caracteres.',
+            'certificate_name.max'      => 'O nome pode ter no máximo 60 caracteres — o certificado tem espaço limitado.',
+        ]);
+
+        $session->update([
+            'certificate_name'      => trim($data['certificate_name']),
+            'certificate_issued_at' => now(),
+        ]);
+
+        return redirect()->route('training.certificate');
+    }
+
+    public function certificate()
+    {
+        $collaborator = Auth::guard('collaborator')->user();
+        $session = $collaborator->trainingSession;
+
+        if (!$session || !$session->passed || !$session->certificate_issued_at) {
+            return redirect()->route('training.completed');
+        }
+
+        return view('training.certificate', compact('collaborator', 'session'));
+    }
+
+    public function retry(Request $request)
+    {
+        $collaborator = Auth::guard('collaborator')->user();
+        $lastSession = $collaborator->trainingSession;
+
+        // Só permite refazer se a última tentativa foi concluída e reprovada
+        if (!$lastSession || !$lastSession->isCompleted() || $lastSession->passed) {
+            abort(403, 'Refazer o treinamento não está disponível no momento.');
+        }
+
+        // Cria nova session e zera o "estado atual" do colaborador.
+        // A session antiga e as answers dela ficam preservadas como histórico.
+        $scenarios = $this->getScenariosFor($collaborator);
+        $this->startNewSession($collaborator, $scenarios, $request);
+
+        $collaborator->update([
+            'completed_at'    => null,
+            'score'           => null,
+            'total_questions' => null,
+        ]);
+
+        return redirect()->route('training.index');
     }
 }

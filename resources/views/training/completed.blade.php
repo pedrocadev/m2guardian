@@ -196,6 +196,84 @@
             text-align: left;
         }
 
+        .cta-primary, .cta-disabled {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.3px;
+            border: none;
+            cursor: pointer;
+            font-family: inherit;
+            margin-bottom: 12px;
+            transition: background 0.15s, transform 0.05s;
+        }
+        .cta-primary {
+            background: var(--lvl-color, #CC0000);
+            color: #fff;
+        }
+        .cta-primary:hover { filter: brightness(0.92); }
+        .cta-primary:active { transform: scale(0.99); }
+        .cta-disabled {
+            background: #f3f4f6;
+            color: #9ca3af;
+            cursor: not-allowed;
+            border: 1.5px dashed #d1d5db;
+        }
+        .cta-disabled small { display: block; font-size: 10px; font-weight: 600; letter-spacing: 1px; margin-top: 2px; opacity: 0.8; }
+
+        .cert-form {
+            background: #f9faf9;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 18px 20px;
+            margin-bottom: 12px;
+            text-align: left;
+        }
+        .cert-form label {
+            display: block;
+            font-size: 12px;
+            font-weight: 700;
+            color: #444;
+            margin-bottom: 8px;
+            letter-spacing: 0.3px;
+        }
+        .cert-form input[type=text] {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1.5px solid #d1d5db;
+            font-size: 14px;
+            font-family: inherit;
+            background: #fff;
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            margin-bottom: 12px;
+        }
+        .cert-form input[type=text]:focus {
+            border-color: var(--lvl-color, #16a34a);
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--lvl-color, #16a34a) 20%, transparent);
+        }
+        .cert-form-hint {
+            font-size: 11.5px;
+            color: #888;
+            margin-top: -6px;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .cert-form-error {
+            font-size: 12px;
+            color: #b91c1c;
+            margin-top: -6px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
         .footer-brand {
             font-size: 11px;
             color: #bbb;
@@ -213,83 +291,65 @@
 <body>
 
 @php
-    $score = $session->score ?? 0;
-    $total = $session->total_questions ?? 1;
-    $pct = $total > 0 ? round($score / $total * 100) : 0;
+    $score  = $session->score ?? 0;
+    $total  = $session->total_questions ?? 0;
+    $pct    = $total > 0 ? round($score / $total * 100) : 0;
     $minutes = $session->duration_seconds ? floor($session->duration_seconds / 60) : '—';
+    $passed = (bool) $session->passed;
 
-    // Determina o nível (N1 a N5)
-    if ($pct >= 100) {
-        $levelKey = 'n5';
-    } elseif ($pct >= 85) {
-        $levelKey = 'n4';
-    } elseif ($pct >= 70) {
-        $levelKey = 'n3';
-    } elseif ($pct >= 50) {
-        $levelKey = 'n2';
+    if ($passed) {
+        // Aprovado: escolhe patente conforme desempenho (>=80%)
+        if ($pct >= 100) {
+            $L = [
+                'tag'       => 'NÍVEL 5',
+                'name'      => 'Guardião Digital Certificado',
+                'icon'      => '🏆',
+                'color'     => '#CC0000',
+                'colorDark' => '#7f0000',
+                'shadow'    => 'rgba(204, 0, 0, 0.45)',
+                'title'     => 'Parabéns! Você é referência. 🏆',
+                'message'   => 'Você concluiu todas as etapas com alto desempenho e demonstrou postura segura diante de diferentes ameaças. Compartilhe o que aprendeu — você é exemplo de cultura de segurança.',
+                'mascot'    => 'completion-n5.png',
+            ];
+        } elseif ($pct >= 85) {
+            $L = [
+                'tag'       => 'NÍVEL 4',
+                'name'      => 'Guardião Estratégico',
+                'icon'      => '⚔️',
+                'color'     => '#16a34a',
+                'colorDark' => '#15803d',
+                'shadow'    => 'rgba(22, 163, 74, 0.35)',
+                'title'     => 'Excelente! ⚔️',
+                'message'   => 'Você identifica riscos com clareza, valida informações e protege dados com consistência. Sua postura é referência para o time — continue assim.',
+                'mascot'    => 'completion-n4.png',
+            ];
+        } else {
+            $L = [
+                'tag'       => 'NÍVEL 3',
+                'name'      => 'Guardião Atento',
+                'icon'      => '🛡️',
+                'color'     => '#ca8a04',
+                'colorDark' => '#854d0e',
+                'shadow'    => 'rgba(202, 138, 4, 0.35)',
+                'title'     => 'Aprovado! 🛡️',
+                'message'   => 'Você demonstra boa postura e toma decisões seguras na maior parte dos cenários. Mantenha esse padrão e fique atento aos detalhes — pequenos sinais fazem diferença.',
+                'mascot'    => 'completion-n3.png',
+            ];
+        }
     } else {
-        $levelKey = 'n1';
+        // Reprovado (<80%): tela de encorajamento + botão de refazer
+        $L = [
+            'tag'       => 'RESULTADO',
+            'name'      => 'Ainda não foi desta vez',
+            'icon'      => '💪',
+            'color'     => '#dc2626',
+            'colorDark' => '#991b1b',
+            'shadow'    => 'rgba(220, 38, 38, 0.35)',
+            'title'     => 'Ainda não passou desta vez',
+            'message'   => 'Você acertou ' . $pct . '% e o mínimo para aprovação é ' . \App\Models\TrainingSession::PASS_THRESHOLD . '%. Mas calma — errar faz parte do aprendizado. Revise os pontos que te confundiram e tente de novo. Você consegue!',
+            'mascot'    => 'completion-n1.png',
+        ];
     }
-
-    $levels = [
-        'n1' => [
-            'tag'         => 'NÍVEL 1',
-            'name'        => 'Em Alerta',
-            'icon'        => '⚠️',
-            'color'       => '#dc2626',
-            'colorDark'   => '#991b1b',
-            'shadow'      => 'rgba(220, 38, 38, 0.35)',
-            'title'       => 'Treinamento concluído',
-            'message'     => 'Você já iniciou sua jornada, mas ainda precisa fortalecer sua atenção diante de riscos digitais. Revise os cenários onde errou e fique atento nas próximas semanas — os atacantes exploram exatamente esses pontos.',
-            'mascot'      => 'completion-n1.png',
-        ],
-        'n2' => [
-            'tag'         => 'NÍVEL 2',
-            'name'        => 'Aprendiz Guardião',
-            'icon'        => '🌱',
-            'color'       => '#ea580c',
-            'colorDark'   => '#9a3412',
-            'shadow'      => 'rgba(234, 88, 12, 0.35)',
-            'title'       => 'Bom começo! 👍',
-            'message'     => 'Você reconhece alguns sinais de risco, mas ainda pode evoluir em situações de pressão. Continue praticando — quanto mais você treina, mais natural fica identificar as armadilhas.',
-            'mascot'      => 'completion-n2.png',
-        ],
-        'n3' => [
-            'tag'         => 'NÍVEL 3',
-            'name'        => 'Guardião Atento',
-            'icon'        => '🛡️',
-            'color'       => '#ca8a04',
-            'colorDark'   => '#854d0e',
-            'shadow'      => 'rgba(202, 138, 4, 0.35)',
-            'title'       => 'Bom trabalho! 🛡️',
-            'message'     => 'Você demonstra boa postura e toma decisões seguras na maior parte dos cenários. Mantenha esse padrão e fique atento aos detalhes — pequenos sinais fazem diferença.',
-            'mascot'      => 'completion-n3.png',
-        ],
-        'n4' => [
-            'tag'         => 'NÍVEL 4',
-            'name'        => 'Guardião Estratégico',
-            'icon'        => '⚔️',
-            'color'       => '#16a34a',
-            'colorDark'   => '#15803d',
-            'shadow'      => 'rgba(22, 163, 74, 0.35)',
-            'title'       => 'Excelente! ⚔️',
-            'message'     => 'Você identifica riscos com clareza, valida informações e protege dados com consistência. Sua postura é referência para o time — continue assim.',
-            'mascot'      => 'completion-n4.png',
-        ],
-        'n5' => [
-            'tag'         => 'NÍVEL 5',
-            'name'        => 'Guardião Digital Certificado',
-            'icon'        => '🏆',
-            'color'       => '#CC0000',
-            'colorDark'   => '#7f0000',
-            'shadow'      => 'rgba(204, 0, 0, 0.45)',
-            'title'       => 'Parabéns! Você é referência. 🏆',
-            'message'     => 'Você concluiu todas as etapas com alto desempenho e demonstrou postura segura diante de diferentes ameaças. Compartilhe o que aprendeu — você é exemplo de cultura de segurança.',
-            'mascot'      => 'completion-n5.png',
-        ],
-    ];
-
-    $L = $levels[$levelKey];
 @endphp
 
 <div class="mascot-celebration">
@@ -333,6 +393,44 @@
     </div>
 
     <div class="message">{{ $L['message'] }}</div>
+
+    @if ($passed)
+        @if ($session->certificate_issued_at)
+            <a href="{{ route('training.certificate') }}" class="cta-primary" style="text-decoration: none;">
+                📜 Ver meu Certificado
+            </a>
+        @else
+            <form method="POST" action="{{ route('training.certificate.issue') }}" class="cert-form">
+                @csrf
+                <label for="certificate_name">Nome exibido no certificado</label>
+                <input
+                    type="text"
+                    id="certificate_name"
+                    name="certificate_name"
+                    value="{{ old('certificate_name', $collaborator->name) }}"
+                    placeholder="Como você quer aparecer no certificado?"
+                    maxlength="60"
+                    required
+                    autofocus
+                >
+                @error('certificate_name')
+                    <div class="cert-form-error">{{ $message }}</div>
+                @else
+                    <div class="cert-form-hint">Este será o nome impresso no certificado — confira antes de emitir. Uma vez emitido, entre em contato com a M2 para trocar.</div>
+                @enderror
+                <button type="submit" class="cta-primary">
+                    📜 Emitir meu Certificado
+                </button>
+            </form>
+        @endif
+    @else
+        <form method="POST" action="{{ route('training.retry') }}">
+            @csrf
+            <button type="submit" class="cta-primary">
+                🔄 Refazer treinamento do zero
+            </button>
+        </form>
+    @endif
 
     <div class="footer-brand">M2 Cloud &amp; Security · Guardião Digital</div>
 </div>

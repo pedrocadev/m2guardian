@@ -48,9 +48,22 @@ class Collaborator extends Authenticatable
         return $this->belongsTo(Leader::class, 'invited_by_leader_id');
     }
 
+    /**
+     * Todas as tentativas do colaborador, mais recente primeiro.
+     * Cada refazer cria uma nova TrainingSession — o histórico fica preservado.
+     */
+    public function trainingSessions(): HasMany
+    {
+        return $this->hasMany(TrainingSession::class)->latest('started_at');
+    }
+
+    /**
+     * Tentativa atual (a mais recente). Mantém a interface `$collaborator->trainingSession`
+     * usada em vários pontos do código; agora aponta pra última em vez da única.
+     */
     public function trainingSession(): HasOne
     {
-        return $this->hasOne(TrainingSession::class);
+        return $this->hasOne(TrainingSession::class)->latestOfMany('started_at');
     }
 
     public function answers(): HasMany

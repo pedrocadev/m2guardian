@@ -60,5 +60,8 @@ Route::middleware('auth.collaborator')->prefix('treinamento')->name('training.')
     Route::get('/cenario/{scenario}', [CollaboratorController::class, 'show'])->name('show');
     Route::post('/resposta', [CollaboratorController::class, 'answer'])->name('answer');
     Route::get('/concluido', [CollaboratorController::class, 'completed'])->name('completed');
+    Route::post('/certificado/emitir', [CollaboratorController::class, 'issueCertificate'])->name('certificate.issue');
+    Route::get('/certificado', [CollaboratorController::class, 'certificate'])->name('certificate');
+    Route::post('/refazer', [CollaboratorController::class, 'retry'])->name('retry');
     Route::post('/logout', [CollaboratorController::class, 'logout'])->name('logout');
 });

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Collaborator;
 use App\Models\Company;
 use App\Models\Scenario;
+use App\Models\TrainingSession;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
 class ScoreService
@@ -31,13 +33,25 @@ class ScoreService
     public function forCollaborator(Collaborator $collaborator): array
     {
         $session = $collaborator->trainingSession;
-        if (!$session || $session->total_questions === 0) {
+        if (!$session) {
+            return $this->emptyCollaboratorResult();
+        }
+        return $this->forSession($session);
+    }
+
+    /**
+     * Métricas de uma tentativa específica (útil quando o colaborador refez o teste
+     * e o painel do líder mostra cada tentativa separadamente).
+     */
+    public function forSession(TrainingSession $session): array
+    {
+        if ($session->total_questions === 0) {
             return $this->emptyCollaboratorResult();
         }
 
         $percentage = (int) round($session->score / $session->total_questions * 100);
         $level = $this->resolveLevel($percentage);
-        $byCategory = $this->collaboratorCategoryBreakdown($collaborator->id);
+        $byCategory = $this->sessionCategoryBreakdown($session->id);
 
         return [
             'level_key'    => $level['key'],
@@ -47,6 +61,7 @@ class ScoreService
             'percentage'   => $percentage,
             'score'        => $session->score,
             'total'        => $session->total_questions,
+            'passed'       => $session->passed,
             'by_category'  => $byCategory,
             'strong_points'    => $this->filterCategories($byCategory, '>=', self::STRONG_THRESHOLD),
             'evolution_points' => $this->filterCategories($byCategory, '<',  self::EVOLUTION_THRESHOLD),
@@ -56,16 +71,23 @@ class ScoreService
 
     public function forCompany(Company $company): array
     {
-        $stats = DB::table('answers')
-            ->join('collaborators', 'collaborators.id', '=', 'answers.collaborator_id')
-            ->where('collaborators.company_id', $company->id)
-            ->whereNull('collaborators.deleted_at')
-            ->selectRaw('COUNT(*) as total, SUM(CASE WHEN answers.is_correct = 1 THEN 1 ELSE 0 END) as hits')
-            ->first();
+        $latestSessionIds = $this->latestSessionIdsForCompany($company->id);
 
-        $total = (int) ($stats->total ?? 0);
-        $hits  = (int) ($stats->hits ?? 0);
-        $percentage = $total > 0 ? (int) round($hits / $total * 100) : 0;
+        if ($latestSessionIds->isEmpty()) {
+            $percentage = 0;
+            $total = 0;
+            $hits = 0;
+        } else {
+            $stats = DB::table('answers')
+                ->whereIn('answers.training_session_id', $latestSessionIds)
+                ->selectRaw('COUNT(*) as total, SUM(CASE WHEN answers.is_correct = 1 THEN 1 ELSE 0 END) as hits')
+                ->first();
+
+            $total = (int) ($stats->total ?? 0);
+            $hits  = (int) ($stats->hits ?? 0);
+            $percentage = $total > 0 ? (int) round($hits / $total * 100) : 0;
+        }
+
         $posture = $this->resolvePosture($percentage);
 
         return [
@@ -76,18 +98,36 @@ class ScoreService
             'posture_name'       => $posture['name'],
             'posture_color'      => $posture['color'],
             'posture_icon'       => $posture['icon'],
-            'by_category'        => $this->companyCategoryBreakdown($company->id),
-            'problem_scenarios'  => $this->companyProblemScenarios($company->id),
-            'completed_count'    => $this->completedCount($company->id),
+            'by_category'        => $this->companyCategoryBreakdown($latestSessionIds),
+            'problem_scenarios'  => $this->companyProblemScenarios($latestSessionIds),
+            'completed_count'    => $this->completedCount($latestSessionIds),
             'thermometer'        => $this->buildThermometer($percentage, 'posture'),
         ];
     }
 
-    private function collaboratorCategoryBreakdown(int $collaboratorId): array
+    /**
+     * IDs das últimas TrainingSessions COMPLETAS (uma por colaborador ativo) de uma empresa.
+     * Filtrar por completed_at evita que agregados oscilem enquanto alguém está refazendo:
+     * durante o refazer, a nova session (ainda vazia) seria a "última" e sumiria os dados
+     * da tentativa anterior — usamos a última já finalizada.
+     */
+    private function latestSessionIdsForCompany(int $companyId): Collection
+    {
+        return DB::table('training_sessions')
+            ->join('collaborators', 'collaborators.id', '=', 'training_sessions.collaborator_id')
+            ->where('collaborators.company_id', $companyId)
+            ->whereNull('collaborators.deleted_at')
+            ->whereNotNull('training_sessions.completed_at')
+            ->groupBy('collaborators.id')
+            ->select(DB::raw('MAX(training_sessions.id) as latest_id'))
+            ->pluck('latest_id');
+    }
+
+    private function sessionCategoryBreakdown(int $sessionId): array
     {
         $rows = DB::table('answers')
             ->join('scenarios', 'scenarios.id', '=', 'answers.scenario_id')
-            ->where('answers.collaborator_id', $collaboratorId)
+            ->where('answers.training_session_id', $sessionId)
             ->whereNotNull('scenarios.category')
             ->groupBy('scenarios.category')
             ->select([
@@ -100,13 +140,15 @@ class ScoreService
         return $this->buildCategoryArray($rows);
     }
 
-    private function companyCategoryBreakdown(int $companyId): array
+    private function companyCategoryBreakdown(Collection $latestSessionIds): array
     {
+        if ($latestSessionIds->isEmpty()) {
+            return [];
+        }
+
         $rows = DB::table('answers')
             ->join('scenarios', 'scenarios.id', '=', 'answers.scenario_id')
-            ->join('collaborators', 'collaborators.id', '=', 'answers.collaborator_id')
-            ->where('collaborators.company_id', $companyId)
-            ->whereNull('collaborators.deleted_at')
+            ->whereIn('answers.training_session_id', $latestSessionIds)
             ->whereNotNull('scenarios.category')
             ->groupBy('scenarios.category')
             ->select([
@@ -119,13 +161,15 @@ class ScoreService
         return $this->buildCategoryArray($rows);
     }
 
-    private function companyProblemScenarios(int $companyId, int $limit = 3): array
+    private function companyProblemScenarios(Collection $latestSessionIds, int $limit = 3): array
     {
+        if ($latestSessionIds->isEmpty()) {
+            return [];
+        }
+
         $rows = DB::table('answers')
             ->join('scenarios', 'scenarios.id', '=', 'answers.scenario_id')
-            ->join('collaborators', 'collaborators.id', '=', 'answers.collaborator_id')
-            ->where('collaborators.company_id', $companyId)
-            ->whereNull('collaborators.deleted_at')
+            ->whereIn('answers.training_session_id', $latestSessionIds)
             ->groupBy('scenarios.id', 'scenarios.label', 'scenarios.platform', 'scenarios.avatar')
             ->select([
                 'scenarios.id',
@@ -159,13 +203,15 @@ class ScoreService
         return array_slice($problems, 0, $limit);
     }
 
-    private function completedCount(int $companyId): int
+    private function completedCount(Collection $latestSessionIds): int
     {
+        if ($latestSessionIds->isEmpty()) {
+            return 0;
+        }
+
         return (int) DB::table('training_sessions')
-            ->join('collaborators', 'collaborators.id', '=', 'training_sessions.collaborator_id')
-            ->where('collaborators.company_id', $companyId)
-            ->whereNull('collaborators.deleted_at')
-            ->whereNotNull('training_sessions.completed_at')
+            ->whereIn('id', $latestSessionIds)
+            ->whereNotNull('completed_at')
             ->count();
     }
 
@@ -234,7 +280,7 @@ class ScoreService
     {
         return [
             'level_key' => 'n1', 'level_tag' => 'NÍVEL 1', 'level_name' => 'Em Alerta', 'level_number' => 1,
-            'percentage' => 0, 'score' => 0, 'total' => 0,
+            'percentage' => 0, 'score' => 0, 'total' => 0, 'passed' => false,
             'by_category' => [], 'strong_points' => [], 'evolution_points' => [],
             'thermometer' => $this->buildThermometer(0, 'level'),
         ];

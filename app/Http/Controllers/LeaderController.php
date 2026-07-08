@@ -85,14 +85,25 @@ class LeaderController extends Controller
     public function collaboratorScore(int $id, ScoreService $scoreService)
     {
         $leader = Auth::guard('leader')->user();
-        $collaborator = Collaborator::with('trainingSession', 'company')
+        $collaborator = Collaborator::with('trainingSessions', 'company')
             ->where('id', $id)
             ->where('company_id', $leader->company_id)
             ->firstOrFail();
 
-        $scoreData = $scoreService->forCollaborator($collaborator);
+        $sessions = $collaborator->trainingSessions;
+        $totalAttempts = $sessions->count();
 
-        return view('leader.collaborator-score', compact('leader', 'collaborator', 'scoreData'));
+        // Cada tentativa vira um bloco separado no drill-down.
+        // Numeração: mais antiga = #1, mais recente = #N. Exibição: mais recente primeiro.
+        $attempts = $sessions->values()->map(function ($session, $index) use ($scoreService, $totalAttempts) {
+            return [
+                'session'        => $session,
+                'attempt_number' => $totalAttempts - $index,
+                'score_data'     => $scoreService->forSession($session),
+            ];
+        });
+
+        return view('leader.collaborator-score', compact('leader', 'collaborator', 'attempts', 'totalAttempts'));
     }
 
     public function logout(Request $request)

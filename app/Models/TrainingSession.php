@@ -11,6 +11,12 @@ class TrainingSession extends Model
 {
     use HasFactory;
 
+    /**
+     * Percentual mínimo de acerto para aprovação — fonte única em código de produção.
+     * Migrations de backfill histórico repetem o valor da época (snapshot) intencionalmente.
+     */
+    public const PASS_THRESHOLD = 80;
+
     protected $fillable = [
         'collaborator_id',
         'started_at',
@@ -18,6 +24,9 @@ class TrainingSession extends Model
         'total_scenarios',
         'total_questions',
         'score',
+        'passed',
+        'certificate_name',
+        'certificate_issued_at',
         'duration_seconds',
         'client_user_agent',
         'client_ip',
@@ -26,8 +35,10 @@ class TrainingSession extends Model
     protected function casts(): array
     {
         return [
-            'started_at' => 'datetime',
-            'completed_at' => 'datetime',
+            'started_at'            => 'datetime',
+            'completed_at'          => 'datetime',
+            'passed'                => 'bool',
+            'certificate_issued_at' => 'datetime',
         ];
     }
 
