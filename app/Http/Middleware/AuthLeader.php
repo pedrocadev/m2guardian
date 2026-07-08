@@ -14,6 +14,15 @@ class AuthLeader
             return redirect()->route('leader.login');
         }
 
+        $leader = Auth::guard('leader')->user();
+
+        if ($leader->must_change_password) {
+            $allowedRoutes = ['leader.password.change', 'leader.password.update', 'leader.logout'];
+            if (!in_array($request->route()?->getName(), $allowedRoutes, true)) {
+                return redirect()->route('leader.password.change');
+            }
+        }
+
         return $next($request);
     }
 }

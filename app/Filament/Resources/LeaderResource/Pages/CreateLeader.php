@@ -17,22 +17,11 @@ class CreateLeader extends CreateRecord
 
     protected function afterCreate(): void
     {
-        $leader = $this->record;
-
-        // Gera senha automaticamente
-        $newPassword = LeaderResource::generatePassword();
-        $leader->update([
-            'password'        => $newPassword,
-            'password_set_at' => now(),
-            'status'          => 'active',
-        ]);
-
-        // Armazena na sessão para o admin ver via "Mostrar Credenciais"
-        session()->flash('leader_new_password_' . $leader->id, $newPassword);
+        LeaderResource::resetLeaderPassword($this->record);
 
         Notification::make()
             ->title('Líder criado e senha gerada!')
-            ->body('Clique em "Mostrar Credenciais" na linha do líder para copiar a senha (visível apenas uma vez).')
+            ->body('Clique em "Mostrar Credenciais" na linha do líder para copiar a senha. O líder será obrigado a trocá-la no primeiro acesso.')
             ->success()
             ->persistent()
             ->send();

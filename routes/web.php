@@ -35,6 +35,8 @@ Route::prefix('lider')->name('leader.')->group(function () {
 
 // Área do líder (autenticada)
 Route::middleware('auth.leader')->prefix('lider')->name('leader.')->group(function () {
+    Route::get('/trocar-senha', [LeaderAuthController::class, 'showChangePassword'])->name('password.change');
+    Route::post('/trocar-senha', [LeaderAuthController::class, 'updatePassword'])->name('password.update');
     Route::get('/dashboard', [LeaderController::class, 'dashboard'])->name('dashboard');
     Route::get('/colaborador/{id}/postura', [LeaderController::class, 'collaboratorScore'])->name('collaborator.score');
     Route::get('/relatorio/pdf', [\App\Http\Controllers\ReportController::class, 'downloadPdf'])->name('report.pdf');

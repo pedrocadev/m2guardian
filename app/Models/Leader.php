@@ -28,6 +28,7 @@ class Leader extends Authenticatable
         'failed_attempts',
         'locked_until',
         'password_set_at',
+        'must_change_password',
     ];
 
     protected $hidden = [
@@ -43,6 +44,7 @@ class Leader extends Authenticatable
             'password_set_at' => 'datetime',
             'password'        => 'hashed',
             'is_primary'      => 'bool',
+            'must_change_password' => 'bool',
         ];
     }
 

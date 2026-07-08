@@ -71,7 +71,47 @@ class LeaderAuthController extends Controller
             'leader', $leader->id, null, $request->ip(), $request->userAgent()
         );
 
+        if ($leader->must_change_password) {
+            return redirect()->route('leader.password.change');
+        }
+
         return redirect()->intended(route('leader.dashboard'));
+    }
+
+    public function showChangePassword()
+    {
+        return view('leader.change-password', [
+            'leader' => Auth::guard('leader')->user(),
+        ]);
+    }
+
+    public function updatePassword(Request $request)
+    {
+        $data = $request->validate([
+            'current_password' => ['required', 'string', 'current_password:leader'],
+            'password'         => ['required', 'string', 'min:8', 'confirmed', 'different:current_password'],
+        ], [
+            'current_password.required'         => 'Informe a senha atual.',
+            'current_password.current_password' => 'Senha atual incorreta.',
+            'password.confirmed'                => 'A confirmação da nova senha não confere.',
+            'password.min'                      => 'A nova senha precisa ter pelo menos 8 caracteres.',
+            'password.different'                => 'A nova senha precisa ser diferente da atual.',
+        ]);
+
+        /** @var Leader $leader */
+        $leader = Auth::guard('leader')->user();
+
+        $leader->update([
+            'password'             => $data['password'],
+            'password_set_at'      => now(),
+            'must_change_password' => false,
+        ]);
+
+        AuditLog::record('leader', $leader->id, 'leader.password.changed',
+            'leader', $leader->id, null, $request->ip(), $request->userAgent()
+        );
+
+        return redirect()->route('leader.dashboard')->with('flash_success', 'Senha alterada com sucesso!');
     }
 
     public function logout(Request $request)

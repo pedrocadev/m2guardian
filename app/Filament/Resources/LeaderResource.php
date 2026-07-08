@@ -102,12 +102,32 @@ class LeaderResource extends Resource
                     ->label('Empresa')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\IconColumn::make('password')
+                Tables\Columns\BadgeColumn::make('password_state')
                     ->label('Senha')
                     ->alignCenter()
-                    ->boolean()
-                    ->getStateUsing(fn ($record) => $record->password !== null)
-                    ->tooltip(fn ($record) => $record->password ? 'Senha definida' : 'Sem senha — clique em "Gerar Senha"'),
+                    ->getStateUsing(function (Leader $record): string {
+                        if ($record->password === null) {
+                            return 'none';
+                        }
+                        return $record->must_change_password ? 'temp' : 'personal';
+                    })
+                    ->colors([
+                        'gray'    => 'none',
+                        'warning' => 'temp',
+                        'success' => 'personal',
+                    ])
+                    ->formatStateUsing(fn ($state) => match ($state) {
+                        'none'     => 'Sem senha',
+                        'temp'     => 'Temporária',
+                        'personal' => 'Pessoal',
+                        default    => $state,
+                    })
+                    ->tooltip(fn ($state) => match ($state) {
+                        'none'     => 'Sem senha — clique em "Gerar Senha"',
+                        'temp'     => 'Senha gerada pelo admin — o líder ainda não trocou',
+                        'personal' => 'Senha foi trocada pelo líder — não é mais visível',
+                        default    => null,
+                    }),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
                     ->colors([
@@ -158,21 +178,11 @@ class LeaderResource extends Resource
                         : 'Uma senha aleatória será gerada para que o líder possa acessar o painel.'
                     )
                     ->action(function (Leader $record) {
-                        $newPassword = self::generatePassword();
-                        $record->update([
-                            'password'        => $newPassword,
-                            'password_set_at' => now(),
-                            'failed_attempts' => 0,
-                            'locked_until'    => null,
-                            'status'          => $record->status === 'pending' ? 'active' : $record->status,
-                        ]);
-
-                        // Store in session to show in next action (show_credentials)
-                        session()->flash('leader_new_password_' . $record->id, $newPassword);
+                        self::resetLeaderPassword($record);
 
                         Notification::make()
                             ->title('Senha gerada!')
-                            ->body('Clique em "Mostrar Credenciais" para copiar a senha (visível apenas uma vez).')
+                            ->body('Clique em "Mostrar Credenciais" para copiar a senha. O líder será obrigado a trocá-la no primeiro acesso.')
                             ->success()
                             ->send();
                     }),
@@ -181,27 +191,14 @@ class LeaderResource extends Resource
                     ->label('Mostrar Credenciais')
                     ->icon('heroicon-o-clipboard-document-list')
                     ->color('primary')
+                    ->visible(fn (Leader $record) => $record->must_change_password && session()->has('leader_new_password_' . $record->id))
                     ->modalHeading(fn (Leader $record) => 'Credenciais — ' . $record->name)
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Fechar')
                     ->modalContent(function (Leader $record) {
-                        $password = session('leader_new_password_' . $record->id);
-
-                        if (!$password) {
-                            // Auto-generate if there's no stored password to show
-                            $password = self::generatePassword();
-                            $record->update([
-                                'password'        => $password,
-                                'password_set_at' => now(),
-                                'failed_attempts' => 0,
-                                'locked_until'    => null,
-                                'status'          => $record->status === 'pending' ? 'active' : $record->status,
-                            ]);
-                        }
-
                         return view('filament.leader-credentials', [
                             'leader'   => $record,
-                            'password' => $password,
+                            'password' => session('leader_new_password_' . $record->id),
                             'loginUrl' => route('leader.login'),
                         ]);
                     }),
@@ -215,15 +212,7 @@ class LeaderResource extends Resource
                     ->modalDescription(fn (Leader $record) => "Uma nova senha será gerada e enviada para {$record->email}.")
                     ->action(function (Leader $record) {
                         $record->load('company');
-
-                        $newPassword = self::generatePassword();
-                        $record->update([
-                            'password'        => $newPassword,
-                            'password_set_at' => now(),
-                            'failed_attempts' => 0,
-                            'locked_until'    => null,
-                            'status'          => $record->status === 'pending' ? 'active' : $record->status,
-                        ]);
+                        $newPassword = self::resetLeaderPassword($record);
 
                         try {
                             Mail::to($record->email)->send(new LeaderInviteMail($record, $newPassword));
@@ -282,13 +271,36 @@ class LeaderResource extends Resource
 
     public static function generatePassword(): string
     {
-        // 12 chars: alphanumeric, easy-to-read (no confusing 0/O/1/l/I)
+        // Sem 0/O/1/l/I para evitar confusão ao ditar/copiar por telefone.
         $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
         $pwd = '';
         for ($i = 0; $i < 12; $i++) {
             $pwd .= $chars[random_int(0, strlen($chars) - 1)];
         }
         return $pwd;
+    }
+
+    /**
+     * Gera nova senha aleatória para o líder, marca troca obrigatória no próximo login,
+     * zera lockout, ativa a conta se estava pendente e guarda a senha na sessão do admin
+     * para exibição via "Mostrar Credenciais". Retorna a senha em texto puro.
+     */
+    public static function resetLeaderPassword(Leader $record): string
+    {
+        $newPassword = self::generatePassword();
+
+        $record->update([
+            'password'             => $newPassword,
+            'password_set_at'      => now(),
+            'must_change_password' => true,
+            'failed_attempts'      => 0,
+            'locked_until'         => null,
+            'status'               => $record->status === 'pending' ? 'active' : $record->status,
+        ]);
+
+        session()->put('leader_new_password_' . $record->id, $newPassword);
+
+        return $newPassword;
     }
 
     public static function getRelations(): array
