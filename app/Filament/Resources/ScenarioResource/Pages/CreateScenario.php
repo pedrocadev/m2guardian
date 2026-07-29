@@ -29,6 +29,7 @@ class CreateScenario extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['updated_by_admin_id'] = auth('admin')->id();
+        $data['content'] = ScenarioResource::normalizeMessagesContent($data['content'] ?? []);
         return $data;
     }
 }

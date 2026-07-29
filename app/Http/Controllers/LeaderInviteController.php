@@ -7,6 +7,7 @@ use App\Models\Collaborator;
 use App\Models\MagicLink;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 class LeaderInviteController extends Controller
@@ -61,8 +62,13 @@ class LeaderInviteController extends Controller
             return redirect()->route('leader.invite.index')
                 ->with('success', "Convite enviado para {$collaborator->email}!");
         } catch (\Exception $e) {
+            Log::error('Falha ao enviar convite de colaborador', [
+                'collaborator_id' => $collaborator->id,
+                'leader_id'       => $leader->id,
+                'error'           => $e->getMessage(),
+            ]);
             return redirect()->route('leader.invite.index')
-                ->with('warning', "Colaborador cadastrado, mas o e-mail falhou: {$e->getMessage()}");
+                ->with('warning', 'Colaborador cadastrado, mas o envio do e-mail falhou. Use o botão "Copiar Link" para enviar o convite manualmente ou fale com o suporte M2 (suporte@m2cloud.com.br).');
         }
     }
 
@@ -95,7 +101,12 @@ class LeaderInviteController extends Controller
 
             return back()->with('success', "Convite reenviado para {$collaborator->email}!");
         } catch (\Exception $e) {
-            return back()->with('warning', "Erro ao reenviar: {$e->getMessage()}");
+            Log::error('Falha ao reenviar convite', [
+                'collaborator_id' => $collaborator->id,
+                'leader_id'       => $leader->id,
+                'error'           => $e->getMessage(),
+            ]);
+            return back()->with('warning', 'Não foi possível reenviar o e-mail. Use "Copiar Link" para enviar manualmente ou fale com o suporte M2.');
         }
     }
 

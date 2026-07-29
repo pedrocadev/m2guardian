@@ -140,6 +140,86 @@
 
         @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
+        /* Overlay flutuante da transição rápida entre chats da mesma plataforma */
+        .quick-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 15, 15, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s ease;
+            backdrop-filter: blur(3px);
+        }
+        .quick-overlay.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .quick-stage {
+            display: flex;
+            align-items: center;
+            gap: 26px;
+            max-width: 540px;
+            width: 100%;
+            transform: translateY(30px);
+            transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .quick-overlay.show .quick-stage { transform: translateY(0); }
+        .quick-mascote img {
+            width: 130px;
+            height: auto;
+            filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.3));
+            animation: quickFloat 2.5s ease-in-out infinite;
+        }
+        .quick-balao {
+            position: relative;
+            background: #fff;
+            padding: 18px 24px;
+            border-radius: 22px;
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25);
+            font-size: 17px;
+            font-weight: 600;
+            color: #222;
+            line-height: 1.4;
+            flex: 1;
+        }
+        .quick-balao::before {
+            content: '';
+            position: absolute;
+            left: -13px;
+            top: 32px;
+            width: 0; height: 0;
+            border-top: 11px solid transparent;
+            border-bottom: 11px solid transparent;
+            border-right: 15px solid #fff;
+        }
+        .quick-emphasize {
+            color: #CC0000;
+            font-weight: 800;
+        }
+        @keyframes quickFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @media (max-width: 620px) {
+            .quick-stage { flex-direction: column; gap: 18px; text-align: center; }
+            .quick-mascote img { width: 100px; }
+            .quick-balao { font-size: 15px; }
+            .quick-balao::before {
+                left: 50%;
+                top: -13px;
+                transform: translateX(-50%);
+                border-left: 11px solid transparent;
+                border-right: 11px solid transparent;
+                border-bottom: 15px solid #fff;
+                border-top: 0;
+            }
+        }
+
         .typing { display: flex; align-items: center; gap: 4px; padding: 12px 16px; background: #fff; border-radius: 16px; border-bottom-left-radius: 4px; width: fit-content; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
         .dot { width: 7px; height: 7px; background: #bbb; border-radius: 50%; animation: bounce 1.2s infinite; }
         .dot:nth-child(2) { animation-delay: 0.2s; }
@@ -1510,6 +1590,13 @@ const csrfToken      = document.querySelector('meta[name="csrf-token"]').content
 const answerUrl      = '{{ route("training.answer") }}';
 const nextScenarioFallback = '{{ route("training.index") }}';
 
+// Mascotes que rotacionam no overlay flutuante entre chats da mesma plataforma
+const QUICK_MASCOTS = [
+    '/images/transicao-chats/training-index-start.png',
+    '/images/transicao-chats/training-index-done.png',
+    '/images/transicao-chats/completion-n3.png',
+];
+
 // ─── Agrupa mensagens em "chunks", cada um termina com uma pergunta ──────
 const chunks = [];
 let buffer = [];
@@ -1782,7 +1869,22 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
                     }
                     contBtn.classList.add('next-scenario');
                     contBtn.addEventListener('click', () => {
-                        window.location.href = data.next_url || nextScenarioFallback;
+                        const target = data.next_url || nextScenarioFallback;
+                        if (data.quick_transition) {
+                            const overlay = document.getElementById('quickOverlay');
+                            const mascote = document.getElementById('quickMascote');
+                            if (overlay && mascote) {
+                                const idx = parseInt(sessionStorage.getItem('quickMascoteIdx') || '0', 10) % QUICK_MASCOTS.length;
+                                mascote.src = QUICK_MASCOTS[idx];
+                                sessionStorage.setItem('quickMascoteIdx', String((idx + 1) % QUICK_MASCOTS.length));
+
+                                overlay.classList.add('show');
+                                overlay.setAttribute('aria-hidden', 'false');
+                                setTimeout(() => { window.location.href = target; }, 1800);
+                                return;
+                            }
+                        }
+                        window.location.href = target;
                     });
                 } else {
                     contBtn.textContent = 'Continuar →';
@@ -1814,5 +1916,16 @@ async function run() {
 
 run();
 </script>
+
+<div class="quick-overlay" id="quickOverlay" aria-hidden="true">
+    <div class="quick-stage">
+        <div class="quick-mascote">
+            <img id="quickMascote" src="/images/transicao-chats/training-index-start.png" alt="Guardião">
+        </div>
+        <div class="quick-balao">
+            <span class="quick-emphasize">Etapa concluída.</span> Vamos para a próxima?
+        </div>
+    </div>
+</div>
 </body>
 </html>

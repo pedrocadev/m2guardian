@@ -45,7 +45,9 @@ class ScoreService
      */
     public function forSession(TrainingSession $session): array
     {
-        if ($session->total_questions === 0) {
+        // Cobre 3 estados: sessão em progresso (score=null), sessão sem perguntas
+        // (total_questions=0) e ambos. Evita divisão null/int (deprecation PHP 8.1+).
+        if ($session->score === null || (int) $session->total_questions === 0) {
             return $this->emptyCollaboratorResult();
         }
 

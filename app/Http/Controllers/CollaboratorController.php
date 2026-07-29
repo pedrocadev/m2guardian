@@ -117,11 +117,6 @@ class CollaboratorController extends Controller
             return redirect()->route('training.index');
         }
 
-        // Total de perguntas neste cenário
-        $totalQuestions = collect($scenario->content['messages'])
-            ->where('type', 'question')
-            ->count();
-
         // Respostas que ja foram dadas para este cenário (indexadas por question_index)
         $answers = Answer::where('training_session_id', $session->id)
             ->where('scenario_id', $scenario->id)
@@ -243,6 +238,7 @@ class CollaboratorController extends Controller
         // Treinamento todo concluído? Todos os cenários têm todas as perguntas respondidas?
         $trainingComplete = false;
         $nextUrl = null;
+        $quickTransition = false;
 
         if ($scenarioComplete) {
             $completedIds = $this->completedScenarioIds($session, $scenarios);
@@ -254,7 +250,17 @@ class CollaboratorController extends Controller
                 $nextUrl = route('training.completed');
             } else {
                 $next = $scenarios->first(fn($s) => !$completedIds->contains($s->id));
-                $nextUrl = $next ? route('training.transition', $next->id) : route('training.completed');
+                if ($next) {
+                    // Mesma plataforma → pula tela de transição, overlay flutuante direto no chat.
+                    if ($next->platform === $scenario->platform) {
+                        $nextUrl = route('training.show', $next->id);
+                        $quickTransition = true;
+                    } else {
+                        $nextUrl = route('training.transition', $next->id);
+                    }
+                } else {
+                    $nextUrl = route('training.completed');
+                }
             }
         }
 
@@ -264,6 +270,7 @@ class CollaboratorController extends Controller
             'scenario_complete' => $scenarioComplete,
             'training_complete' => $trainingComplete,
             'next_url'          => $nextUrl,
+            'quick_transition'  => $quickTransition,
         ]);
     }
 
@@ -424,24 +431,28 @@ class CollaboratorController extends Controller
 
     public function retry(Request $request)
     {
-        $collaborator = Auth::guard('collaborator')->user();
-        $lastSession = $collaborator->trainingSession;
+        $collaboratorId = Auth::guard('collaborator')->id();
 
-        // Só permite refazer se a última tentativa foi concluída e reprovada
-        if (!$lastSession || !$lastSession->isCompleted() || $lastSession->passed) {
-            abort(403, 'Refazer o treinamento não está disponível no momento.');
-        }
+        // Transação + lockForUpdate serializam double-clicks: dois POSTs concorrentes
+        // não conseguem criar duas sessions vazias — o segundo cai no guard depois
+        // que o primeiro já criou a nova session (isCompleted() será false).
+        DB::transaction(function () use ($collaboratorId, $request) {
+            $collaborator = Collaborator::whereKey($collaboratorId)->lockForUpdate()->firstOrFail();
+            $lastSession = $collaborator->trainingSessions()->latest('started_at')->first();
 
-        // Cria nova session e zera o "estado atual" do colaborador.
-        // A session antiga e as answers dela ficam preservadas como histórico.
-        $scenarios = $this->getScenariosFor($collaborator);
-        $this->startNewSession($collaborator, $scenarios, $request);
+            if (!$lastSession || !$lastSession->isCompleted() || $lastSession->passed) {
+                abort(403, 'Refazer o treinamento não está disponível no momento.');
+            }
 
-        $collaborator->update([
-            'completed_at'    => null,
-            'score'           => null,
-            'total_questions' => null,
-        ]);
+            $scenarios = $this->getScenariosFor($collaborator);
+            $this->startNewSession($collaborator, $scenarios, $request);
+
+            $collaborator->update([
+                'completed_at'    => null,
+                'score'           => null,
+                'total_questions' => null,
+            ]);
+        });
 
         return redirect()->route('training.index');
     }

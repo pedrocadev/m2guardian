@@ -46,6 +46,7 @@ class EditScenario extends EditRecord
     {
         $data['updated_by_admin_id'] = auth('admin')->id();
         $data['version'] = $this->record->version + 1;
+        $data['content'] = ScenarioResource::normalizeMessagesContent($data['content'] ?? []);
         return $data;
     }
 

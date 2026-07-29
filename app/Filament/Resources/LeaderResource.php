@@ -162,6 +162,7 @@ class LeaderResource extends Resource
                         'active'    => 'Ativo',
                         'suspended' => 'Suspenso',
                     ]),
+                Tables\Filters\TrashedFilter::make()->label('Arquivados'),
             ])
             ->actions([
                 Tables\Actions\Action::make('generate_credentials')
@@ -196,9 +197,10 @@ class LeaderResource extends Resource
                     ->modalSubmitAction(false)
                     ->modalCancelActionLabel('Fechar')
                     ->modalContent(function (Leader $record) {
+                        $encrypted = session('leader_new_password_' . $record->id);
                         return view('filament.leader-credentials', [
                             'leader'   => $record,
-                            'password' => session('leader_new_password_' . $record->id),
+                            'password' => $encrypted ? decrypt($encrypted) : null,
                             'loginUrl' => route('leader.login'),
                         ]);
                     }),
@@ -212,22 +214,33 @@ class LeaderResource extends Resource
                     ->modalDescription(fn (Leader $record) => "Uma nova senha será gerada e enviada para {$record->email}.")
                     ->action(function (Leader $record) {
                         $record->load('company');
-                        $newPassword = self::resetLeaderPassword($record);
+                        // Gera em memória e tenta enviar ANTES de persistir. Se o envio falhar,
+                        // a senha antiga do líder permanece intacta — nada é rotacionado à toa.
+                        $newPassword = self::generatePassword();
 
                         try {
                             Mail::to($record->email)->send(new LeaderInviteMail($record, $newPassword));
-                            Notification::make()
-                                ->title('Credenciais enviadas!')
-                                ->body("E-mail enviado para {$record->email}.")
-                                ->success()
-                                ->send();
                         } catch (\Exception $e) {
+                            \Log::error('Falha ao enviar credenciais do líder', [
+                                'leader_id' => $record->id,
+                                'error'     => $e->getMessage(),
+                            ]);
                             Notification::make()
-                                ->title('Erro ao enviar')
-                                ->body($e->getMessage())
+                                ->title('Falha no envio')
+                                ->body('Não foi possível enviar o e-mail. A senha atual do líder foi mantida — use "Resetar Senha" + "Mostrar Credenciais" para enviar manualmente.')
                                 ->danger()
+                                ->persistent()
                                 ->send();
+                            return;
                         }
+
+                        self::persistNewPassword($record, $newPassword);
+
+                        Notification::make()
+                            ->title('Credenciais enviadas!')
+                            ->body("E-mail enviado para {$record->email}.")
+                            ->success()
+                            ->send();
                     }),
 
                 Tables\Actions\EditAction::make()->label('Editar'),
@@ -257,9 +270,6 @@ class LeaderResource extends Resource
                     ->icon('heroicon-o-arrow-uturn-left')
                     ->color('success'),
             ])
-            ->filters([
-                Tables\Filters\TrashedFilter::make()->label('Arquivados'),
-            ])
             ->defaultSort('created_at', 'desc');
     }
 
@@ -288,7 +298,17 @@ class LeaderResource extends Resource
     public static function resetLeaderPassword(Leader $record): string
     {
         $newPassword = self::generatePassword();
+        self::persistNewPassword($record, $newPassword);
+        return $newPassword;
+    }
 
+    /**
+     * Persiste uma senha já gerada. Separado do resetLeaderPassword para permitir
+     * o fluxo "envia primeiro, persiste depois" no envio de credenciais por e-mail:
+     * se o Mail::send falhar, a senha antiga do líder permanece válida.
+     */
+    private static function persistNewPassword(Leader $record, string $newPassword): void
+    {
         $record->update([
             'password'             => $newPassword,
             'password_set_at'      => now(),
@@ -298,9 +318,9 @@ class LeaderResource extends Resource
             'status'               => $record->status === 'pending' ? 'active' : $record->status,
         ]);
 
-        session()->put('leader_new_password_' . $record->id, $newPassword);
-
-        return $newPassword;
+        // Encrypt evita expor a senha em plaintext se o session driver for file/database
+        // (com Redis efêmero o ganho é menor, mas mantém defesa em profundidade).
+        session()->put('leader_new_password_' . $record->id, encrypt($newPassword));
     }
 
     public static function getRelations(): array

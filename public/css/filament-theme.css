@@ -306,3 +306,37 @@ body.fi-body {
     .release-popup-footer { padding: 14px 20px 18px; }
     .release-popup-btn { padding: 11px 20px; font-size: 13px; }
 }
+
+/* ==== Editor de Cenários — blocos coloridos por tipo ==== */
+.scenario-block-message,
+.scenario-block-response {
+    border-radius: 8px;
+    padding: 16px !important;
+    margin-top: 8px;
+}
+.scenario-block-message::before,
+.scenario-block-response::before {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+}
+
+.scenario-block-message {
+    background: #eff6ff;
+    border-left: 4px solid #3b82f6;
+}
+.scenario-block-message::before {
+    content: '💬 Mensagem (aparece à esquerda no chat)';
+    color: #1e40af;
+}
+
+.scenario-block-response {
+    background: #fff7ed;
+    border-left: 4px solid #f97316;
+}
+.scenario-block-response::before {
+    content: '✍️ Resposta (o colaborador vai escolher uma opção)';
+    color: #c2410c;
+}

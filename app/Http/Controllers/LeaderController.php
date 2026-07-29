@@ -41,9 +41,12 @@ class LeaderController extends Controller
             ])
             ->sortByDesc('total');
 
+        // Só sessions COMPLETAS entram nos agregados — mesma regra do
+        // ScoreService::latestSessionIdsForCompany. Sem esse filtro, ao alguém
+        // refazer o teste, a session vazia nova entra e distorce as métricas.
         $sessionIds = $company->collaborators
             ->pluck('trainingSession')
-            ->filter()
+            ->filter(fn ($s) => $s !== null && $s->completed_at !== null)
             ->pluck('id');
 
         $scenarioStats = collect();

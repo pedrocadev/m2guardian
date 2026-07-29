@@ -46,6 +46,7 @@ class MagicLinkController extends Controller
         );
 
         Auth::guard($guard)->login($user, remember: true);
+        $request->session()->regenerate();
 
         AuditLog::record(
             $guard, $user->id, "{$guard}.login",

@@ -187,6 +187,7 @@ Marcos estáveis usados para rollback rápido antes de refatorações grandes. C
 | Tag | Commit | Data | Estado preservado |
 |-----|--------|------|-------------------|
 | `checkpoint-pre-quiz-refactor` | `1afb4a6` | 2026-07-02 | Login/mascotes/logo novos deployados; painel do líder com editar e-mail + scroll horizontal; chat com barra de progresso colorida. **Estado imediatamente anterior à refatoração da aba de perguntas do usuário final (`training/show.blade.php`).** |
+| `checkpoint-pre-retry-system` | `69dd288` | 2026-07-08 | Feature de troca obrigatória de senha do líder no primeiro acesso já implantada. **Estado imediatamente anterior à refatoração da regra de aprovação (≥80%) + refazer teste + múltiplas TrainingSessions por colaborador + certificado.** |
 
 **Voltar a um checkpoint (não-destrutivo, cria detached HEAD):**
 ```bash
@@ -597,36 +598,39 @@ public/images/
 
 Exceção: `login-admin.png`, `login-leader.png` e `training-welcome-guardian.png` foram **revertidos pro mascote antigo** (corpo inteiro sem moldura circular branca) porque a "bolinha" destoava dos heros escuros dessas telas.
 
-## Estado atual (2026-07-07) — trabalho pendente de commit
+## Estado atual (2026-07-28) — 10 correções pós-review aguardando commit
 
-⚠️ **IMPORTANTE PRO PRÓXIMO DEV:** o working tree tem **1300+ linhas não commitadas** em 5 arquivos. Antes de fazer alterações grandes, revise e commite ou faça `git stash` do que já está lá pra não perder trabalho.
+Pedro voltou das férias. Rodamos os **5 agentes** (`clean-code-reviewer`, `db-health-checker`, `local-tester`, `production-tester`, `security-tester`) para health check antes de começar alterações grandes. As 10 correções encontradas (1 crítico + 6 médios + 3 baixos) foram aplicadas — aguardando OK pra commitar.
 
-**Arquivos modificados:**
+**Arquivos modificados no working tree:**
 ```
-M  app/Filament/Resources/ScenarioResource.php
-M  app/Filament/Resources/ScenarioResource/Pages/CreateScenario.php
-M  app/Filament/Resources/ScenarioResource/Pages/EditScenario.php
+M  app/Filament/Resources/LeaderResource.php
 M  app/Http/Controllers/CollaboratorController.php
-M  resources/views/training/show.blade.php
+M  app/Http/Controllers/LeaderController.php
+M  app/Http/Controllers/LeaderInviteController.php
+M  app/Http/Controllers/MagicLinkController.php
+M  app/Services/ScoreService.php
 ```
 
-**Trabalho pendente contém 2 blocos lógicos separáveis:**
+**Correções aplicadas:**
 
-**Bloco 1 — Cenários imersivos por plataforma no chat** (`CollaboratorController.php` + `show.blade.php`):
-- 3 modos de renderização (WhatsApp Web / Teams / E-mail) ativados via `body.platform-*`
-- Sidebar de conversas + 4 estados de cenário (active/completed/available/locked)
-- Helper `completedScenarioIds()` eliminando N+1
-- `abort(403)` contra acesso via URL a cenários locked
-- `.faded` opacity 0.35 nas opções não-escolhidas após responder
+**🔴 Crítico:**
+- `LeaderResource.php` — método `filters()` era chamado 2x (setter, não append) → segunda chamada sobrescrevia a primeira → filtros "Empresa" e "Status" tinham sumido da tabela de líderes. Unificados num único bloco.
 
-**Bloco 2 — Editor de cenário no Filament (admin)** (`ScenarioResource.php` + 2 pages):
-- **Fix bug SQL:** `'created_at' => now()` no `ScenarioVersion::create` do `EditScenario::afterSave` — resolve o erro "`Field 'created_at' doesn't have a default value`" que aparecia ao salvar/trocar plataforma no editor
-- Botão **Salvar** no topo do EditScenario (via `getHeaderActions()` + `->action('save')`)
-- Botão **Criar cenário** no topo do CreateScenario (via `getHeaderActions()` + `->action('create')`)
-- Nova **Section "Cabeçalho do e-mail"** no form, visível apenas se `platform=email`. 3 campos armazenados em `content.email_from_name/address/subject`
-- Textarea "Texto da mensagem": `->rows(2)` → `->rows(12)` + `->autosize()` (antes vinha apertado, agora abre expandido)
+**🟡 Médios (6):**
+- `MagicLinkController.php` — `$request->session()->regenerate()` após `Auth::login` (fecha session fixation).
+- `LeaderInviteController.php` — exceções SMTP vão pro `Log::error` com contexto, líder vê mensagem genérica (não vaza mais host `smtp.office365.com` nem código `5.7.139`).
+- `ScoreService.php` — guard cobre `score === null` além de `total_questions === 0` (elimina deprecation PHP 8.1+ em drill-down de sessão em progresso).
+- `LeaderController.php` — `sessionIds` do dashboard filtra `completed_at !== null` (métricas param de oscilar durante refazer).
+- `LeaderResource send_credentials` — **envia e-mail ANTES** de rotacionar senha. Extraído `persistNewPassword()` do `resetLeaderPassword()`. Se envio falhar, senha antiga do líder permanece intacta.
+- `CollaboratorController::show` — removida variável morta `$totalQuestions`.
 
-Ambos os blocos estão **prontos e passaram por clean-code-reviewer**. Aguardando OK do Pedro pra commit + push + deploy quando ele voltar OU decisão do novo dev.
+**🔵 Baixos (3):**
+- `LeaderResource::persistNewPassword` — senha na sessão do admin agora `encrypt()` / `decrypt()`.
+- `showChangePassword` — **decisão consciente de NÃO adicionar guard** `must_change_password` (preserva flexibilidade pra futura troca voluntária).
+- `CollaboratorController::retry` — `DB::transaction()` + `lockForUpdate()` serializam double-clicks.
+
+**Testes:** 28/29 passam. Única falha é conhecida (`MagicLinkTest` desatualizado — espera `/treinamento`, real vai pra `/treinamento/intro`; não é bug).
 
 **Untracked (homolog adiado — NÃO commitar):**
 ```
@@ -636,19 +640,34 @@ Ambos os blocos estão **prontos e passaram por clean-code-reviewer**. Aguardand
 ?? docs/HOMOLOG-SETUP.md
 ```
 
-Homolog está pronto pra ativar mas foi pausado por escolha do Pedro — ver seção Ambientes.
+## SMTP M365 — configurado e funcionando (2026-07-10)
+
+Envio real de e-mails funcionando em prod via `noreply@m2guardiao.com.br`. **Gotcha importante:** o erro `535 5.7.139 Authentication unsuccessful, the request did not meet the criteria` **não é** SMTP AUTH desabilitado — é **Conditional Access Policy** "Block legacy authentication" do Entra ID bloqueando. Solução: adicionar exceção da conta noreply na CA policy (portal Entra → Proteção → Acesso Condicional → Políticas → editar → Identidades excluídas). `Set-CASMailbox -SmtpClientAuthenticationDisabled $false` sozinho **não** sobrescreve CA policies.
+
+Sequência de camadas de bloqueio SMTP no M365 (ordem: mais externa → mais interna):
+1. **Conditional Access Policies (Entra ID)** ← sobrescreve tudo (foi o culpado)
+2. **Security Defaults (Entra ID)**
+3. **`Set-TransportConfig -SmtpClientAuthenticationDisabled`** (tenant global)
+4. **`Set-CASMailbox -SmtpClientAuthenticationDisabled`** (mailbox individual, override)
+5. **Checkbox "SMTP autenticado" no Admin Center** (mesma coisa que #4, UI)
+
+Debug futuro: sempre checar **Message Trace no Exchange Admin Center** (https://admin.exchange.microsoft.com) — se aparecerem entradas, o M365 recebeu (problema é filtro do destinatário); se aparecer vazio, o M365 nunca recebeu (problema é auth ou CA policy).
 
 ## Known Backlog (post-launch)
 
 | # | Item | Priority | Status |
 |---|------|----------|--------|
-| 1 | Configure SMTP M365 (email delivery) | High | **Em progresso** — domínio provisionado, roteiro pronto em `docs/EMAIL-SMTP-SETUP.md` OU memória `project-email-smtp-pendente`. Falta criar caixa + habilitar SMTP AUTH + editar `.env` da VM |
-| 2 | Commit + deploy dos 2 blocos pendentes no working tree (cenários imersivos por plataforma + editor de cenário) | High | Prontos e revisados, aguardando OK |
-| 3 | Enable 2FA TOTP on super admin | High | Backlog |
-| 4 | Ativar homologação (`homolog.m2guardiao.com.br`) — 4 arquivos untracked prontos | Medium | Adiado por escolha do Pedro |
-| 5 | Investigate intermittent dropdown logout bug (Filament user menu, possibly cache-related) | Medium | Backlog |
-| 6 | Migrate CSP from `Report-Only` to enforced after observation | Medium | Backlog |
-| 7 | Move `Logo_guardiao.png` de `backgrounds/` pra `brand/` (semanticamente correto) | Low | Cosmético |
-| 8 | Visual refinements with marketing team | Low | Backlog |
-| 9 | LGPD legal copy (privacy policy + consent) | Low | Backlog |
-| 10 | Upgrade Nginx 1.18 → 1.24+ in maintenance window | Low | Backlog |
+| 1 | Commit + deploy das 10 correções pós-review (working tree atual) | High | Prontas, aguardando OK do Pedro |
+| 2 | ~~Configure SMTP M365~~ | ~~High~~ | ✅ **Resolvido em 2026-07-10** — funcionando via `noreply@m2guardiao.com.br`. Ver seção "SMTP M365" acima |
+| 3 | ~~Commit + deploy dos 2 blocos (cenários imersivos + editor)~~ | ~~High~~ | ✅ **Deployed** — commits `b2dae4e` + `6cd40e3` |
+| 4 | Configurar SPF + DKIM no DNS de `m2guardiao.com.br` (melhora deliverability, evita spam) | High | Backlog — primeiros envios podem cair em spam sem esses |
+| 5 | Enable 2FA TOTP on super admin | High | Backlog |
+| 6 | Ativar homologação (`homolog.m2guardiao.com.br`) — 4 arquivos untracked prontos | Medium | Adiado por escolha do Pedro |
+| 7 | Investigate intermittent dropdown logout bug (Filament user menu, possibly cache-related) | Medium | Backlog |
+| 8 | Migrate CSP from `Report-Only` to enforced after observation | Medium | Backlog |
+| 9 | Corrigir teste `MagicLinkTest` desatualizado (espera redirect `/treinamento`, real vai `/treinamento/intro`) | Low | 1 linha de fix |
+| 10 | Housekeeping DB: empresa teste "Empresa Teste Slug 527" sem uso, tokens magic_link expirados 30d+, sessions abandonadas | Low | db-health-checker reportou (nenhum urgente) |
+| 11 | Move `Logo_guardiao.png` de `backgrounds/` pra `brand/` | Low | Cosmético |
+| 12 | Visual refinements with marketing team | Low | Backlog |
+| 13 | LGPD legal copy (privacy policy + consent) | Low | Backlog |
+| 14 | Upgrade Nginx 1.18 → 1.24+ in maintenance window | Low | Backlog |
