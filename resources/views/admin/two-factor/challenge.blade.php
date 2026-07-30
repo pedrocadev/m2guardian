@@ -28,10 +28,15 @@
 <body>
 <div class="card">
     <div class="logo">
-        <div class="logo-icon">🛡️</div>
-        <div>
-            <div class="logo-text">GUARDIÃO DIGITAL</div>
-            <div class="logo-sub">by M2 Cloud & Security</div>
+        <img src="{{ asset('images/backgrounds/Logo_guardiao.png') }}"
+             alt="Guardião Digital" style="height:44px; width:auto; display:block;"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+        <div style="display:none; align-items:center; gap:10px;">
+            <div class="logo-icon">🛡️</div>
+            <div>
+                <div class="logo-text">GUARDIÃO DIGITAL</div>
+                <div class="logo-sub">by M2 Cloud & Security</div>
+            </div>
         </div>
     </div>
 

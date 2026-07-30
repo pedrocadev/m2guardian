@@ -31,7 +31,9 @@
         body > * { position: relative; z-index: 1; }
 
         .header { background: #111; border-bottom: 3px solid #CC0000; padding: 0 24px; display: flex; align-items: center; justify-content: space-between; height: 56px; flex-shrink: 0; }
-        .brand-name { color: #fff; font-weight: 900; font-size: 14px; letter-spacing: 1px; }
+        .brand-logo { display: flex; align-items: center; }
+        .brand-logo img { height: 40px; width: auto; display: block; filter: drop-shadow(0 2px 8px rgba(204, 0, 0, 0.3)); }
+        .brand-name { color: #fff; font-weight: 900; font-size: 14px; letter-spacing: 1px; display: none; }
         .progress-info {
             display: flex;
             flex-direction: column;
@@ -1291,11 +1293,9 @@
             font-size: 13px;
             font-weight: 600;
             color: #201f1e;
-            cursor: pointer;
             font-family: inherit;
-            transition: background 0.15s;
+            pointer-events: none;
         }
-        .email-btn:hover { background: #f3f2f1; }
         .email-btn span { color: #0078d4; margin-right: 4px; }
 
         /* Esconde bolhas .msg no modo email (mensagens já viraram parágrafos) */
@@ -1413,7 +1413,11 @@
 <body class="platform-{{ $scenario->platform }}">
 
 <div class="header">
-    <div class="brand-name">🛡️ GUARDIÃO DIGITAL</div>
+    <div class="brand-logo">
+        <img src="/images/backgrounds/Logo_guardiao.png" alt="Guardião Digital — by M2 Cloud &amp; Security"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-flex';">
+        <span class="brand-name">🛡️ GUARDIÃO DIGITAL</span>
+    </div>
     @php
         $progressPercent = $total > 0 ? round(($position / $total) * 100) : 0;
         $progressColor = $progressPercent < 33 ? 'red' : ($progressPercent < 66 ? 'yellow' : 'green');
@@ -1568,8 +1572,8 @@
                 {{-- Corpo do e-mail é populado pelo JS (mensagens do cenário viram parágrafos) --}}
             </div>
             <div class="email-actions-bottom">
-                <button type="button" class="email-btn"><span>↩</span> Responder</button>
-                <button type="button" class="email-btn"><span>↪</span> Encaminhar</button>
+                <button type="button" class="email-btn" tabindex="-1" aria-hidden="true"><span>↩</span> Responder</button>
+                <button type="button" class="email-btn" tabindex="-1" aria-hidden="true"><span>↪</span> Encaminhar</button>
             </div>
         </div>
     @endif

@@ -9,8 +9,7 @@
 
         .header { background: #111; color: #fff; padding: 20px 28px; border-bottom: 4px solid #CC0000; }
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; }
-        .brand { font-size: 18px; font-weight: 900; letter-spacing: 1px; }
-        .brand-sub { font-size: 9px; color: #888; letter-spacing: 0.5px; margin-top: 2px; }
+        .brand-logo img { height: 44px; width: auto; display: block; }
         .header-meta { text-align: right; font-size: 10px; color: #aaa; }
         .header-meta strong { color: #fff; display: block; font-size: 14px; margin-bottom: 2px; }
         .report-title { margin-top: 14px; font-size: 13px; color: #ccc; }
@@ -64,8 +63,7 @@
 <div class="header">
     <div class="header-top">
         <div>
-            <div class="brand">🛡️ GUARDIÃO DIGITAL</div>
-            <div class="brand-sub">by M2 Cloud & Security</div>
+            <div class="brand-logo"><img src="{{ public_path('images/backgrounds/Logo_guardiao.png') }}" alt="Guardião Digital"></div>
         </div>
         <div class="header-meta">
             <strong>{{ $company->name }}</strong>

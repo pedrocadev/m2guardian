@@ -11,7 +11,8 @@
         .icon { font-size: 48px; margin-bottom: 20px; }
         .title { font-size: 22px; font-weight: 800; color: #111; margin-bottom: 12px; }
         .text { font-size: 15px; color: #666; line-height: 1.6; margin-bottom: 28px; }
-        .badge { display: inline-block; background: #111; color: white; font-size: 10px; font-weight: 700; letter-spacing: 1px; padding: 4px 10px; border-radius: 4px; margin-bottom: 24px; }
+        .brand-logo { margin-bottom: 24px; }
+        .brand-logo img { height: 42px; width: auto; display: inline-block; }
         .contact { font-size: 13px; color: #999; }
         .contact a { color: #CC0000; text-decoration: none; }
     </style>
@@ -19,7 +20,11 @@
 <body>
     <div class="card">
         <div class="icon">🔒</div>
-        <div class="badge">GUARDIÃO DIGITAL</div>
+        <div class="brand-logo">
+            <img src="{{ asset('images/backgrounds/Logo_guardiao.png') }}" alt="Guardião Digital"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='inline-block';">
+            <span style="display:none; background:#111; color:#fff; font-size:10px; font-weight:700; letter-spacing:1px; padding:4px 10px; border-radius:4px;">GUARDIÃO DIGITAL</span>
+        </div>
         <div class="title">Link inválido ou expirado</div>
         <p class="text">
             Este link de acesso já foi utilizado ou expirou.<br>

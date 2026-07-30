@@ -8,8 +8,6 @@
         body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: #f5f5f5; }
         .wrapper { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
         .header { background: #111111; padding: 28px 32px; text-align: center; border-bottom: 3px solid #CC0000; }
-        .header-title { color: #ffffff; font-size: 20px; font-weight: 900; letter-spacing: 1px; margin: 8px 0 2px; }
-        .header-sub { color: #999999; font-size: 11px; letter-spacing: 0.5px; }
         .body { padding: 36px 32px; }
         .greeting { font-size: 18px; font-weight: 700; color: #111111; margin-bottom: 12px; }
         .text { font-size: 15px; color: #444444; line-height: 1.6; margin-bottom: 16px; }
@@ -29,9 +27,9 @@
 <body>
 <div class="wrapper">
     <div class="header">
-        <div style="font-size: 32px;">🛡️</div>
-        <div class="header-title">GUARDIÃO DIGITAL</div>
-        <div class="header-sub">by M2 Cloud &amp; Security</div>
+        <img src="{{ asset('images/backgrounds/Logo_guardiao.png') }}"
+             alt="Guardião Digital — by M2 Cloud &amp; Security"
+             style="height:52px; width:auto; display:inline-block;">
     </div>
 
     <div class="body">

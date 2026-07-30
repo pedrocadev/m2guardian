@@ -69,14 +69,12 @@
 
         .badge {
             display: inline-block;
-            background: #111;
-            color: #fff;
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            padding: 5px 12px;
-            border-radius: 4px;
             margin-bottom: 22px;
+        }
+        .badge img {
+            height: 40px;
+            width: auto;
+            display: block;
         }
 
         .score-circle {
@@ -361,7 +359,7 @@
     --lvl-color-dark: {{ $L['colorDark'] }};
     --lvl-shadow: {{ $L['shadow'] }};
 ">
-    <div class="badge">GUARDIÃO DIGITAL</div>
+    <div class="badge"><img src="{{ asset('images/backgrounds/Logo_guardiao.png') }}" alt="Guardião Digital"></div>
 
     <div class="score-circle">
         <div class="score-pct">{{ $pct }}%</div>

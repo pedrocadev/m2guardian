@@ -322,9 +322,10 @@
     {{-- ===== Hero (esquerda) ===== --}}
     <aside class="m2-hero @if($heroBackground) m2-hero--has-bg @endif" @if($heroBackground) style="background: url('{{ asset('images/backgrounds/' . $heroBackground) }}') {{ $heroBackgroundPosition }}/cover no-repeat, #0a0a0a;" @endif>
         <div class="m2-brand">
-            @if($brandLogo)
-                <img src="{{ asset('images/' . $brandLogo) }}" alt="Guardião Digital" class="m2-brand-logo">
-            @else
+            <img src="{{ asset('images/' . ($brandLogo ?? 'backgrounds/Logo_guardiao.png')) }}"
+                 alt="Guardião Digital" class="m2-brand-logo"
+                 onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            <div class="m2-brand-fallback" style="display:none; align-items:center; gap:10px;">
                 <div class="m2-brand-icon">
                     <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z"/>
@@ -334,7 +335,7 @@
                     <div class="m2-brand-name">GUARDIÃO DIGITAL</div>
                     <div class="m2-brand-sub">Continuous Human Risk Management</div>
                 </div>
-            @endif
+            </div>
         </div>
 
         <div class="m2-hero-content">
@@ -408,14 +409,19 @@
     <main class="m2-form-side">
         <div class="m2-form-card">
             <div class="m2-brand-mobile">
-                <div class="m2-brand-icon">
-                    <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z"/>
-                    </svg>
-                </div>
-                <div class="m2-brand-text">
-                    <div class="m2-brand-name">GUARDIÃO DIGITAL</div>
-                    <div class="m2-brand-sub">by M2 Cloud &amp; Security</div>
+                <img src="{{ asset('images/' . ($brandLogo ?? 'backgrounds/Logo_guardiao.png')) }}"
+                     alt="Guardião Digital" style="height:44px; width:auto; display:block;"
+                     onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                <div style="display:none; align-items:center; gap:8px;">
+                    <div class="m2-brand-icon">
+                        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3z"/>
+                        </svg>
+                    </div>
+                    <div class="m2-brand-text">
+                        <div class="m2-brand-name">GUARDIÃO DIGITAL</div>
+                        <div class="m2-brand-sub">by M2 Cloud &amp; Security</div>
+                    </div>
                 </div>
             </div>
 
