@@ -1,0 +1,4 @@
+on:
+  schedule:
+    - cron: '0 9 1 * *'  # todo dia 1, 9h UTC
+  workflow_dispatch:      # permite rodar manualmente também
