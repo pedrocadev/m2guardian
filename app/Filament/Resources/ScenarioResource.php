@@ -34,7 +34,7 @@ class ScenarioResource extends Resource
                     ->schema([
                         Forms\Components\Select::make('platform')
                             ->label('Plataforma')
-                            ->options(['wapp' => 'WhatsApp', 'teams' => 'Microsoft Teams', 'email' => 'E-mail', 'outro' => 'Outra Plataforma'])
+                            ->options(Scenario::PLATFORM_LABELS)
                             ->required()
                             ->hintIcon(
                                 'heroicon-m-information-circle',
@@ -104,19 +104,17 @@ class ScenarioResource extends Resource
                     ->icon('heroicon-o-cog-6-tooth')
                     ->description('Empresa, status e áreas-alvo')
                     ->schema([
-                        Forms\Components\Select::make('company_id')
-                            ->label('Empresa (vazio = padrão M2)')
-                            ->relationship('company', 'name')
+                        Forms\Components\Select::make('companies')
+                            ->label('Empresas vinculadas')
+                            ->multiple()
+                            ->relationship('companies', 'name')
                             ->searchable()
                             ->preload()
-                            ->nullable()
-                            ->hintIcon(
-                                'heroicon-m-information-circle',
-                                tooltip: 'Se selecionar uma empresa, o cenário fica disponível APENAS para colaboradores dela. Se deixar vazio, vira "cenário padrão M2" disponível pra todas as empresas que tiverem licença para esse tipo de cenário.'
-                            ),
+                            ->columnSpanFull()
+                            ->helperText('Uma empresa que tem QUALQUER cenário vinculado vê APENAS os vinculados a ela. Empresas sem vínculos veem só os cenários marcados como "Cenário padrão M2". Deixe vazio pra tratar como padrão M2.'),
                         Forms\Components\Select::make('status')
                             ->label('Status')
-                            ->options(['active' => 'Ativo', 'draft' => 'Rascunho', 'archived' => 'Arquivado'])
+                            ->options(Scenario::STATUS_LABELS)
                             ->default('active')
                             ->required()
                             ->hintIcon(
@@ -318,24 +316,16 @@ class ScenarioResource extends Resource
                 Tables\Columns\TextColumn::make('platform')
                     ->label('Plataforma')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'wapp'  => 'success',
-                        'teams' => 'primary',
-                        'email' => 'warning',
-                        'outro' => 'gray',
-                        default => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'wapp'  => 'WhatsApp',
-                        'teams' => 'Teams',
-                        'email' => 'E-mail',
-                        'outro' => 'Outra',
-                        default => $state,
-                    }),
-                Tables\Columns\TextColumn::make('company.name')
-                    ->label('Empresa')
-                    ->default('— Padrão M2 —')
-                    ->sortable(),
+                    ->color(fn ($state) => Scenario::PLATFORM_COLORS[$state] ?? 'gray')
+                    ->formatStateUsing(fn ($state) => Scenario::PLATFORM_LABELS[$state] ?? $state),
+                Tables\Columns\TextColumn::make('companies.name')
+                    ->label('Empresas vinculadas')
+                    ->badge()
+                    ->separator(',')
+                    ->color('gray')
+                    ->limitList(3)
+                    ->expandableLimitedList()
+                    ->placeholder('— Padrão M2 —'),
                 Tables\Columns\IconColumn::make('is_default')
                     ->label('Padrão')
                     ->boolean()
@@ -354,18 +344,8 @@ class ScenarioResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()
-                    ->color(fn ($state) => match ($state) {
-                        'active'   => 'success',
-                        'draft'    => 'warning',
-                        'archived' => 'danger',
-                        default    => 'gray',
-                    })
-                    ->formatStateUsing(fn ($state) => match ($state) {
-                        'active'   => 'Ativo',
-                        'draft'    => 'Rascunho',
-                        'archived' => 'Arquivado',
-                        default    => $state,
-                    }),
+                    ->color(fn ($state) => Scenario::STATUS_COLORS[$state] ?? 'gray')
+                    ->formatStateUsing(fn ($state) => Scenario::STATUS_LABELS[$state] ?? $state),
                 Tables\Columns\TextColumn::make('version')
                     ->label('v.')
                     ->alignCenter(),
@@ -373,10 +353,10 @@ class ScenarioResource extends Resource
             ->filters([
                 Tables\Filters\SelectFilter::make('platform')
                     ->label('Plataforma')
-                    ->options(['wapp' => 'WhatsApp', 'teams' => 'Teams', 'email' => 'E-mail']),
+                    ->options(Scenario::PLATFORM_LABELS),
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
-                    ->options(['active' => 'Ativo', 'draft' => 'Rascunho', 'archived' => 'Arquivado']),
+                    ->options(Scenario::STATUS_LABELS),
                 Tables\Filters\TernaryFilter::make('is_default')->label('Apenas padrão M2'),
                 Tables\Filters\TernaryFilter::make('demo_eligible')->label('Apenas Demo'),
                 // (Filtro de área-alvo removido temporariamente — usar filtros de plataforma e demo)

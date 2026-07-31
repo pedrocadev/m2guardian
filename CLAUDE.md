@@ -190,6 +190,7 @@ Marcos estáveis usados para rollback rápido antes de refatorações grandes. C
 | `checkpoint-pre-retry-system` | `69dd288` | 2026-07-08 | Feature de troca obrigatória de senha do líder no primeiro acesso já implantada. **Estado imediatamente anterior à refatoração da regra de aprovação (≥80%) + refazer teste + múltiplas TrainingSessions por colaborador + certificado.** |
 | `checkpoint-pre-wizard-e-emails` | `d0f7fa5` | 2026-07-29 | Sistema com regra ≥80%, refazer teste e certificado já implantados. **Estado imediatamente anterior às features grandes de 29/07: wizard 3 passos no editor de cenários, novo layout do e-mail de convite, transição rápida entre chats mesma plataforma e 10 correções pós-review dos 5 agentes.** |
 | `checkpoint-pre-logo-global` | `1ea56b7` | 2026-07-30 | Wizard editor + novo e-mail + transição rápida já implantados. **Estado imediatamente anterior à varredura de logo antiga em 7 telas (chat/2FA/completed/leader-invite/magic-link-invalid/training-pdf/auth-layout).** Se rollback: telas voltam a mostrar texto "GUARDIÃO DIGITAL" ou emoji + SVG. |
+| `checkpoint-pre-features-31jul` | `9369355` | 2026-07-31 | Logo oficial em 7 telas + randomização das opções por sessão + workflow `recorrente.yml`. **Estado imediatamente anterior às próximas features grandes de 31/07.** Se rollback: opções voltam a aparecer sempre na ordem cadastrada no admin (risco de gabarito na empresa). |
 
 **Voltar a um checkpoint (não-destrutivo, cria detached HEAD):**
 ```bash

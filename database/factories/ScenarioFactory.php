@@ -12,7 +12,6 @@ class ScenarioFactory extends Factory
     public function definition(): array
     {
         return [
-            'company_id'    => null,
             'platform'      => fake()->randomElement(['wapp', 'teams', 'email']),
             'slug'          => fake()->unique()->slug(3),
             'label'         => fake()->sentence(3),

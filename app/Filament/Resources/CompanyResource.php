@@ -275,7 +275,9 @@ class CompanyResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            CompanyResource\RelationManagers\ScenariosRelationManager::class,
+        ];
     }
 
     public static function getPages(): array

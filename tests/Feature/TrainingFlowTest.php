@@ -26,9 +26,8 @@ beforeEach(function () {
         'invited_by_leader_id' => $this->leader->id,
     ]);
 
-    // Create 3 demo-eligible scenarios
+    // Create 3 demo-eligible scenarios (padrao M2, sem vinculo a nenhuma empresa)
     Scenario::factory()->count(3)->create([
-        'company_id'    => null,
         'is_default'    => true,
         'demo_eligible' => true,
         'status'        => 'active',

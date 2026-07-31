@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -14,7 +15,6 @@ class Scenario extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'company_id',
         'platform',
         'category',
         'slug',
@@ -53,6 +53,32 @@ class Scenario extends Model
         'anexos_downloads'             => 'Anexos e downloads suspeitos',
     ];
 
+    public const PLATFORM_LABELS = [
+        'wapp'  => 'WhatsApp',
+        'teams' => 'Teams',
+        'email' => 'E-mail',
+        'outro' => 'Outra',
+    ];
+
+    public const PLATFORM_COLORS = [
+        'wapp'  => 'success',
+        'teams' => 'primary',
+        'email' => 'warning',
+        'outro' => 'gray',
+    ];
+
+    public const STATUS_LABELS = [
+        'active'   => 'Ativo',
+        'draft'    => 'Rascunho',
+        'archived' => 'Arquivado',
+    ];
+
+    public const STATUS_COLORS = [
+        'active'   => 'success',
+        'draft'    => 'warning',
+        'archived' => 'danger',
+    ];
+
     protected function casts(): array
     {
         return [
@@ -63,9 +89,9 @@ class Scenario extends Model
         ];
     }
 
-    public function company(): BelongsTo
+    public function companies(): BelongsToMany
     {
-        return $this->belongsTo(Company::class);
+        return $this->belongsToMany(Company::class, 'company_scenario')->withTimestamps();
     }
 
     public function updatedBy(): BelongsTo
@@ -83,9 +109,12 @@ class Scenario extends Model
         return $this->hasMany(Answer::class);
     }
 
+    // Cenarios padrao M2 = fallback usado por empresas SEM vinculos proprios no pivot.
+    // Nao filtra por doesntHave('companies') de proposito: um cenario is_default pode
+    // ADICIONALMENTE estar vinculado a X empresas (aparece pra elas + pras sem vinculo).
     public function scopeDefaults(Builder $query): Builder
     {
-        return $query->whereNull('company_id')->where('is_default', true);
+        return $query->where('is_default', true);
     }
 
     public function scopeDemoEligible(Builder $query): Builder

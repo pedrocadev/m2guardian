@@ -11,7 +11,7 @@ class ScenarioSeeder extends Seeder
     {
         foreach ($this->scenarios() as $scenario) {
             Scenario::updateOrCreate(
-                ['company_id' => null, 'slug' => $scenario['slug']],
+                ['slug' => $scenario['slug']],
                 $scenario
             );
         }

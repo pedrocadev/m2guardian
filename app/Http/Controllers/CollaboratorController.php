@@ -345,18 +345,26 @@ class CollaboratorController extends Controller
     {
         $company = $collaborator->company;
 
+        // Demo: sempre 3 cenarios do catalogo padrao M2 marcados como elegiveis.
         if ($company->license === 'demo') {
-            return Scenario::whereNull('company_id')
-                ->where('demo_eligible', true)
-                ->where('status', 'active')
+            return Scenario::defaults()
+                ->demoEligible()
+                ->active()
                 ->orderBy('id')
                 ->take(3)
                 ->get();
         }
 
-        return Scenario::where(function ($q) use ($company) {
-            $q->whereNull('company_id')->orWhere('company_id', $company->id);
-        })->where('status', 'active')->orderBy('id')->get();
+        // Empresa com vinculos proprios (pivot): SO os vinculados.
+        // Empresa sem vinculos: SO os padrao M2 (is_default=true) — fallback.
+        if ($company->scenarios()->exists()) {
+            return $company->scenarios()
+                ->where('status', 'active')
+                ->orderBy('scenarios.id')
+                ->get();
+        }
+
+        return Scenario::defaults()->active()->orderBy('id')->get();
     }
 
     /**
