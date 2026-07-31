@@ -12,7 +12,7 @@ class ScenarioFactory extends Factory
     public function definition(): array
     {
         return [
-            'platform'      => fake()->randomElement(['wapp', 'teams', 'email']),
+            'platform'      => fake()->randomElement(['wapp', 'teams', 'email', 'telegram']),
             'slug'          => fake()->unique()->slug(3),
             'label'         => fake()->sentence(3),
             'avatar'        => '🎭',

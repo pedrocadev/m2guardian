@@ -360,7 +360,7 @@
         $nextPosition = $nextScenario
             ? $scenarios->search(fn($s) => $s->id === $nextScenario->id) + 1
             : null;
-        $platforms = ['wapp' => 'WhatsApp', 'teams' => 'Microsoft Teams', 'email' => 'E-mail'];
+        $platforms = ['wapp' => 'WhatsApp', 'teams' => 'Microsoft Teams', 'email' => 'E-mail', 'telegram' => 'Telegram'];
 
         // Mensagem do mascote contextual
         if ($completed === 0) {

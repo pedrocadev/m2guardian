@@ -114,7 +114,6 @@
         .option-btn.selected-correct { border-color: #16a34a; background: #f0fdf4; color: #15803d; }
         .option-btn.selected-wrong { border-color: #dc2626; background: #fef2f2; color: #dc2626; }
         .option-btn.faded { opacity: 0.35; transition: opacity 0.3s ease; cursor: not-allowed; }
-        .option-key { font-weight: 900; font-size: 13px; min-width: 20px; margin-top: 1px; }
 
         .feedback-box { margin-top: 16px; padding: 14px 16px; border-radius: 10px; font-size: 13px; line-height: 1.6; display: none; animation: fadeIn 0.3s ease; }
         .feedback-box.correct { background: #f0fdf4; border: 1px solid #86efac; color: #166534; }
@@ -299,10 +298,11 @@
         .msg-time, .msg-check, .s-info-online, .wapp-header-icons { display: none; }
         .s-info { display: flex; flex-direction: column; gap: 2px; }
 
-        /* Regras compartilhadas entre todos os modos de plataforma (wapp / teams / email) */
+        /* Regras compartilhadas entre todos os modos de plataforma (wapp / teams / email / telegram) */
         .platform-wapp .chat-main,
         .platform-teams .chat-main,
-        .platform-email .chat-main {
+        .platform-email .chat-main,
+        .platform-telegram .chat-main {
             display: flex;
             flex-direction: column;
             min-width: 0;
@@ -310,13 +310,15 @@
         }
         .platform-wapp .chat-main .chat-area,
         .platform-teams .chat-main .chat-area,
-        .platform-email .chat-main .chat-area {
+        .platform-email .chat-main .chat-area,
+        .platform-telegram .chat-main .chat-area {
             max-width: 100%;
             margin: 0;
         }
         .platform-wapp .mascote-fixo,
         .platform-teams .mascote-fixo,
-        .platform-email .mascote-fixo {
+        .platform-email .mascote-fixo,
+        .platform-telegram .mascote-fixo {
             display: none;
         }
 
@@ -537,9 +539,6 @@
             background: #dc2626;
             color: #fff;
             border-color: transparent;
-        }
-        .platform-wapp .option-key {
-            display: none;
         }
 
         /* Feedback vira 'resposta do sistema' — bolha branca com remetente */
@@ -1041,7 +1040,6 @@
             background: #c50f1f;
             color: #fff;
         }
-        .platform-teams .option-key { display: none; }
 
         /* Feedback como "resposta do sistema" */
         .platform-teams .feedback-mascot-wrap { display: none !important; }
@@ -1355,13 +1353,6 @@
             border-color: #c50f1f;
             color: #c50f1f;
         }
-        .platform-email .option-key {
-            display: inline-block;
-            font-weight: 700;
-            color: #0078d4;
-            font-size: 13px;
-            min-width: 20px;
-        }
 
         /* Feedback como card do "Guardião" */
         .platform-email .feedback-mascot-wrap { display: none !important; }
@@ -1408,6 +1399,300 @@
             .platform-email .question-counter { display: none; }
             .platform-email .email-actions-top { display: none; }
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           MODO TELEGRAM — layout de messenger dark com paleta violeta
+           ═══════════════════════════════════════════════════════════ */
+        body.platform-telegram {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            /* Herda background-image: training-show.jpg + overlay do body (mesmo padrao dos outros cenarios) */
+        }
+
+        .platform-telegram .chat-wrapper {
+            display: grid;
+            grid-template-columns: minmax(300px, 380px) 1fr;
+            flex: 1;
+            min-height: 0;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            background-color: #0a0a0a;
+            background-image: url('/images/telegran.jpg');
+            background-size: auto;
+            background-repeat: repeat;
+            background-position: center;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.4);
+            overflow: hidden;
+        }
+
+        /* Sidebar opaca pra bloquear o wallpaper por tras */
+        .platform-telegram .wapp-sidebar {
+            background: #0f0f0f;
+            border-right: 1px solid #000;
+        }
+        .platform-telegram .wapp-sidebar-header {
+            background: #0f0f0f;
+            padding: 10px 14px;
+            color: #fff;
+            border-bottom: none;
+        }
+        .platform-telegram .wapp-user-avatar {
+            background: transparent;
+            color: #aaa;
+            width: 32px; height: 32px;
+            font-size: 18px;
+        }
+        .platform-telegram .wapp-sidebar-icons { color: #aaa; gap: 20px; }
+        .platform-telegram .wapp-sidebar-icons svg { width: 22px; height: 22px; }
+
+        .platform-telegram .wapp-search {
+            background: #212121;
+            border-bottom: none;
+            color: #7d7d7d;
+            margin: 6px 10px 8px;
+            border-radius: 22px;
+            padding: 9px 14px;
+        }
+
+        .platform-telegram .wapp-chat-list { background: #0f0f0f; }
+        .platform-telegram .wapp-chat-list::-webkit-scrollbar-thumb { background: #333; }
+
+        .platform-telegram .wapp-chat-item {
+            padding: 10px 12px;
+            border-bottom: none;
+            border-radius: 12px;
+            margin: 1px 6px;
+        }
+        .platform-telegram .wapp-chat-item.active { background: #8774E1; }
+        .platform-telegram .wapp-chat-item.completed:hover,
+        .platform-telegram .wapp-chat-item.available:hover { background: #1c1c1c; }
+
+        .platform-telegram .wapp-chat-avatar {
+            border-radius: 50%;
+            width: 54px; height: 54px;
+        }
+        .platform-telegram .wapp-chat-name { color: #fff; font-weight: 600; font-size: 15px; }
+        .platform-telegram .wapp-chat-time { color: #aaa; font-size: 12px; }
+        .platform-telegram .wapp-chat-preview { color: #aaa; }
+        .platform-telegram .wapp-chat-item.active .wapp-chat-time,
+        .platform-telegram .wapp-chat-item.active .wapp-chat-preview { color: rgba(255,255,255,0.85); }
+        .platform-telegram .wapp-chat-checkmark { color: #fff; }
+        .platform-telegram .wapp-chat-badge {
+            background: #8774E1;
+            color: #fff;
+            border-radius: 12px;
+            padding: 1px 8px;
+            font-size: 12px;
+        }
+
+        /* Header da conversa — semi-transparente pra deixar o wallpaper aparecer */
+        .platform-telegram .scenario-bar {
+            background: rgba(15, 15, 15, 0.65);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+            padding: 10px 18px;
+            color: #fff;
+        }
+        .platform-telegram .s-avatar {
+            border-radius: 50%;
+            width: 42px; height: 42px;
+            background: #ff8a2b !important;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .platform-telegram .s-info-label {
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        .platform-telegram .s-info-sub { display: none; }
+        .platform-telegram .s-info-online {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            color: #aaa;
+        }
+        .platform-telegram .online-dot { display: none; }
+        .platform-telegram .wapp-header-icons {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            margin-left: auto;
+            color: #aaa;
+        }
+        .platform-telegram .wapp-header-icons svg { width: 22px; height: 22px; }
+        .platform-telegram .question-counter {
+            background: rgba(135, 116, 225, 0.15);
+            color: #b4a4ff;
+            margin-left: 16px;
+        }
+        .platform-telegram .question-counter strong { color: #fff; }
+
+        /* Chat area transparente — wallpaper vem do wrapper por tras */
+        .platform-telegram .chat-area {
+            background: transparent;
+            max-width: 560px;
+            padding: 16px 12px;
+        }
+
+        /* Bolhas — recebidas cinza-escuro, enviadas violeta */
+        .platform-telegram .msg { margin-bottom: 8px; }
+        .platform-telegram .bubble {
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 14.5px;
+            line-height: 1.4;
+            max-width: 68%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        }
+        .platform-telegram .bubble.them {
+            background: #212121;
+            color: #fff;
+            border-bottom-left-radius: 4px;
+        }
+        .platform-telegram .bubble.me {
+            background: #8774E1;
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        /* Remove tails herdados */
+        .platform-telegram .bubble.them::before,
+        .platform-telegram .bubble.me::before,
+        .platform-telegram .question-prompt::before,
+        .platform-telegram .typing::before,
+        .platform-telegram .feedback-box::before,
+        .platform-telegram .option-btn:first-child::before {
+            display: none;
+        }
+
+        /* Timestamp + check */
+        .platform-telegram .msg-time {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.55);
+            float: right;
+            margin: 4px 0 -2px 8px;
+            font-family: inherit;
+        }
+        .platform-telegram .msg-check {
+            display: inline;
+            color: #fff;
+            font-weight: 500;
+            letter-spacing: -2px;
+        }
+
+        /* Typing indicator */
+        .platform-telegram .typing {
+            background: #212121;
+            border-radius: 12px;
+            border-bottom-left-radius: 4px;
+        }
+        .platform-telegram .typing .dot { background: #aaa; }
+
+        /* Question card — pergunta vira bolha them */
+        .platform-telegram .question-card {
+            background: transparent;
+            box-shadow: none;
+            padding: 0;
+            margin: 4px 0;
+        }
+        .platform-telegram .question-prompt {
+            background: #212121;
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border-bottom-left-radius: 4px;
+            font-size: 14.5px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            max-width: 68%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        }
+        .platform-telegram .answered-tag {
+            display: block;
+            font-size: 11px;
+            color: #aaa;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Opções — botões estilo bolha "me" (violeta) */
+        .platform-telegram .options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-end;
+            margin-top: 4px;
+        }
+        .platform-telegram .option-btn {
+            background: #8774E1;
+            color: #fff;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border-bottom-right-radius: 4px;
+            font-size: 14.5px;
+            font-family: inherit;
+            cursor: pointer;
+            text-align: left;
+            max-width: 68%;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+            transition: background 0.15s;
+        }
+        .platform-telegram .option-btn:hover:not(:disabled) { background: #9985ee; }
+        .platform-telegram .option-btn:disabled { cursor: default; }
+        .platform-telegram .option-btn.selected-correct { background: #4caf50; }
+        .platform-telegram .option-btn.selected-wrong { background: #e57373; }
+        .platform-telegram .option-btn.faded { opacity: 0.35; }
+
+        /* Feedback box (resposta educativa) — bolha do "sistema" */
+        .platform-telegram .feedback-box {
+            background: #212121;
+            color: #fff;
+            border-radius: 12px;
+            border-bottom-left-radius: 4px;
+            padding: 12px 14px;
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 68%;
+            margin: 8px 0;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.25);
+        }
+        .platform-telegram .feedback-box.correct { border-left: 3px solid #4caf50; }
+        .platform-telegram .feedback-box.wrong { border-left: 3px solid #e57373; }
+        .platform-telegram .feedback-mascot-wrap { display: none; }
+
+        /* Botão continuar — violeta */
+        .platform-telegram .continue-btn {
+            background: #8774E1;
+            border-radius: 20px;
+            font-weight: 500;
+            box-shadow: 0 2px 6px rgba(135, 116, 225, 0.35);
+        }
+        .platform-telegram .continue-btn:hover { background: #7461d4; }
+        .platform-telegram .continue-btn.next-scenario { background: #7461d4; }
+        .platform-telegram .continue-btn.next-scenario:hover { background: #6250bf; }
+
+        /* Intro do mascote — fundo escuro solido pra contrastar com wallpaper */
+        .platform-telegram .mascote-intro {
+            background: #1c1c1c;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4);
+            border-left: 4px solid #CC0000;
+        }
+        .platform-telegram .mascote-intro .intro-text {
+            color: #e8e8e8;
+        }
+
+        @media (max-width: 700px) {
+            .platform-telegram .wapp-header-icons { display: none; }
+            .platform-telegram .question-counter { display: none; }
+        }
     </style>
 </head>
 <body class="platform-{{ $scenario->platform }}">
@@ -1432,7 +1717,7 @@
 
 <div class="chat-wrapper">
 
-@if(in_array($scenario->platform, ['wapp', 'teams', 'email']))
+@if(in_array($scenario->platform, ['wapp', 'teams', 'email', 'telegram']))
 <aside class="wapp-sidebar">
     <div class="wapp-sidebar-header">
         @if($scenario->platform === 'email')
@@ -1744,7 +2029,6 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
 
     const optionsHtml = q.options.map(opt => `
         <button type="button" class="option-btn" data-key="${opt.key}">
-            <span class="option-key">${opt.key.toUpperCase()}</span>
             <span>${opt.text.replace(/</g, '&lt;')}</span>
         </button>
     `).join('');

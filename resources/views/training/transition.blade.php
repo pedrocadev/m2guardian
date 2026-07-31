@@ -319,9 +319,10 @@
 <div class="main">
     @php
         $platforms = [
-            'wapp'  => ['name' => 'WhatsApp',           'icon' => '📱', 'verb' => 'Atenção redobrada com mensagens diretas.'],
-            'teams' => ['name' => 'Microsoft Teams',    'icon' => '💼', 'verb' => 'Comunicação corporativa também pode esconder armadilhas.'],
-            'email' => ['name' => 'E-mail corporativo', 'icon' => '📧', 'verb' => 'A caixa de entrada é um dos alvos favoritos dos atacantes.'],
+            'wapp'     => ['name' => 'WhatsApp',           'icon' => '📱', 'verb' => 'Atenção redobrada com mensagens diretas.'],
+            'teams'    => ['name' => 'Microsoft Teams',    'icon' => '💼', 'verb' => 'Comunicação corporativa também pode esconder armadilhas.'],
+            'email'    => ['name' => 'E-mail corporativo', 'icon' => '📧', 'verb' => 'A caixa de entrada é um dos alvos favoritos dos atacantes.'],
+            'telegram' => ['name' => 'Telegram',           'icon' => '✈️', 'verb' => 'Mensageiros pessoais também são usados pra golpes.'],
         ];
         $platform = $platforms[$scenario->platform] ?? ['name' => $scenario->platform, 'icon' => '⚡', 'verb' => 'Próximo desafio na área.'];
 
@@ -329,9 +330,10 @@
 
         // Mascote alterna por plataforma pra dar variedade
         $mascotes = [
-            'wapp'  => 'training-transition-wapp.png',
-            'teams' => 'training-transition-teams.png',
-            'email' => 'training-transition-email.png',
+            'wapp'     => 'training-transition-wapp.png',
+            'teams'    => 'training-transition-teams.png',
+            'email'    => 'training-transition-email.png',
+            'telegram' => 'training-transition-fallback.png',
         ];
         $mascote = $mascotes[$scenario->platform] ?? 'training-transition-fallback.png';
     @endphp

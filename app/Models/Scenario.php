@@ -54,17 +54,19 @@ class Scenario extends Model
     ];
 
     public const PLATFORM_LABELS = [
-        'wapp'  => 'WhatsApp',
-        'teams' => 'Teams',
-        'email' => 'E-mail',
-        'outro' => 'Outra',
+        'wapp'     => 'WhatsApp',
+        'teams'    => 'Teams',
+        'email'    => 'E-mail',
+        'telegram' => 'Telegram',
+        'outro'    => 'Outra',
     ];
 
     public const PLATFORM_COLORS = [
-        'wapp'  => 'success',
-        'teams' => 'primary',
-        'email' => 'warning',
-        'outro' => 'gray',
+        'wapp'     => 'success',
+        'teams'    => 'primary',
+        'email'    => 'warning',
+        'telegram' => 'info',
+        'outro'    => 'gray',
     ];
 
     public const STATUS_LABELS = [

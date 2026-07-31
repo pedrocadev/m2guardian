@@ -357,6 +357,11 @@ class ScenarioResource extends Resource
                 Tables\Filters\SelectFilter::make('status')
                     ->label('Status')
                     ->options(Scenario::STATUS_LABELS),
+                Tables\Filters\SelectFilter::make('companies')
+                    ->label('Empresa vinculada')
+                    ->relationship('companies', 'name')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\TernaryFilter::make('is_default')->label('Apenas padrão M2'),
                 Tables\Filters\TernaryFilter::make('demo_eligible')->label('Apenas Demo'),
                 // (Filtro de área-alvo removido temporariamente — usar filtros de plataforma e demo)
