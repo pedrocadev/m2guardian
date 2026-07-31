@@ -372,7 +372,7 @@ No pseudo-elements, no z-index manipulation. Equivalent visual result, no JS-bre
 - `Company` → hasMany `Leader`, `Collaborator`, `Scenario`; belongsTo `Admin` (created_by); hasOne `Setting`
 - `Leader` → belongsTo `Company`; hasMany `Collaborator` (invited); morphMany `MagicLink`
 - `Collaborator` → belongsTo `Company`, `Leader`; hasOne `TrainingSession`; hasMany `Answer`; morphMany `MagicLink`
-- `Scenario` — `company_id = NULL` means default M2 template; `demo_eligible` controls demo selection; `target_areas` (JSON) tags audience departments via `Scenario::AREAS` constant
+- `Scenario` — belongsToMany `Company` via pivot `company_scenario` (m2m, desde `206034b`); `is_default=true` marca cenário como catálogo padrão M2 (fallback pra empresas sem vínculos próprios); `demo_eligible` controls demo selection; `target_areas` (JSON) tags audience departments via `Scenario::AREAS` constant. Labels/cores de `platform` e `status` centralizados em constantes `PLATFORM_LABELS/COLORS/STATUS_LABELS/COLORS` no próprio model
 - `TrainingSession` — exactly one per collaborator (UNIQUE constraint); aggregates score/duration
 - `Answer` — one row per question answered (granular metrics); stores `scenario_version` for snapshot integrity
 - `MagicLink` — polymorphic (`tokenable_type` + `tokenable_id`)
@@ -380,7 +380,7 @@ No pseudo-elements, no z-index manipulation. Equivalent visual result, no JS-bre
 
 ### Modos de plataforma no chat de treinamento (feature nova, ver em `training/show.blade.php`)
 
-Cada cenário tem um campo `platform` (`wapp`, `teams`, `email`, `outro`). O chat de treinamento renderiza **visualmente** o cenário como se fosse a plataforma real, ativado via classe `body.platform-{wapp|teams|email}`. Toda a lógica visual está em `resources/views/training/show.blade.php`.
+Cada cenário tem um campo `platform` (`wapp`, `teams`, `email`, `telegram`, `outro`). O chat de treinamento renderiza **visualmente** o cenário como se fosse a plataforma real, ativado via classe `body.platform-{wapp|teams|email|telegram}`. Toda a lógica visual está em `resources/views/training/show.blade.php`. **Ao adicionar uma nova plataforma**, atualizar: (1) enum na migration; (2) `Scenario::PLATFORM_LABELS` + `PLATFORM_COLORS` no model; (3) tab em `ListScenarios::getTabs()`; (4) arrays em `transition.blade.php` + `index.blade.php`; (5) `@if(in_array(..., ['wapp','teams','email','telegram']))` que ativa a sidebar em `show.blade.php`; (6) CSS `.platform-{nome}` seguindo o padrão dos outros modos.
 
 #### Modo WhatsApp Web (`platform=wapp`)
 - Layout 2 colunas: sidebar de conversas + chat principal
@@ -412,7 +412,7 @@ Cada cenário tem um campo `platform` (`wapp`, `teams`, `email`, `outro`). O cha
 - Opções de resposta como **botões retangulares empilhados verticalmente** (não quick-reply)
 - Assunto/remetente/endereço vêm de campos JSON no `content` (ver abaixo)
 
-#### Sidebar de conversas (compartilhada wapp+teams+email)
+#### Sidebar de conversas (compartilhada wapp+teams+email+telegram)
 
 Filtra cenários pelo `platform` atual e mostra com 4 estados:
 - **`active`** — cenário atual (fundo destacado, não clicável)
@@ -602,47 +602,70 @@ public/images/
 
 Exceção: `login-admin.png`, `login-leader.png` e `training-welcome-guardian.png` foram **revertidos pro mascote antigo** (corpo inteiro sem moldura circular branca) porque a "bolinha" destoava dos heros escuros dessas telas.
 
-## Estado atual (2026-07-28) — 10 correções pós-review aguardando commit
+## Estado atual (2026-07-31) — 4 releases grandes deployadas, working tree limpo
 
-Pedro voltou das férias. Rodamos os **5 agentes** (`clean-code-reviewer`, `db-health-checker`, `local-tester`, `production-tester`, `security-tester`) para health check antes de começar alterações grandes. As 10 correções encontradas (1 crítico + 6 médios + 3 baixos) foram aplicadas — aguardando OK pra commitar.
+Semana intensa. **4 releases** foram pra prod nos últimos 2 dias — todas testadas e validadas em `https://m2guardiao.com.br` via `production-tester`. Working tree só com os 4 arquivos de homolog untracked (política de sempre).
 
-**Arquivos modificados no working tree:**
-```
-M  app/Filament/Resources/LeaderResource.php
-M  app/Http/Controllers/CollaboratorController.php
-M  app/Http/Controllers/LeaderController.php
-M  app/Http/Controllers/LeaderInviteController.php
-M  app/Http/Controllers/MagicLinkController.php
-M  app/Services/ScoreService.php
-```
+### Releases deployadas (mais recente primeiro)
 
-**Correções aplicadas:**
+| Commit | Data | O que foi |
+|--------|------|-----------|
+| `61c59dd` | 31/07 | **Nova plataforma Telegram** nos cenários + filtro "Empresa vinculada" na tabela |
+| `206034b` | 31/07 | **Cenários vinculados a múltiplas empresas** (pivot m2m + relation manager) |
+| `83901b2` | 31/07 | **Randomização das opções de resposta** por sessão (evita gabarito) |
+| `0b0cf31` | 30/07 | **Logo oficial em 7 telas** + botões "Responder"/"Encaminhar" decorativos no chat E-mail |
+| `1ea56b7` | 29/07 | Wizard editor de cenários + novo layout do e-mail de convite + transição rápida entre chats + 10 correções pós-review dos 5 agentes |
 
-**🔴 Crítico:**
-- `LeaderResource.php` — método `filters()` era chamado 2x (setter, não append) → segunda chamada sobrescrevia a primeira → filtros "Empresa" e "Status" tinham sumido da tabela de líderes. Unificados num único bloco.
+### Feature summary — Cenários vinculados a múltiplas empresas (m2m)
 
-**🟡 Médios (6):**
-- `MagicLinkController.php` — `$request->session()->regenerate()` após `Auth::login` (fecha session fixation).
-- `LeaderInviteController.php` — exceções SMTP vão pro `Log::error` com contexto, líder vê mensagem genérica (não vaza mais host `smtp.office365.com` nem código `5.7.139`).
-- `ScoreService.php` — guard cobre `score === null` além de `total_questions === 0` (elimina deprecation PHP 8.1+ em drill-down de sessão em progresso).
-- `LeaderController.php` — `sessionIds` do dashboard filtra `completed_at !== null` (métricas param de oscilar durante refazer).
-- `LeaderResource send_credentials` — **envia e-mail ANTES** de rotacionar senha. Extraído `persistNewPassword()` do `resetLeaderPassword()`. Se envio falhar, senha antiga do líder permanece intacta.
-- `CollaboratorController::show` — removida variável morta `$totalQuestions`.
+Antes `scenarios.company_id` era belongs-to. Agora é **many-to-many** via pivot `company_scenario`.
 
-**🔵 Baixos (3):**
-- `LeaderResource::persistNewPassword` — senha na sessão do admin agora `encrypt()` / `decrypt()`.
-- `showChangePassword` — **decisão consciente de NÃO adicionar guard** `must_change_password` (preserva flexibilidade pra futura troca voluntária).
-- `CollaboratorController::retry` — `DB::transaction()` + `lockForUpdate()` serializam double-clicks.
+**Regra nova de visibilidade** em [`CollaboratorController::getScenariosFor()`](app/Http/Controllers/CollaboratorController.php):
+- Empresa **com** cenários vinculados via pivot → colaborador vê **APENAS** os vinculados (isolamento)
+- Empresa **sem** vínculos → colaborador vê **APENAS** os `is_default=true` (fallback M2)
+- Demo continua sendo 3 cenários `is_default+demo_eligible`
 
-**Testes:** 28/29 passam. Única falha é conhecida (`MagicLinkTest` desatualizado — espera `/treinamento`, real vai pra `/treinamento/intro`; não é bug).
+**Onde gerenciar** (Filament):
+- `/admin/scenarios/{id}/edit` — passo 2 do wizard tem multi-select "Empresas vinculadas"
+- `/admin/companies/{id}/edit` — aba "Cenários vinculados" via `ScenariosRelationManager` (attach/detach, filtro platform, action "Abrir" leva pro editor)
+- `/admin/scenarios` — filtro "Empresa vinculada" na tabela
 
-**Untracked (homolog adiado — NÃO commitar):**
+Migration `2026_07_31_120000_create_company_scenario_pivot` migrou dados de `company_id` pro pivot e dropou a coluna. É **defensiva** com try/catch pra FK/unique (trabalha em MySQL local, MySQL prod e SQLite dos testes).
+
+### Feature summary — Randomização de opções por sessão
+
+Em `CollaboratorController::show()`, método privado `shuffleQuestionOptions()` embaralha o array `options` de cada question do `content.messages` **em memória** (sem persistir).
+
+Seed: `crc32("t{session_id}-s{scenario_id}-q{question_index}")` — **determinística**:
+- Mesmo colaborador em reload/logout+login = mesma ordem
+- Colaboradores diferentes = ordens diferentes (evita gabarito)
+- Retry (nova TrainingSession) = ordem nova (evita decorar posição)
+
+Chave (`a/b/c/d`) fica constante, backend continua identificando pela `key` (não pela posição). Modo revisão funciona com a nova ordem.
+
+### Feature summary — Plataforma Telegram
+
+Enum `scenarios.platform` agora inclui `telegram`. CSS `.platform-telegram` em `resources/views/training/show.blade.php` (~230 linhas): tema dark violeta com wallpaper em `public/images/telegran.jpg` no `.chat-wrapper`, sidebar opaca escura, header semi-transparente com backdrop-filter blur, bolhas violetas à direita, chat area transparente pra deixar o wallpaper passar. Cenário exemplo `ceo-telegram` (id=28) foi criado no banco **local** via script tinker — em prod precisa duplicar via painel.
+
+Também rolou uma limpa: as letras **A/B/C/D** das opções não aparecem mais pro colaborador (a `<span class="option-key">` foi removida do JS de renderização). As letras continuam sendo mostradas apenas no `itemLabel` do repeater no admin, pra organização interna. As 4 regras CSS `.option-key` órfãs (base + wapp + teams + email) foram removidas.
+
+### Feature summary — Correções pós-review (deploy 2026-07-29)
+
+10 correções aplicadas: `filters()` duplicado do LeaderResource, session fixation no MagicLinkController, SMTP leak no LeaderInviteController, guard `score === null` no ScoreService, `sessionIds` do LeaderController filtra `completed_at`, `send_credentials` envia antes de rotar senha, dead code removido, encrypt/decrypt na session do admin, `retry` com `lockForUpdate` serializando double-clicks.
+
+### Cenários no banco (prod + local)
+
+Todos os cenários da plataforma **WhatsApp** foram atualizados manualmente pelo Pedro conforme o documento enviado (mensagens, perguntas, respostas e feedbacks revisados via painel admin).
+
+**Untracked** (homolog adiado — NÃO commitar):
 ```
 ?? deploy/.env.homolog
 ?? deploy/04-deploy-homolog.sh
 ?? deploy/nginx-homolog.conf
 ?? docs/HOMOLOG-SETUP.md
 ```
+
+**Testes:** 28/28 verde (excluindo o `MagicLinkTest` desatualizado — teste espera redirect `/treinamento`, real vai `/treinamento/intro`; não é bug, está no backlog).
 
 ## SMTP M365 — configurado e funcionando (2026-07-10)
 
@@ -661,17 +684,26 @@ Debug futuro: sempre checar **Message Trace no Exchange Admin Center** (https://
 
 | # | Item | Priority | Status |
 |---|------|----------|--------|
-| 1 | Commit + deploy das 10 correções pós-review (working tree atual) | High | Prontas, aguardando OK do Pedro |
-| 2 | ~~Configure SMTP M365~~ | ~~High~~ | ✅ **Resolvido em 2026-07-10** — funcionando via `noreply@m2guardiao.com.br`. Ver seção "SMTP M365" acima |
-| 3 | ~~Commit + deploy dos 2 blocos (cenários imersivos + editor)~~ | ~~High~~ | ✅ **Deployed** — commits `b2dae4e` + `6cd40e3` |
-| 4 | Configurar SPF + DKIM no DNS de `m2guardiao.com.br` (melhora deliverability, evita spam) | High | Backlog — primeiros envios podem cair em spam sem esses |
-| 5 | Enable 2FA TOTP on super admin | High | Backlog |
-| 6 | Ativar homologação (`homolog.m2guardiao.com.br`) — 4 arquivos untracked prontos | Medium | Adiado por escolha do Pedro |
-| 7 | Investigate intermittent dropdown logout bug (Filament user menu, possibly cache-related) | Medium | Backlog |
-| 8 | Migrate CSP from `Report-Only` to enforced after observation | Medium | Backlog |
-| 9 | Corrigir teste `MagicLinkTest` desatualizado (espera redirect `/treinamento`, real vai `/treinamento/intro`) | Low | 1 linha de fix |
-| 10 | Housekeeping DB: empresa teste "Empresa Teste Slug 527" sem uso, tokens magic_link expirados 30d+, sessions abandonadas | Low | db-health-checker reportou (nenhum urgente) |
-| 11 | Move `Logo_guardiao.png` de `backgrounds/` pra `brand/` | Low | Cosmético |
-| 12 | Visual refinements with marketing team | Low | Backlog |
-| 13 | LGPD legal copy (privacy policy + consent) | Low | Backlog |
-| 14 | Upgrade Nginx 1.18 → 1.24+ in maintenance window | Low | Backlog |
+| 1 | ~~Configure SMTP M365~~ | ~~High~~ | ✅ **Resolvido 2026-07-10** — ver seção "SMTP M365" acima |
+| 2 | ~~Correções pós-review dos 5 agentes~~ | ~~High~~ | ✅ **Deployed 2026-07-29** no commit `1ea56b7` |
+| 3 | ~~Feature m2m de cenários × empresas~~ | ~~High~~ | ✅ **Deployed 2026-07-31** no commit `206034b` |
+| 4 | ~~Randomização das opções por sessão~~ | ~~Medium~~ | ✅ **Deployed 2026-07-31** no commit `83901b2` |
+| 5 | ~~Plataforma Telegram~~ | ~~Medium~~ | ✅ **Deployed 2026-07-31** no commit `61c59dd` |
+| 6 | **Criar +3 plataformas** (a definir com Pedro — pedido em 2026-07-31 após Telegram) | High | Próximo grande |
+| 7 | Configurar SPF + DKIM no DNS de `m2guardiao.com.br` | High | Backlog — melhora deliverability, evita spam. Primeiros envios podem cair em spam sem esses |
+| 8 | Enable 2FA TOTP no super admin | High | Backlog |
+| 9 | Ativar homologação (`homolog.m2guardiao.com.br`) — 4 arquivos untracked prontos | Medium | Adiado por escolha do Pedro |
+| 10 | Adicionar cenário `ceo-telegram` (ou similar) no `ScenarioSeeder` — hoje o exemplo Telegram só existe no banco local (id=28), em prod precisa duplicar via painel | Medium | Se quiser catálogo padrão M2 de Telegram |
+| 11 | Investigar bug intermitente do dropdown de logout (menu Filament, possivelmente cache) | Medium | Backlog |
+| 12 | Migrar CSP `Report-Only` → enforced após observação | Medium | Backlog |
+| 13 | VM Oracle Cloud (137.131.186.168, ARM Ampere Ubuntu 22.04): 50+ updates pendentes + kernel novo pendente. Rodar `apt upgrade` + reboot em janela de manutenção | Medium | Diagnóstico rodado 2026-07-30, VM subutilizada (17% RAM, 6% disco, load 0.00) — não precisa upgrade de máquina |
+| 14 | Corrigir teste `MagicLinkTest` desatualizado (espera redirect `/treinamento`, real vai `/treinamento/intro`) | Low | 1 linha de fix |
+| 15 | Housekeeping DB: empresa "Empresa Teste Slug 527" sem uso, tokens magic_link expirados 30d+, sessions abandonadas | Low | db-health-checker reportou (nenhum urgente) |
+| 16 | Extrair `<x-brand-logo>` como componente Blade (elimina duplicação em 5+ views) | Low | Refactor de branding |
+| 17 | Extrair sub-partial dos blocos brand desktop/mobile em `auth-layout.blade.php` | Low | Refactor de branding |
+| 18 | Move `Logo_guardiao.png` de `backgrounds/` pra `brand/` | Low | Cosmético |
+| 19 | Visual refinements with marketing team | Low | Backlog |
+| 20 | LGPD legal copy (privacy policy + consent) | Low | Backlog |
+| 21 | Upgrade Nginx 1.18 → 1.24+ in maintenance window | Low | Backlog |
+| 22 | `/var/log/journal` na VM tem 1.2 GB — rodar `journalctl --vacuum-time=14d` + setar `SystemMaxUse=500M` | Low | Diagnóstico rodado 2026-07-30 |
+| 23 | Considerar adicionar swap de 2 GB na VM (opcional — safety net contra OOM) | Low | VM sem swap hoje, mas RAM sobra |
