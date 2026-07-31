@@ -157,9 +157,44 @@ class CollaboratorController extends Controller
         $position = $scenarios->search(fn($s) => $s->id === $scenario->id) + 1;
         $total = $scenarios->count();
 
+        // Embaralha as opcoes de cada pergunta com seed deterministico (session+scenario+q_idx),
+        // pra impedir gabarito entre colaboradores da mesma empresa. Mesma pessoa ve sempre a
+        // mesma ordem entre reloads; retry gera nova sessao, entao gera nova ordem.
+        $scenario->setAttribute(
+            'content',
+            $this->shuffleQuestionOptions($scenario->content, $session->id, $scenario->id)
+        );
+
         return view('training.show', compact(
             'collaborator', 'scenario', 'scenarios', 'session', 'position', 'total', 'previousAnswers', 'completedScenarioIds', 'reachableScenarioIds'
         ));
+    }
+
+    private function shuffleQuestionOptions(array $content, int $sessionId, int $scenarioId): array
+    {
+        $messages = $content['messages'] ?? [];
+        $questionIndex = 0;
+
+        foreach ($messages as $i => $msg) {
+            if (($msg['type'] ?? null) !== 'question') {
+                continue;
+            }
+            $options = $msg['options'] ?? [];
+            if (count($options) > 1) {
+                $seed = crc32("t{$sessionId}-s{$scenarioId}-q{$questionIndex}");
+                mt_srand($seed);
+                for ($j = count($options) - 1; $j > 0; $j--) {
+                    $k = mt_rand(0, $j);
+                    [$options[$j], $options[$k]] = [$options[$k], $options[$j]];
+                }
+                mt_srand();
+                $messages[$i]['options'] = array_values($options);
+            }
+            $questionIndex++;
+        }
+
+        $content['messages'] = $messages;
+        return $content;
     }
 
     public function answer(Request $request)

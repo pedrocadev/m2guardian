@@ -188,6 +188,8 @@ Marcos estáveis usados para rollback rápido antes de refatorações grandes. C
 |-----|--------|------|-------------------|
 | `checkpoint-pre-quiz-refactor` | `1afb4a6` | 2026-07-02 | Login/mascotes/logo novos deployados; painel do líder com editar e-mail + scroll horizontal; chat com barra de progresso colorida. **Estado imediatamente anterior à refatoração da aba de perguntas do usuário final (`training/show.blade.php`).** |
 | `checkpoint-pre-retry-system` | `69dd288` | 2026-07-08 | Feature de troca obrigatória de senha do líder no primeiro acesso já implantada. **Estado imediatamente anterior à refatoração da regra de aprovação (≥80%) + refazer teste + múltiplas TrainingSessions por colaborador + certificado.** |
+| `checkpoint-pre-wizard-e-emails` | `d0f7fa5` | 2026-07-29 | Sistema com regra ≥80%, refazer teste e certificado já implantados. **Estado imediatamente anterior às features grandes de 29/07: wizard 3 passos no editor de cenários, novo layout do e-mail de convite, transição rápida entre chats mesma plataforma e 10 correções pós-review dos 5 agentes.** |
+| `checkpoint-pre-logo-global` | `1ea56b7` | 2026-07-30 | Wizard editor + novo e-mail + transição rápida já implantados. **Estado imediatamente anterior à varredura de logo antiga em 7 telas (chat/2FA/completed/leader-invite/magic-link-invalid/training-pdf/auth-layout).** Se rollback: telas voltam a mostrar texto "GUARDIÃO DIGITAL" ou emoji + SVG. |
 
 **Voltar a um checkpoint (não-destrutivo, cria detached HEAD):**
 ```bash
