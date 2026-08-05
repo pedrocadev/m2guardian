@@ -163,7 +163,6 @@
             line-height: 1.2;
             margin-bottom: 10px;
         }
-        .transition-title span { color: #CC0000; }
 
         .transition-subtitle {
             font-size: 15px;
@@ -318,15 +317,36 @@
 
 <div class="main">
     @php
-        $platforms = [
-            'wapp'     => ['name' => 'WhatsApp',           'icon' => '📱', 'verb' => 'Atenção redobrada com mensagens diretas.'],
-            'teams'    => ['name' => 'Microsoft Teams',    'icon' => '💼', 'verb' => 'Comunicação corporativa também pode esconder armadilhas.'],
-            'email'    => ['name' => 'E-mail corporativo', 'icon' => '📧', 'verb' => 'A caixa de entrada é um dos alvos favoritos dos atacantes.'],
-            'telegram' => ['name' => 'Telegram',           'icon' => '✈️', 'verb' => 'Mensageiros pessoais também são usados pra golpes.'],
-        ];
-        $platform = $platforms[$scenario->platform] ?? ['name' => $scenario->platform, 'icon' => '⚡', 'verb' => 'Próximo desafio na área.'];
-
         $firstName = explode(' ', $collaborator->name ?? 'colaborador')[0];
+        $missionOrdinal = [1 => 'primeira', 2 => 'segunda', 3 => 'terceira', 4 => 'quarta', 5 => 'quinta', 6 => 'sexta', 7 => 'sétima'][$position] ?? 'próxima';
+
+        $platforms = [
+            'wapp'     => [
+                'icon'  => '📱',
+                'title' => 'Sua ' . $missionOrdinal . ' missão chegou! Vamos lá?',
+                'text'  => 'Mensagens rápidas exigem decisões cuidadosas. Leia, confirme e não aja por impulso.',
+            ],
+            'teams'    => [
+                'icon'  => '💼',
+                'title' => 'Pronto, ' . $firstName . '? Sua ' . $missionOrdinal . ' missão chegou. Agora vamos usar o Microsoft Teams.',
+                'text'  => 'Ambiente corporativo não é sinônimo de confiança automática. Valide sempre o perfil e o processo, antes de seguir com a conversa.',
+            ],
+            'email'    => [
+                'icon'  => '📧',
+                'title' => 'Tudo certo para a ' . $missionOrdinal . ' missão? Chegamos ao e-mail corporativo.',
+                'text'  => 'Nesse cenário a aparência pode enganar. Confira remetente, domínio, links e anexos antes de agir.',
+            ],
+            'telegram' => [
+                'icon'  => '✈️',
+                'title' => 'Sua ' . $missionOrdinal . ' missão chegou! Vamos lá?',
+                'text'  => 'Mensageiros pessoais também são usados pra golpes. Valide contatos e não clique em links suspeitos.',
+            ],
+        ];
+        $platform = $platforms[$scenario->platform] ?? [
+            'icon'  => '⚡',
+            'title' => 'Sua ' . $missionOrdinal . ' missão chegou!',
+            'text'  => 'Leia com calma e tome a decisão mais segura possível.',
+        ];
 
         // Mascote alterna por plataforma pra dar variedade
         $mascotes = [
@@ -357,13 +377,9 @@
 
         <div class="platform-icon">{{ $platform['icon'] }}</div>
 
-        <h1 class="transition-title">
-            Agora é hora do <span>{{ $platform['name'] }}</span>
-        </h1>
+        <h1 class="transition-title">{{ $platform['title'] }}</h1>
 
-        <p class="transition-subtitle">
-            {{ $platform['verb'] }} Respire fundo, leia com calma e tome a decisão mais segura.
-        </p>
+        <p class="transition-subtitle">{{ $platform['text'] }}</p>
 
         <div class="mission-counter">
             ⚡ Missão {{ $position }} de {{ $total }}
@@ -372,10 +388,10 @@
 
     <div class="cta-row">
         <a href="{{ route('training.show', $scenario->id) }}" id="goBtn" class="btn-go">
-            Bora encarar →
+            Iniciar Missão →
         </a>
         <div class="auto-advance">
-            <span>auto em <strong id="countdown">5</strong>s</span>
+            <span>auto em <strong id="countdown">10</strong>s</span>
             <div class="auto-progress"><div class="auto-fill" id="autoFill"></div></div>
         </div>
     </div>
@@ -383,7 +399,7 @@
 
 <script>
 (function() {
-    const DURATION = 5; // segundos
+    const DURATION = 10; // segundos
     const TARGET_URL = '{{ route("training.show", $scenario->id) }}';
     const countdown = document.getElementById('countdown');
     const fill = document.getElementById('autoFill');
