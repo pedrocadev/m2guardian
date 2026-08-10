@@ -192,6 +192,10 @@ Marcos estáveis usados para rollback rápido antes de refatorações grandes. C
 | `checkpoint-pre-logo-global` | `1ea56b7` | 2026-07-30 | Wizard editor + novo e-mail + transição rápida já implantados. **Estado imediatamente anterior à varredura de logo antiga em 7 telas (chat/2FA/completed/leader-invite/magic-link-invalid/training-pdf/auth-layout).** Se rollback: telas voltam a mostrar texto "GUARDIÃO DIGITAL" ou emoji + SVG. |
 | `checkpoint-pre-features-31jul` | `9369355` | 2026-07-31 | Logo oficial em 7 telas + randomização das opções por sessão + workflow `recorrente.yml`. **Estado imediatamente anterior às próximas features grandes de 31/07.** Se rollback: opções voltam a aparecer sempre na ordem cadastrada no admin (risco de gabarito na empresa). |
 | `checkpoint-31jul-multiempresas` | `206034b` | 2026-07-31 | Randomização + logo global + **feature many-to-many de cenários ↔ empresas (pivot `company_scenario`)** + aba "Cenários vinculados" na tela de empresa via RelationManager. Regra nova: empresa com vínculos vê SÓ os vinculados; sem vínculos vê SÓ os `is_default`. **Marco antes da próxima alteração grande.** Se rollback: cenários voltam ao belongs-to `company_id` (belongs-to UMA empresa apenas). |
+| `checkpoint-pre-mascote-intro-textos` | `8ea1cfe` | 2026-08-05 | Estado imediatamente anterior à personalização das falas do mascote na tela de transição entre cenários (título/subtítulo específicos por plataforma + botão "Iniciar Missão" + timer 10s no lugar de 5s). Se rollback: transição volta ao "Agora é hora do X" genérico + "Bora encarar →" + auto-avanço 5s. |
+| `checkpoint-pre-telegram-azul` | `40dc804` | 2026-08-05 | Falas do mascote personalizadas já implantadas. **Estado antes da paleta violeta `#8774E1` do Telegram ser substituída pelo `#0088cc` do logo.** Se rollback: Telegram volta ao roxo escuro violeta. Preservado por Pedro pra permitir voltar caso a nova paleta não agrade. |
+| `checkpoint-pre-telegram-nightblue` | `40dc804` | 2026-08-05 | Idem `checkpoint-pre-telegram-azul` — snapshot preservado durante iterações da paleta azul (Night Blue `#17212B` foi testada e descartada em favor do `#0088cc` vívido). |
+| `checkpoint-pre-slack` | `dc67186` | 2026-08-10 | Telegram já com paleta `#0088cc` deployada. **Estado imediatamente anterior à adição da plataforma Slack (5ª plataforma).** Se rollback: enum volta a `('wapp','teams','email','telegram','outro')`, tab "Slack" some do admin, CSS `.platform-slack` some. Migration `down()` do commit da release já cuida da migração `slack → outro` antes do rollback do enum. |
 
 **Voltar a um checkpoint (não-destrutivo, cria detached HEAD):**
 ```bash
@@ -380,7 +384,7 @@ No pseudo-elements, no z-index manipulation. Equivalent visual result, no JS-bre
 
 ### Modos de plataforma no chat de treinamento (feature nova, ver em `training/show.blade.php`)
 
-Cada cenário tem um campo `platform` (`wapp`, `teams`, `email`, `telegram`, `outro`). O chat de treinamento renderiza **visualmente** o cenário como se fosse a plataforma real, ativado via classe `body.platform-{wapp|teams|email|telegram}`. Toda a lógica visual está em `resources/views/training/show.blade.php`. **Ao adicionar uma nova plataforma**, atualizar: (1) enum na migration; (2) `Scenario::PLATFORM_LABELS` + `PLATFORM_COLORS` no model; (3) tab em `ListScenarios::getTabs()`; (4) arrays em `transition.blade.php` + `index.blade.php`; (5) `@if(in_array(..., ['wapp','teams','email','telegram']))` que ativa a sidebar em `show.blade.php`; (6) CSS `.platform-{nome}` seguindo o padrão dos outros modos.
+Cada cenário tem um campo `platform` (`wapp`, `teams`, `email`, `telegram`, `slack`, `outro`). O chat de treinamento renderiza **visualmente** o cenário como se fosse a plataforma real, ativado via classe `body.platform-{wapp|teams|email|telegram|slack}`. Toda a lógica visual está em `resources/views/training/show.blade.php`. **Ao adicionar uma nova plataforma**, atualizar: (1) enum na migration (guardar SQLite com `if driver === sqlite return`; migration `down()` DEVE migrar linhas com o valor novo pra `'outro'` antes de reduzir o enum — sem isso truncate silencioso); (2) `Scenario::PLATFORM_LABELS` + `PLATFORM_COLORS` no model; (3) tab em `ListScenarios::getTabs()` com ícone Heroicon; (4) arrays em `transition.blade.php` (textos de intro + mascotes) + `index.blade.php` (labels); (5) `@if(in_array(..., ['wapp','teams','email','telegram','slack']))` que ativa a sidebar em `show.blade.php`; (6) CSS `.platform-{nome}` seguindo o padrão dos outros modos; (7) **INCLUIR a nova plataforma nas 3 regras compartilhadas** de `.chat-main`, `.chat-main .chat-area` e `.mascote-fixo` (linhas ~302-323 do `show.blade.php`) — regressão descoberta no clean-code do Slack: esquecer isso deixa mascote flutuante indevido e chat-area sem scroll no desktop.
 
 #### Modo WhatsApp Web (`platform=wapp`)
 - Layout 2 colunas: sidebar de conversas + chat principal
@@ -412,7 +416,40 @@ Cada cenário tem um campo `platform` (`wapp`, `teams`, `email`, `telegram`, `ou
 - Opções de resposta como **botões retangulares empilhados verticalmente** (não quick-reply)
 - Assunto/remetente/endereço vêm de campos JSON no `content` (ver abaixo)
 
-#### Sidebar de conversas (compartilhada wapp+teams+email+telegram)
+#### Modo Telegram (`platform=telegram`)
+- Layout 2 colunas (mesma estrutura do WhatsApp Web)
+- **Paleta "Telegram Blue vívido" (aplicada em 2026-08-05, commit `dc67186`):** chrome inteiro em `#0088cc` (a cor do logo do Telegram), com header do canal semi-transparente `rgba(0, 136, 204, 0.85)` + `backdrop-filter: blur(10px)` sobre o wallpaper. Iteração inicial usou paleta violeta `#8774E1` (2026-07-31) e depois "Night Blue" `#17212B`, mas Pedro pediu explicitamente o azul do logo (`#0088cc`) — histórico das iterações preservado nos checkpoints `checkpoint-pre-telegram-azul` e `checkpoint-pre-telegram-nightblue`.
+- **Bolha "them" (recebidas), question prompt, typing e feedback box:** `#17212B` (Night Blue escuro pra destacar sobre o wallpaper)
+- **Bolha "me" (enviadas), chat-item.active, chat-badge, option-btn base, continue-btn base:** `#005F8C` (azul-escuro accent pra contrastar com o chrome vívido)
+- **Hover state option-btn:** `#0088cc` (fica vívido, igual chrome)
+- **Search bar + hover chat-item + scrollbar:** `#33A1D6` (mais claro pra destacar sobre chrome vívido)
+- Wallpaper `/images/telegran.jpg` no `.chat-wrapper` (typo intencional — Pedro nomeou assim)
+- Ícones/textos secundários brancos (`#fff` ou `rgba(255,255,255,0.7-0.9)`) pra contraste sobre o chrome azul — inclui `wapp-chat-time`, `wapp-chat-preview`, `s-info-online`, ícones da header/sidebar
+- Chat area transparente (wallpaper vem do `.chat-wrapper` por trás), max-width 560px como o wapp
+- `body.platform-telegram` sem `background:` próprio — herda o `training-show.jpg` do body
+- Mascote intro com fundo `#1c1c1c` sólido + texto `#e8e8e8` (contraste sobre wallpaper escuro)
+- Sem `letras A/B/C/D` nas opções do colaborador (mesma remoção cross-platform de 31/07)
+- Cenário exemplo `ceo-telegram` só existe no banco **local** (id=28) — pra produção, duplicar via painel admin
+
+#### Modo Slack (`platform=slack`) — **novo em 2026-08-10, commit `ccfb11f`**
+- Layout **3 colunas fiéis ao Slack real** (não é mais só cor variando — reestrutura de HTML condicional):
+  1. **Nav rail** (68px) em aubergine escuro `#3F0E40` — workspace icon amarelo/laranja no topo, ícones grandes de Home/MDs/Atividade/Mais empilhados, botão `+` e avatar do usuário no bottom. HTML dedicado `<aside class="slack-nav-rail">` renderizado só quando `platform=slack`
+  2. **Sidebar de canais** (`.wapp-sidebar`) em **lilás muito claro `#F8F0F6`** com texto escuro — "Acme Inc ▾" no topo (via `::before` do sidebar-header), header "▾ Canais" (via `::before` do search span), cada canal listado como `# nome-do-canal`, canal ativo com fundo roxo escuro `#4A154B` + texto branco
+  3. **Chat area branca** com header do canal `# nome ▾` grande em bold + subtitle cinza vindo do `preview` do cenário (`.s-info-sub` reativada só pro slack)
+- **Mensagens SEM bolha** — texto direto sobre branco, avatar quadrado 36×36 à esquerda (via `::before` do `.msg` — decorativo, roxo com "M" pro them e azul-verde com "V" pro me), nome+hora hardcoded no CSS (`"Marcelo Andrade 10:07"` / `"Você 10:07"`) via `::before` do `.bubble` — limitação conhecida: nome do sender é fixo (mexer no JS pra passar nome quebraria outras plataformas)
+- **Question card** vira "poll message" cinza claro `#F4F4F4` com borda-left roxa `#611F69`, alinhado com o body pós-avatar (`margin-left: 46px`)
+- **Opções** como **quick-reply buttons** brancos com borda azul `#1264A3` (Slack interaction style de bots), hover: fundo azul + texto branco
+- **Continue-btn** verde Slack `#007A5A`
+- **Feedback box** com borda-left cinza (base) / verde (correto) / vermelho (errado)
+- **Correto/errado** = `#007A5A` (verde Slack) / `#CD2553` (vermelho Slack)
+- **Input decorativo** no rodapé (`<div class="slack-input-bar">`) simulando o compositor Slack: toolbar top com **B I S**, links, listas; placeholder "Mensagem para # canal"; toolbar bottom com `+ 😊 @ Aa 📹 🎤 /` + botão de enviar verde. Não é funcional — só visual
+- **Fonte:** Lato (fallback -apple-system, Segoe UI, Roboto)
+- Cenário exemplo `ceo-slack` (id=29) só existe no banco **local** — pra produção, duplicar via painel admin
+- **PLATFORM_COLORS[slack] = 'danger'** (badge vermelho no admin — diferencia visualmente das outras)
+
+#### Sidebar de conversas — 2 estruturas diferentes
+
+Wapp / Teams / E-mail / Telegram compartilham a estrutura **2 colunas** (sidebar + chat). Slack tem estrutura **3 colunas** própria (`slack-nav-rail` + `wapp-sidebar` + `chat-main`, com `grid-template-columns: 68px minmax(220px, 260px) 1fr`).
 
 Filtra cenários pelo `platform` atual e mostra com 4 estados:
 - **`active`** — cenário atual (fundo destacado, não clicável)
@@ -602,19 +639,63 @@ public/images/
 
 Exceção: `login-admin.png`, `login-leader.png` e `training-welcome-guardian.png` foram **revertidos pro mascote antigo** (corpo inteiro sem moldura circular branca) porque a "bolinha" destoava dos heros escuros dessas telas.
 
-## Estado atual (2026-07-31) — 4 releases grandes deployadas, working tree limpo
+## Estado atual (2026-08-10) — 8 releases grandes deployadas nos últimos 12 dias, working tree limpo
 
-Semana intensa. **4 releases** foram pra prod nos últimos 2 dias — todas testadas e validadas em `https://m2guardiao.com.br` via `production-tester`. Working tree só com os 4 arquivos de homolog untracked (política de sempre).
+Ritmo intenso. **8 releases** foram pra prod desde 29/07 — todas testadas e validadas em `https://m2guardiao.com.br` via `production-tester`. Working tree só com os 4 arquivos de homolog untracked (política de sempre).
 
 ### Releases deployadas (mais recente primeiro)
 
 | Commit | Data | O que foi |
 |--------|------|-----------|
+| `ccfb11f` | 10/08 | **Nova plataforma Slack** com layout de 3 colunas fiel ao Slack real (nav rail + sidebar canais + chat área), mensagens sem bolha com avatar quadrado, input decorativo, paleta oficial Slack + **fix cross-platform** do mascote de feedback (removido do JS — aparecia indevidamente em Telegram/Slack) |
+| `dc67186` | 05/08 | **Paleta azul `#0088cc` do Telegram** — chrome inteiro (sidebar, header, chat-wrapper) em Telegram Blue vívido do logo, bolhas them em Night Blue `#17212B`, ícones/textos secundários brancos pra contraste |
+| `40dc804` | 05/08 | **Falas do mascote personalizadas por plataforma** na tela de transição entre cenários + botão "Iniciar Missão" + timer 10s |
+| `8ea1cfe` | 31/07 | Atualização do CLAUDE.md refletindo estado até 31/07 |
 | `61c59dd` | 31/07 | **Nova plataforma Telegram** nos cenários + filtro "Empresa vinculada" na tabela |
 | `206034b` | 31/07 | **Cenários vinculados a múltiplas empresas** (pivot m2m + relation manager) |
 | `83901b2` | 31/07 | **Randomização das opções de resposta** por sessão (evita gabarito) |
 | `0b0cf31` | 30/07 | **Logo oficial em 7 telas** + botões "Responder"/"Encaminhar" decorativos no chat E-mail |
 | `1ea56b7` | 29/07 | Wizard editor de cenários + novo layout do e-mail de convite + transição rápida entre chats + 10 correções pós-review dos 5 agentes |
+
+### Feature summary — Plataforma Slack (5ª plataforma, deploy 2026-08-10)
+
+**A primeira plataforma que foi REESTRUTURADA em vez de só variar cor.** Iteração inicial (também no dia 10/08, várias horas antes) fez só troca de paleta sobre o layout wapp/teams/telegram — Pedro reclamou explicitamente "vc só ta duplicando cenarios e mudando a cor". Fizemos v2 com layout de 3 colunas de verdade.
+
+**HTML novo** (só quando `platform=slack`):
+- `<aside class="slack-nav-rail">` antes da `.wapp-sidebar` — coluna 1 estreita com workspace icon + 4 nav items + botão `+` + avatar do usuário
+- `<div class="slack-input-bar">` depois do `.bottom-spacer` — input decorativo simulando o compositor Slack (toolbar top + placeholder + toolbar bottom + botão send verde). Não funcional
+
+**CSS `.platform-slack`** (~350 linhas em `show.blade.php`, blocos 1696–2033):
+- `chat-wrapper { grid-template-columns: 68px minmax(220px, 260px) 1fr }` — 3 colunas
+- Sidebar de canais em lilás claro `#F8F0F6` (não escuro como as outras plataformas)
+- Mensagens 100% sem bolha (texto puro sobre branco) + avatar quadrado via `::before`
+
+**Trade-off aceito** (documentado no CSS como limitação): nome do sender + hora hardcoded no `::before` do `.bubble` (`"Marcelo Andrade 10:07"` / `"Você 10:07"`). Mexer no JS pra passar sender/hora renderizaria dinamicamente mas quebraria compatibilidade com as outras plataformas — trade-off pra não introduzir divergência estrutural.
+
+**Fix cross-platform que veio junto:** o JS forçava `mascotWrap.style.display = 'flex'` no card de feedback após responder — sobrescrevia o `display: none` do CSS onde não tinha `!important` (Telegram e Slack). Mascote aparecia indevidamente. Removidas as 2 linhas do JS que forçavam o display — agora o CSS `display: none` global vence sempre. **Mascote grande de feedback nunca mais aparece em plataforma nenhuma.**
+
+**Bloco `body.platform-slack` incluído nas 3 regras compartilhadas** de `.chat-main`, `.chat-main .chat-area` e `.mascote-fixo` (linhas ~302-323 do show.blade.php) — regressão descoberta pelo clean-code-reviewer: esquecer isso deixava o mascote flutuante no canto direito e chat-area sem scroll no desktop.
+
+### Feature summary — Paleta azul do Telegram (deploy 2026-08-05)
+
+Cor do chrome + accent do Telegram foi refatorada 3x pra chegar no final:
+1. **Iteração 1** (`61c59dd`, 31/07): paleta violeta `#8774E1` (branding moderno do Telegram)
+2. **Iteração 2** (parte do refactor de 05/08): Night Blue `#17212B` (tema dark padrão do Telegram Web/Desktop atual). Pedro achou "muito escuro, parece preto"
+3. **Iteração 3 final** (`dc67186`, 05/08): `#0088cc` — o azul do LOGO do Telegram, aplicado no chrome inteiro (sidebar, header, chat-wrapper). Bolhas them em Night Blue pra contraste; accent em `#005F8C` pra destacar sobre o chrome vívido; textos/ícones secundários em branco pra contraste sobre o chrome azul brilhante
+
+Iterações intermediárias preservadas em `checkpoint-pre-telegram-azul` e `checkpoint-pre-telegram-nightblue` (ambos apontam pro commit `40dc804`, criadas pela pontualmente antes das mudanças de paleta).
+
+### Feature summary — Falas do mascote personalizadas + botão Iniciar Missão (deploy 2026-08-05)
+
+Substituiu o texto genérico da tela de transição ("Agora é hora do WhatsApp" + "Comunicação corporativa também pode esconder armadilhas" + botão "Bora encarar →") por:
+
+- **Título dinâmico por plataforma** com ordinal derivado de `$position` (1→"primeira", 2→"segunda", 3→"terceira", ...)
+- **Nome do colaborador** no texto do Teams: `"Pronto, {firstName}? Sua {ordinal} missão chegou..."`
+- **Textos específicos por plataforma** (Wapp foco em mensagens rápidas, Teams em ambiente corporativo, E-mail em remetente/domínio/anexos, Telegram genérico)
+- **Botão "Iniciar Missão →"** (era "Bora encarar →")
+- **Timer auto-avanço subiu de 5s para 10s** (mais tempo pra ler)
+
+Estrutura vive no bloco `@php` de `resources/views/training/transition.blade.php` (array `$platforms` com `icon/title/text`). Se a empresa tiver ordem/quantidade diferente de cenários (só Teams+Email por exemplo), o ordinal acompanha automaticamente.
 
 ### Feature summary — Cenários vinculados a múltiplas empresas (m2m)
 
@@ -688,12 +769,16 @@ Debug futuro: sempre checar **Message Trace no Exchange Admin Center** (https://
 | 2 | ~~Correções pós-review dos 5 agentes~~ | ~~High~~ | ✅ **Deployed 2026-07-29** no commit `1ea56b7` |
 | 3 | ~~Feature m2m de cenários × empresas~~ | ~~High~~ | ✅ **Deployed 2026-07-31** no commit `206034b` |
 | 4 | ~~Randomização das opções por sessão~~ | ~~Medium~~ | ✅ **Deployed 2026-07-31** no commit `83901b2` |
-| 5 | ~~Plataforma Telegram~~ | ~~Medium~~ | ✅ **Deployed 2026-07-31** no commit `61c59dd` |
-| 6 | **Criar +3 plataformas** (a definir com Pedro — pedido em 2026-07-31 após Telegram) | High | Próximo grande |
+| 5 | ~~Plataforma Telegram~~ | ~~Medium~~ | ✅ **Deployed 2026-07-31** no commit `61c59dd`; paleta finalizada em `dc67186` (05/08) |
+| 6 | ~~Plataforma Slack~~ | ~~High~~ | ✅ **Deployed 2026-08-10** no commit `ccfb11f` — layout 3 colunas fiel ao Slack real |
+| 6.1 | **Falta 1 plataforma nova** — Pedro pediu +3 em 2026-07-31 além de wapp/teams/email; feitas Telegram + Slack (2 de 3), falta uma 3ª a definir | High | Próximo grande |
 | 7 | Configurar SPF + DKIM no DNS de `m2guardiao.com.br` | High | Backlog — melhora deliverability, evita spam. Primeiros envios podem cair em spam sem esses |
 | 8 | Enable 2FA TOTP no super admin | High | Backlog |
 | 9 | Ativar homologação (`homolog.m2guardiao.com.br`) — 4 arquivos untracked prontos | Medium | Adiado por escolha do Pedro |
 | 10 | Adicionar cenário `ceo-telegram` (ou similar) no `ScenarioSeeder` — hoje o exemplo Telegram só existe no banco local (id=28), em prod precisa duplicar via painel | Medium | Se quiser catálogo padrão M2 de Telegram |
+| 10.1 | Adicionar cenário `ceo-slack` no `ScenarioSeeder` — hoje id=29 local só, em prod precisa duplicar via painel | Medium | Idem Telegram |
+| 10.2 | **`package-lock.json` não está no repo** (nem tracked, nem no `.gitignore`) — junior descobriu no pull de 10/08. Padrão Node é ter esse arquivo commitado pra determinismo entre máquinas. Decidir: commitar (fixa versões) ou colocar no `.gitignore` (assume que qualquer install gera OK) | Medium | Débito técnico real, aparece como untracked em qualquer `npm install` fresh |
+| 10.3 | Nome do sender + hora hardcoded no CSS do `.platform-slack` (`.msg.them .bubble::before = "Marcelo Andrade 10:07"`). Se quiser dinâmico por cenário, mexer no JS de renderização (`addBubble`) pra aceitar `sender_name` + `time` e adicionar essas keys ao JSON de `content.messages` — implicaria alterar também renderers das outras plataformas ou usar campo opcional só pro Slack | Low | Trade-off aceito na v2 do Slack |
 | 11 | Investigar bug intermitente do dropdown de logout (menu Filament, possivelmente cache) | Medium | Backlog |
 | 12 | Migrar CSP `Report-Only` → enforced após observação | Medium | Backlog |
 | 13 | VM Oracle Cloud (137.131.186.168, ARM Ampere Ubuntu 22.04): 50+ updates pendentes + kernel novo pendente. Rodar `apt upgrade` + reboot em janela de manutenção | Medium | Diagnóstico rodado 2026-07-30, VM subutilizada (17% RAM, 6% disco, load 0.00) — não precisa upgrade de máquina |
