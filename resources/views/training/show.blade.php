@@ -298,11 +298,12 @@
         .msg-time, .msg-check, .s-info-online, .wapp-header-icons { display: none; }
         .s-info { display: flex; flex-direction: column; gap: 2px; }
 
-        /* Regras compartilhadas entre todos os modos de plataforma (wapp / teams / email / telegram) */
+        /* Regras compartilhadas entre todos os modos de plataforma (wapp / teams / email / telegram / slack) */
         .platform-wapp .chat-main,
         .platform-teams .chat-main,
         .platform-email .chat-main,
-        .platform-telegram .chat-main {
+        .platform-telegram .chat-main,
+        .platform-slack .chat-main {
             display: flex;
             flex-direction: column;
             min-width: 0;
@@ -311,14 +312,16 @@
         .platform-wapp .chat-main .chat-area,
         .platform-teams .chat-main .chat-area,
         .platform-email .chat-main .chat-area,
-        .platform-telegram .chat-main .chat-area {
+        .platform-telegram .chat-main .chat-area,
+        .platform-slack .chat-main .chat-area {
             max-width: 100%;
             margin: 0;
         }
         .platform-wapp .mascote-fixo,
         .platform-teams .mascote-fixo,
         .platform-email .mascote-fixo,
-        .platform-telegram .mascote-fixo {
+        .platform-telegram .mascote-fixo,
+        .platform-slack .mascote-fixo {
             display: none;
         }
 
@@ -1692,6 +1695,517 @@
             .platform-telegram .wapp-header-icons { display: none; }
             .platform-telegram .question-counter { display: none; }
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           MODO SLACK — 3 colunas fiéis ao layout real:
+           (1) nav rail estreita aubergine escuro   → .slack-nav-rail
+           (2) sidebar de canais em lilás claro     → .wapp-sidebar
+           (3) chat area branca com mensagens SEM bolha + input decorativo
+           ═══════════════════════════════════════════════════════════ */
+        body.platform-slack {
+            font-family: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .platform-slack .chat-wrapper {
+            display: grid;
+            grid-template-columns: 68px minmax(220px, 260px) 1fr; /* 3 colunas fiéis ao Slack */
+            flex: 1;
+            min-height: 0;
+            max-width: 1400px;
+            width: 100%;
+            margin: 0 auto;
+            background: #fff;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+
+        /* ─── COLUNA 1 · Nav rail estreita ────────────────────────── */
+        .platform-slack .slack-nav-rail {
+            background: #3F0E40;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 12px 0 10px;
+            gap: 4px;
+            border-right: 1px solid rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        .platform-slack .slack-workspace-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, #F2C744, #FF8A2B);
+            color: #4A154B;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 8px;
+            font-weight: 900;
+            font-size: 22px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+        }
+        .platform-slack .slack-nav-items {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            width: 100%;
+        }
+        .platform-slack .slack-nav-item {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.75);
+            cursor: default;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            padding: 8px 0 6px;
+            font-size: 10px;
+            font-weight: 700;
+            font-family: inherit;
+        }
+        .platform-slack .slack-nav-item svg { width: 22px; height: 22px; }
+        .platform-slack .slack-nav-item.active { color: #fff; }
+        .platform-slack .slack-nav-item.active svg {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            padding: 4px;
+            box-sizing: content-box;
+        }
+        .platform-slack .slack-nav-bottom {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            align-items: center;
+        }
+        .platform-slack .slack-nav-plus {
+            background: transparent;
+            border: 1.5px solid rgba(255, 255, 255, 0.55);
+            color: #fff;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            cursor: default;
+            font-size: 18px;
+            line-height: 1;
+            padding: 0;
+        }
+        .platform-slack .slack-nav-avatar {
+            width: 30px; height: 30px;
+            border-radius: 6px;
+            overflow: hidden;
+            background: #F2C744;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px;
+        }
+        .platform-slack .slack-nav-avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* ─── COLUNA 2 · Sidebar de canais em lilás claro ─────────── */
+        .platform-slack .wapp-sidebar {
+            background: #F8F0F6;
+            border-right: 1px solid #D8C4D5;
+        }
+        .platform-slack .wapp-sidebar-header {
+            background: transparent;
+            padding: 14px 16px 4px;
+            border-bottom: none;
+            display: block;
+        }
+        /* "Acme Inc ▾" — o workspace name (via ::before, evita mudar o HTML compartilhado) */
+        .platform-slack .wapp-sidebar-header::before {
+            content: 'Acme Inc ▾';
+            display: block;
+            font-weight: 900;
+            color: #1D1C1D;
+            font-size: 15px;
+            letter-spacing: -0.2px;
+        }
+        .platform-slack .wapp-user-avatar { display: none; }
+        .platform-slack .wapp-sidebar-icons { display: none; } /* ícones do wapp não fazem sentido aqui */
+
+        /* Search vira "Threads" e afins — Slack tem headers de seção acima da lista */
+        .platform-slack .wapp-search {
+            background: transparent;
+            border: none;
+            color: #616061;
+            margin: 8px 12px 4px;
+            padding: 2px 4px;
+            font-size: 13px;
+            font-weight: 700;
+            display: block;
+        }
+        .platform-slack .wapp-search svg { display: none; }
+        .platform-slack .wapp-search span {
+            color: #616061;
+            font-weight: 700;
+        }
+        .platform-slack .wapp-search span::before {
+            content: '▾  Canais';
+            color: #616061;
+            font-size: 13px; /* font-size do span é 0 pra esconder o texto original, mas o ::before recupera */
+        }
+        .platform-slack .wapp-search span { font-size: 0; }
+
+        .platform-slack .wapp-chat-list {
+            background: transparent;
+            padding: 2px 8px 12px;
+        }
+        .platform-slack .wapp-chat-list::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.15); }
+
+        .platform-slack .wapp-chat-item {
+            padding: 3px 10px;
+            border-bottom: none;
+            border-radius: 4px;
+            margin: 1px 0;
+            color: #1D1C1D;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+        .platform-slack .wapp-chat-item.active {
+            background: #4A154B; /* roxo escuro Slack pro canal ativo */
+            color: #fff;
+        }
+        .platform-slack .wapp-chat-item.completed:hover,
+        .platform-slack .wapp-chat-item.available:hover { background: rgba(74, 21, 75, 0.10); }
+
+        .platform-slack .wapp-chat-avatar { display: none; }
+        .platform-slack .wapp-chat-name {
+            color: inherit;
+            font-weight: 400;
+            font-size: 15px;
+        }
+        .platform-slack .wapp-chat-name::before {
+            content: '# ';
+            color: #616061;
+            font-weight: 400;
+        }
+        .platform-slack .wapp-chat-item.active .wapp-chat-name::before { color: rgba(255,255,255,0.7); }
+        .platform-slack .wapp-chat-item.active .wapp-chat-name { font-weight: 700; }
+        .platform-slack .wapp-chat-time { display: none; }
+        .platform-slack .wapp-chat-preview { display: none; }
+        .platform-slack .wapp-chat-checkmark { display: none; }
+        .platform-slack .wapp-chat-badge {
+            background: #CD2553;
+            color: #fff;
+            border-radius: 12px;
+            padding: 1px 7px;
+            font-size: 11px;
+            font-weight: 700;
+            margin-left: auto;
+        }
+
+        /* ─── COLUNA 3 · Chat area ─────────────────────────────────── */
+        /* Header do canal — branco, borda cinza, com # nome ▾ + subtitle */
+        .platform-slack .scenario-bar {
+            background: #fff;
+            border-bottom: 1px solid #DDDDDD;
+            padding: 10px 20px;
+            color: #1D1C1D;
+            gap: 12px;
+            align-items: center;
+        }
+        .platform-slack .s-avatar { display: none; } /* Slack não mostra avatar no header do canal */
+        .platform-slack .s-info { flex-direction: row; align-items: baseline; gap: 12px; }
+        .platform-slack .s-info-label {
+            color: #1D1C1D;
+            font-size: 18px;
+            font-weight: 900;
+        }
+        .platform-slack .s-info-label::before {
+            content: '# ';
+            color: #1D1C1D;
+            font-weight: 400;
+        }
+        .platform-slack .s-info-label::after {
+            content: ' ▾';
+            color: #616061;
+            font-weight: 400;
+            font-size: 14px;
+        }
+        .platform-slack .s-info-sub {
+            display: block;
+            color: #616061;
+            font-size: 13px;
+            padding-left: 12px;
+            border-left: 1px solid #DDD;
+        }
+        .platform-slack .wapp-header-icons {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-left: auto;
+            color: #616061;
+        }
+        .platform-slack .wapp-header-icons svg { width: 20px; height: 20px; }
+        .platform-slack .question-counter {
+            background: #F4EDF4;
+            color: #4A154B;
+            margin-left: 12px;
+            font-weight: 700;
+            font-size: 12px;
+        }
+        .platform-slack .question-counter strong { color: #4A154B; }
+
+        /* Chat area branca */
+        .platform-slack .chat-area {
+            background: #fff;
+            padding: 16px 20px 6px;
+        }
+
+        /* Mensagens — SEM BOLHA. Avatar quadrado à esquerda + texto puro */
+        .platform-slack .msg {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            margin-bottom: 12px;
+            justify-content: flex-start; /* Slack alinha tudo à esquerda */
+            padding-left: 4px;
+        }
+        .platform-slack .msg.me { justify-content: flex-start; } /* me também vai pra esquerda no Slack */
+
+        /* Avatar quadrado colorido antes de cada mensagem (via ::before, decorativo) */
+        /* Base propriedades geometricas comuns; .them/.me abaixo sobrescrevem content/background */
+        .platform-slack .msg::before {
+            width: 36px; height: 36px;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        .platform-slack .msg.them::before {
+            background: linear-gradient(135deg, #4A154B, #611F69); /* Marcelo Andrade — roxo */
+            content: 'M';
+            color: #fff;
+            font-weight: 900;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .platform-slack .msg.me::before {
+            background: linear-gradient(135deg, #1264A3, #007A5A); /* Você — azul/verde */
+            content: 'V';
+            color: #fff;
+            font-weight: 900;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Bolha = texto direto sobre branco, sem background/border-radius */
+        .platform-slack .bubble {
+            background: transparent !important;
+            padding: 0;
+            border-radius: 0;
+            font-size: 15px;
+            line-height: 1.5;
+            max-width: none;
+            box-shadow: none;
+            border: none;
+            color: #1D1C1D;
+            flex: 1;
+        }
+        .platform-slack .bubble.them, .platform-slack .bubble.me { background: transparent; color: #1D1C1D; }
+        .platform-slack .bubble.them::before, .platform-slack .bubble.me::before { display: none; }
+
+        /* "Sender name + hora" acima da mensagem — via ::before do .bubble */
+        .platform-slack .msg.them .bubble::before {
+            content: 'Marcelo Andrade  10:07';
+            display: block;
+            font-weight: 900;
+            color: #1D1C1D;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        .platform-slack .msg.me .bubble::before {
+            content: 'Você  10:07';
+            display: block;
+            font-weight: 900;
+            color: #1D1C1D;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+
+        /* Remove pseudo-elements herdados de outros modos */
+        .platform-slack .question-prompt::before,
+        .platform-slack .typing::before,
+        .platform-slack .feedback-box::before,
+        .platform-slack .option-btn:first-child::before {
+            display: none;
+        }
+
+        /* Typing indicator — Slack usa "fulano is typing…" cinza no rodapé, aqui simplifica */
+        .platform-slack .typing {
+            background: transparent;
+            border-radius: 0;
+            padding: 4px 0;
+        }
+        .platform-slack .typing .dot { background: #616061; }
+
+        /* Question card — no Slack fica como uma "poll message" com fundo cinza claro */
+        .platform-slack .question-card {
+            background: #F4F4F4;
+            border-radius: 6px;
+            padding: 14px 16px;
+            margin: 8px 0 8px 46px; /* alinha com o corpo da mensagem (após avatar) */
+            box-shadow: none;
+            border-left: 4px solid #611F69;
+        }
+        .platform-slack .question-prompt {
+            background: transparent;
+            color: #1D1C1D;
+            padding: 0;
+            border-radius: 0;
+            border: none;
+            font-size: 15px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            max-width: none;
+            box-shadow: none;
+        }
+        .platform-slack .answered-tag {
+            display: block;
+            font-size: 12px;
+            color: #616061;
+            margin-bottom: 8px;
+        }
+
+        /* Opções — botões brancos com borda tipo Slack (interações inline em bots) */
+        .platform-slack .options {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            align-items: flex-start;
+            margin-top: 4px;
+        }
+        .platform-slack .option-btn {
+            background: #fff;
+            color: #1264A3;
+            border: 1px solid #1264A3;
+            padding: 8px 14px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: left;
+            max-width: 100%;
+            box-shadow: none;
+            transition: background 0.15s, color 0.15s;
+        }
+        .platform-slack .option-btn:hover:not(:disabled) { background: #1264A3; color: #fff; }
+        .platform-slack .option-btn:disabled { cursor: default; }
+        .platform-slack .option-btn.selected-correct { background: #007A5A; color: #fff; border-color: #007A5A; }
+        .platform-slack .option-btn.selected-wrong { background: #CD2553; color: #fff; border-color: #CD2553; }
+        .platform-slack .option-btn.faded { opacity: 0.35; }
+
+        /* Feedback box — Slack "system message" (cinza claro, borda-left) */
+        .platform-slack .feedback-box {
+            background: #F4F4F4;
+            color: #1D1C1D;
+            border-radius: 4px;
+            border-left: 4px solid #616061;
+            padding: 12px 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: none;
+            margin: 8px 0 8px 46px; /* alinha com o body pós-avatar */
+            box-shadow: none;
+        }
+        .platform-slack .feedback-box.correct { border-left-color: #007A5A; background: #EDF9F4; }
+        .platform-slack .feedback-box.wrong { border-left-color: #CD2553; background: #FBEAEE; }
+        .platform-slack .feedback-mascot-wrap { display: none; }
+
+        /* Botão continuar — verde Slack */
+        .platform-slack .continue-btn {
+            background: #007A5A;
+            color: #fff;
+            border-radius: 4px;
+            font-weight: 700;
+            box-shadow: 0 1px 2px rgba(0, 122, 90, 0.25);
+            margin-left: 46px; /* alinha com o body pós-avatar */
+        }
+        .platform-slack .continue-btn:hover { background: #006644; }
+        .platform-slack .continue-btn.next-scenario { background: #4A154B; }
+        .platform-slack .continue-btn.next-scenario:hover { background: #611F69; }
+
+        /* Intro do mascote — mantém identidade M2 (borda vermelha), sobre branco */
+        .platform-slack .mascote-intro {
+            background: #fff;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            border-left: 4px solid #CC0000;
+        }
+        .platform-slack .mascote-intro .intro-text { color: #1D1C1D; }
+
+        /* ─── Input decorativo do Slack no rodapé do chat ───────── */
+        .platform-slack .slack-input-bar {
+            padding: 4px 20px 18px;
+            background: #fff;
+        }
+        .platform-slack .slack-input-box {
+            border: 1px solid #DDDDDD;
+            border-radius: 8px;
+            background: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .platform-slack .slack-input-toolbar-top {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-bottom: 1px solid #EEE;
+            color: #616061;
+            font-size: 13px;
+        }
+        .platform-slack .slack-input-fmt { cursor: default; padding: 2px 4px; }
+        .platform-slack .slack-input-fmt-sep {
+            width: 1px; height: 16px;
+            background: #DDD;
+            margin: 0 2px;
+        }
+        .platform-slack .slack-input-placeholder {
+            padding: 12px 14px;
+            color: #616061;
+            font-size: 15px;
+        }
+        .platform-slack .slack-input-toolbar-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            color: #616061;
+        }
+        .platform-slack .slack-input-actions {
+            display: flex;
+            gap: 14px;
+            align-items: center;
+            font-size: 15px;
+        }
+        .platform-slack .slack-input-actions span { cursor: default; }
+        .platform-slack .slack-send-btn {
+            background: transparent;
+            color: #007A5A;
+            border: none;
+            padding: 6px;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+        .platform-slack .slack-send-btn svg { width: 18px; height: 18px; }
+
+        @media (max-width: 780px) {
+            .platform-slack .chat-wrapper { grid-template-columns: 68px 1fr; }
+            .platform-slack .wapp-sidebar { display: none; } /* colapsa sidebar de canais em mobile */
+            .platform-slack .s-info-sub { display: none; }
+            .platform-slack .wapp-header-icons { display: none; }
+            .platform-slack .question-counter { display: none; }
+        }
     </style>
 </head>
 <body class="platform-{{ $scenario->platform }}">
@@ -1716,7 +2230,37 @@
 
 <div class="chat-wrapper">
 
-@if(in_array($scenario->platform, ['wapp', 'teams', 'email', 'telegram']))
+@if(in_array($scenario->platform, ['wapp', 'teams', 'email', 'telegram', 'slack']))
+@if($scenario->platform === 'slack')
+{{-- Nav rail estreita à esquerda (coluna 1 do Slack) --}}
+<aside class="slack-nav-rail">
+    <div class="slack-workspace-icon">A</div>
+    <nav class="slack-nav-items">
+        <button type="button" class="slack-nav-item active" tabindex="-1" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+            <span>Home</span>
+        </button>
+        <button type="button" class="slack-nav-item" tabindex="-1" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <span>MDs</span>
+        </button>
+        <button type="button" class="slack-nav-item" tabindex="-1" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+            <span>Atividade</span>
+        </button>
+        <button type="button" class="slack-nav-item" tabindex="-1" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+            <span>Mais</span>
+        </button>
+    </nav>
+    <div class="slack-nav-bottom">
+        <button type="button" class="slack-nav-plus" tabindex="-1" aria-hidden="true">+</button>
+        <div class="slack-nav-avatar">
+            <img src="/images/mascots/training-show-sidebar.png" alt="Você" onerror="this.style.display='none';this.parentElement.textContent='🛡️';">
+        </div>
+    </div>
+</aside>
+@endif
 <aside class="wapp-sidebar">
     <div class="wapp-sidebar-header">
         @if($scenario->platform === 'email')
@@ -1864,6 +2408,40 @@
 </div>
 
 <div class="bottom-spacer"></div>
+
+@if($scenario->platform === 'slack')
+{{-- Input decorativo do Slack (não funcional — só visual) --}}
+<div class="slack-input-bar" aria-hidden="true">
+    <div class="slack-input-box">
+        <div class="slack-input-toolbar-top">
+            <span class="slack-input-fmt"><strong>B</strong></span>
+            <span class="slack-input-fmt"><em>I</em></span>
+            <span class="slack-input-fmt"><s>S</s></span>
+            <span class="slack-input-fmt-sep"></span>
+            <span class="slack-input-fmt">🔗</span>
+            <span class="slack-input-fmt">•</span>
+            <span class="slack-input-fmt">1.</span>
+            <span class="slack-input-fmt-sep"></span>
+            <span class="slack-input-fmt">〈/〉</span>
+        </div>
+        <div class="slack-input-placeholder">Mensagem para # {{ $scenario->label }}</div>
+        <div class="slack-input-toolbar-bottom">
+            <div class="slack-input-actions">
+                <span title="Anexar">+</span>
+                <span title="Emoji">😊</span>
+                <span title="Mencionar">@</span>
+                <span title="Formatar">Aa</span>
+                <span title="Vídeo">📹</span>
+                <span title="Áudio">🎤</span>
+                <span title="Comando">/</span>
+            </div>
+            <button type="button" class="slack-send-btn" tabindex="-1">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+@endif
 
 </div> {{-- /chat-main --}}
 </div> {{-- /chat-wrapper --}}
@@ -2060,14 +2638,6 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
             }
         });
 
-        const mascotWrap = card.querySelector('.feedback-mascot-wrap');
-        const mascotImg = mascotWrap.querySelector('img');
-        mascotImg.src = isCorrect
-            ? '/images/mascots/training-show-correct.png'
-            : '/images/mascots/training-show-wrong.png';
-        mascotImg.alt = isCorrect ? 'Acertou!' : 'Vamos aprender';
-        mascotWrap.style.display = 'flex';
-
         const fbox = card.querySelector('.feedback-box');
         fbox.className = 'feedback-box ' + (isCorrect ? 'correct' : 'wrong');
         fbox.textContent = feedbackText;
@@ -2130,15 +2700,6 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
                         b.classList.add('faded');
                     }
                 });
-
-                // Mostra mascote do feedback (vitoria ou explicando)
-                const mascotWrap = card.querySelector('.feedback-mascot-wrap');
-                const mascotImg = mascotWrap.querySelector('img');
-                mascotImg.src = data.is_correct
-                    ? '/images/mascots/training-show-correct.png'
-                    : '/images/mascots/training-show-wrong.png';
-                mascotImg.alt = data.is_correct ? 'Acertou!' : 'Vamos aprender';
-                mascotWrap.style.display = 'flex';
 
                 // Mostra feedback
                 const fbox = card.querySelector('.feedback-box');

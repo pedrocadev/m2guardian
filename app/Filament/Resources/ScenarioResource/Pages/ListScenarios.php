@@ -40,6 +40,10 @@ class ListScenarios extends ListRecords
                 ->icon('heroicon-o-paper-airplane')
                 ->modifyQueryUsing(fn ($query) => $query->where('platform', 'telegram')),
 
+            'slack' => Tab::make('Slack')
+                ->icon('heroicon-o-hashtag')
+                ->modifyQueryUsing(fn ($query) => $query->where('platform', 'slack')),
+
             'outro' => Tab::make('Outras Plataformas')
                 ->icon('heroicon-o-globe-alt')
                 ->modifyQueryUsing(fn ($query) => $query->where('platform', 'outro')),

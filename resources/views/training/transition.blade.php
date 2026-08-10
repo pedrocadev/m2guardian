@@ -341,6 +341,11 @@
                 'title' => 'Sua ' . $missionOrdinal . ' missão chegou! Vamos lá?',
                 'text'  => 'Mensageiros pessoais também são usados pra golpes. Valide contatos e não clique em links suspeitos.',
             ],
+            'slack'    => [
+                'icon'  => '💬',
+                'title' => 'Hora da ' . $missionOrdinal . ' missão! Chegamos ao Slack.',
+                'text'  => 'Canais de trabalho parecem seguros, mas bots e integrações podem ser exploradas. Confirme identidades antes de compartilhar dados sensíveis.',
+            ],
         ];
         $platform = $platforms[$scenario->platform] ?? [
             'icon'  => '⚡',
@@ -354,6 +359,7 @@
             'teams'    => 'training-transition-teams.png',
             'email'    => 'training-transition-email.png',
             'telegram' => 'training-transition-fallback.png',
+            'slack'    => 'training-transition-fallback.png',
         ];
         $mascote = $mascotes[$scenario->platform] ?? 'training-transition-fallback.png';
     @endphp

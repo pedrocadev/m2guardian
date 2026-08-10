@@ -58,6 +58,7 @@ class Scenario extends Model
         'teams'    => 'Teams',
         'email'    => 'E-mail',
         'telegram' => 'Telegram',
+        'slack'    => 'Slack',
         'outro'    => 'Outra',
     ];
 
@@ -66,6 +67,7 @@ class Scenario extends Model
         'teams'    => 'primary',
         'email'    => 'warning',
         'telegram' => 'info',
+        'slack'    => 'danger',
         'outro'    => 'gray',
     ];
 
