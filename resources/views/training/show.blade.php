@@ -1401,7 +1401,7 @@
         }
 
         /* ═══════════════════════════════════════════════════════════
-           MODO TELEGRAM — layout de messenger dark com paleta violeta
+           MODO TELEGRAM — chrome em Telegram Blue vívido (#0088cc) + bolhas em Night Blue (#17212B)
            ═══════════════════════════════════════════════════════════ */
         body.platform-telegram {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1416,7 +1416,7 @@
             max-width: 1400px;
             width: 100%;
             margin: 0 auto;
-            background-color: #0a0a0a;
+            background-color: #0088cc;
             background-image: url('/images/telegran.jpg');
             background-size: auto;
             background-repeat: repeat;
@@ -1425,37 +1425,37 @@
             overflow: hidden;
         }
 
-        /* Sidebar opaca pra bloquear o wallpaper por tras */
+        /* Sidebar opaca em Telegram Blue vívido (#0088cc, do logo) */
         .platform-telegram .wapp-sidebar {
-            background: #0f0f0f;
-            border-right: 1px solid #000;
+            background: #0088cc;
+            border-right: 1px solid #005F8C;
         }
         .platform-telegram .wapp-sidebar-header {
-            background: #0f0f0f;
+            background: #0088cc;
             padding: 10px 14px;
             color: #fff;
             border-bottom: none;
         }
         .platform-telegram .wapp-user-avatar {
             background: transparent;
-            color: #aaa;
+            color: #fff;
             width: 32px; height: 32px;
             font-size: 18px;
         }
-        .platform-telegram .wapp-sidebar-icons { color: #aaa; gap: 20px; }
+        .platform-telegram .wapp-sidebar-icons { color: #fff; gap: 20px; }
         .platform-telegram .wapp-sidebar-icons svg { width: 22px; height: 22px; }
 
         .platform-telegram .wapp-search {
-            background: #212121;
+            background: #33A1D6;
             border-bottom: none;
-            color: #7d7d7d;
+            color: rgba(255, 255, 255, 0.85);
             margin: 6px 10px 8px;
             border-radius: 22px;
             padding: 9px 14px;
         }
 
-        .platform-telegram .wapp-chat-list { background: #0f0f0f; }
-        .platform-telegram .wapp-chat-list::-webkit-scrollbar-thumb { background: #333; }
+        .platform-telegram .wapp-chat-list { background: #0088cc; }
+        .platform-telegram .wapp-chat-list::-webkit-scrollbar-thumb { background: #33A1D6; }
 
         .platform-telegram .wapp-chat-item {
             padding: 10px 12px;
@@ -1463,34 +1463,34 @@
             border-radius: 12px;
             margin: 1px 6px;
         }
-        .platform-telegram .wapp-chat-item.active { background: #8774E1; }
+        .platform-telegram .wapp-chat-item.active { background: #005F8C; }
         .platform-telegram .wapp-chat-item.completed:hover,
-        .platform-telegram .wapp-chat-item.available:hover { background: #1c1c1c; }
+        .platform-telegram .wapp-chat-item.available:hover { background: #33A1D6; }
 
         .platform-telegram .wapp-chat-avatar {
             border-radius: 50%;
             width: 54px; height: 54px;
         }
         .platform-telegram .wapp-chat-name { color: #fff; font-weight: 600; font-size: 15px; }
-        .platform-telegram .wapp-chat-time { color: #aaa; font-size: 12px; }
-        .platform-telegram .wapp-chat-preview { color: #aaa; }
+        .platform-telegram .wapp-chat-time { color: rgba(255, 255, 255, 0.75); font-size: 12px; }
+        .platform-telegram .wapp-chat-preview { color: rgba(255, 255, 255, 0.75); }
         .platform-telegram .wapp-chat-item.active .wapp-chat-time,
         .platform-telegram .wapp-chat-item.active .wapp-chat-preview { color: rgba(255,255,255,0.85); }
         .platform-telegram .wapp-chat-checkmark { color: #fff; }
         .platform-telegram .wapp-chat-badge {
-            background: #8774E1;
+            background: #005F8C;
             color: #fff;
             border-radius: 12px;
             padding: 1px 8px;
             font-size: 12px;
         }
 
-        /* Header da conversa — semi-transparente pra deixar o wallpaper aparecer */
+        /* Header da conversa — Telegram Blue semi-transparente (85%) com blur sobre wallpaper */
         .platform-telegram .scenario-bar {
-            background: rgba(15, 15, 15, 0.65);
+            background: rgba(0, 136, 204, 0.85);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+            border-bottom: 1px solid rgba(0, 95, 140, 0.6);
             padding: 10px 18px;
             color: #fff;
         }
@@ -1512,7 +1512,7 @@
             align-items: center;
             gap: 6px;
             font-size: 13px;
-            color: #aaa;
+            color: rgba(255, 255, 255, 0.9);
         }
         .platform-telegram .online-dot { display: none; }
         .platform-telegram .wapp-header-icons {
@@ -1520,12 +1520,12 @@
             align-items: center;
             gap: 22px;
             margin-left: auto;
-            color: #aaa;
+            color: #fff;
         }
         .platform-telegram .wapp-header-icons svg { width: 22px; height: 22px; }
         .platform-telegram .question-counter {
-            background: rgba(135, 116, 225, 0.15);
-            color: #b4a4ff;
+            background: rgba(0, 95, 140, 0.4);
+            color: #66C8E6;
             margin-left: 16px;
         }
         .platform-telegram .question-counter strong { color: #fff; }
@@ -1537,7 +1537,7 @@
             padding: 16px 12px;
         }
 
-        /* Bolhas — recebidas cinza-escuro, enviadas violeta */
+        /* Bolhas — recebidas cinza-escuro, enviadas azul */
         .platform-telegram .msg { margin-bottom: 8px; }
         .platform-telegram .bubble {
             padding: 8px 12px;
@@ -1548,12 +1548,12 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.25);
         }
         .platform-telegram .bubble.them {
-            background: #212121;
+            background: #17212B;
             color: #fff;
             border-bottom-left-radius: 4px;
         }
         .platform-telegram .bubble.me {
-            background: #8774E1;
+            background: #005F8C;
             color: #fff;
             border-bottom-right-radius: 4px;
         }
@@ -1587,7 +1587,7 @@
 
         /* Typing indicator */
         .platform-telegram .typing {
-            background: #212121;
+            background: #17212B;
             border-radius: 12px;
             border-bottom-left-radius: 4px;
         }
@@ -1601,7 +1601,7 @@
             margin: 4px 0;
         }
         .platform-telegram .question-prompt {
-            background: #212121;
+            background: #17212B;
             color: #fff;
             padding: 10px 14px;
             border-radius: 12px;
@@ -1621,7 +1621,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Opções — botões estilo bolha "me" (violeta) */
+        /* Opções — botões estilo bolha "me" (azul) */
         .platform-telegram .options {
             display: flex;
             flex-direction: column;
@@ -1630,7 +1630,7 @@
             margin-top: 4px;
         }
         .platform-telegram .option-btn {
-            background: #8774E1;
+            background: #005F8C;
             color: #fff;
             border: none;
             padding: 10px 14px;
@@ -1644,7 +1644,7 @@
             box-shadow: 0 1px 2px rgba(0,0,0,0.25);
             transition: background 0.15s;
         }
-        .platform-telegram .option-btn:hover:not(:disabled) { background: #9985ee; }
+        .platform-telegram .option-btn:hover:not(:disabled) { background: #0088cc; }
         .platform-telegram .option-btn:disabled { cursor: default; }
         .platform-telegram .option-btn.selected-correct { background: #4caf50; }
         .platform-telegram .option-btn.selected-wrong { background: #e57373; }
@@ -1652,7 +1652,7 @@
 
         /* Feedback box (resposta educativa) — bolha do "sistema" */
         .platform-telegram .feedback-box {
-            background: #212121;
+            background: #17212B;
             color: #fff;
             border-radius: 12px;
             border-bottom-left-radius: 4px;
@@ -1667,16 +1667,15 @@
         .platform-telegram .feedback-box.wrong { border-left: 3px solid #e57373; }
         .platform-telegram .feedback-mascot-wrap { display: none; }
 
-        /* Botão continuar — violeta */
+        /* Botão continuar — azul */
         .platform-telegram .continue-btn {
-            background: #8774E1;
+            background: #005F8C;
             border-radius: 20px;
             font-weight: 500;
-            box-shadow: 0 2px 6px rgba(135, 116, 225, 0.35);
+            box-shadow: 0 2px 6px rgba(0, 95, 140, 0.35);
         }
-        .platform-telegram .continue-btn:hover { background: #7461d4; }
-        .platform-telegram .continue-btn.next-scenario { background: #7461d4; }
-        .platform-telegram .continue-btn.next-scenario:hover { background: #6250bf; }
+        .platform-telegram .continue-btn:hover { background: #003B5A; }
+        .platform-telegram .continue-btn.next-scenario { background: #003B5A; }
 
         /* Intro do mascote — fundo escuro solido pra contrastar com wallpaper */
         .platform-telegram .mascote-intro {
