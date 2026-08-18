@@ -481,7 +481,7 @@ class CollaboratorController extends Controller
         // que o primeiro já criou a nova session (isCompleted() será false).
         DB::transaction(function () use ($collaboratorId, $request) {
             $collaborator = Collaborator::whereKey($collaboratorId)->lockForUpdate()->firstOrFail();
-            $lastSession = $collaborator->trainingSessions()->latest('started_at')->first();
+            $lastSession = $collaborator->trainingSessions()->latest('id')->first();
 
             if (!$lastSession || !$lastSession->isCompleted() || $lastSession->passed) {
                 abort(403, 'Refazer o treinamento não está disponível no momento.');

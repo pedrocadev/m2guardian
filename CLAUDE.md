@@ -670,6 +670,28 @@ Ritmo intenso. **8 releases** foram pra prod desde 29/07 — todas testadas e va
 | `0b0cf31` | 30/07 | **Logo oficial em 7 telas** + botões "Responder"/"Encaminhar" decorativos no chat E-mail |
 | `1ea56b7` | 29/07 | Wizard editor de cenários + novo layout do e-mail de convite + transição rápida entre chats + 10 correções pós-review dos 5 agentes |
 
+### ⚠️ Gotcha `latestOfMany` — nunca ordenar sessions por `started_at` (hotfix 2026-08-18)
+
+**Bug reproduzido em prod:** Lucas Pedrosa reprovou o treinamento → clicou em "Refazer treinamento do zero" → redirecionou pra `/treinamento` (correto) mas viu tela "🏆 Treinamento concluído!" em vez da primeira missão. `completed_at` do collaborator estava correto (null), retry rodou até o fim, sessão nova criada — mas o `index()` calculou `$nextScenario = null` e caiu no `@else` da view.
+
+**Causa raiz:** o Model `Collaborator` usava `hasOne(TrainingSession::class)->latestOfMany('started_at')` pra apontar pra "tentativa atual". Em prod, uma session histórica do Lucas tinha `started_at` gravado em **UTC** (19:41:20), enquanto a session nova criada pelo retry ficou em **BRT** (16:41:28). O `latestOfMany('started_at')` compara strings/timestamps crus e concluiu que **`19:41 > 16:41`** → retornou a session ANTIGA. Aí `completedScenarioIds()` contou os 39 answers da session antiga → todos os cenários "concluídos" → `$nextScenario = null` → tela concluído.
+
+**Fix aplicado:** trocar a ordenação de `started_at` → `id` (auto_increment é sempre monotônico, imune a timezone drift):
+
+```diff
+- return $this->hasMany(TrainingSession::class)->latest('started_at');
++ return $this->hasMany(TrainingSession::class)->latest('id');
+
+- return $this->hasOne(TrainingSession::class)->latestOfMany('started_at');
++ return $this->hasOne(TrainingSession::class)->latestOfMany('id');
+```
+
+Mesmo tratamento em `CollaboratorController::retry()` (`->latest('id')` no lugar de `->latest('started_at')`).
+
+**Regra permanente:** ao ordenar registros de um mesmo collaborator/entidade por "mais recente", **sempre** ordenar por `id` quando possível — datetimes são vulneráveis a timezone drift, DST, sync de relógio, e importações de dados históricos com timestamps normalizados. `id` (auto_increment) é a única garantia de monotonicidade em MySQL/MariaDB.
+
+**Teste de regressão:** `tests/Feature/RetryTest.php` reproduz o cenário exato (session antiga com `started_at` 3h à frente da nova, simulando UTC vs BRT) e assere `$nextScenario !== null` no index após retry. Antes do fix o teste falha; com o fix passa.
+
 ### Feature summary — Telegram refinado com input decorativo + FAB (deploy 2026-08-18)
 
 **Motivação:** Pedro mandou screenshot do Telegram Web real ("faça a mesma alteração para o telegran"). Diferente do Teams/Slack, Telegram Web é 2 colunas (não 3) — então não faz sentido nav rail. O foco foi trazer os elementos característicos que faltavam.

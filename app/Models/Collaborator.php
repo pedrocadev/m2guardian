@@ -51,10 +51,15 @@ class Collaborator extends Authenticatable
     /**
      * Todas as tentativas do colaborador, mais recente primeiro.
      * Cada refazer cria uma nova TrainingSession — o histórico fica preservado.
+     *
+     * Ordena por `id` (auto_increment, sempre monotônico) em vez de `started_at`
+     * porque sessions historicas podem ter `started_at` gravado em UTC enquanto
+     * sessions novas ficam em BRT — a comparação por timestamp fica caótica e
+     * `latestOfMany('started_at')` pode retornar a session antiga em vez da nova.
      */
     public function trainingSessions(): HasMany
     {
-        return $this->hasMany(TrainingSession::class)->latest('started_at');
+        return $this->hasMany(TrainingSession::class)->latest('id');
     }
 
     /**
@@ -63,7 +68,7 @@ class Collaborator extends Authenticatable
      */
     public function trainingSession(): HasOne
     {
-        return $this->hasOne(TrainingSession::class)->latestOfMany('started_at');
+        return $this->hasOne(TrainingSession::class)->latestOfMany('id');
     }
 
     public function answers(): HasMany
