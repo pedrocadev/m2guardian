@@ -649,17 +649,18 @@ public/images/
 
 Exceção: `login-admin.png`, `login-leader.png` e `training-welcome-guardian.png` foram **revertidos pro mascote antigo** (corpo inteiro sem moldura circular branca) porque a "bolinha" destoava dos heros escuros dessas telas.
 
-## Estado atual (2026-08-10) — 8 releases grandes deployadas nos últimos 12 dias, working tree limpo
+## Estado atual (2026-08-18) — 9 releases grandes deployadas nos últimos 20 dias, WhatsApp 3col + hotfix retry pendentes
 
-Ritmo intenso. **8 releases** foram pra prod desde 29/07 — todas testadas e validadas em `https://m2guardiao.com.br` via `production-tester`. Working tree só com os 4 arquivos de homolog untracked (política de sempre).
+Ritmo intenso. **9 releases** foram pra prod desde 29/07 — todas testadas e validadas em `https://m2guardiao.com.br` via `production-tester`. Working tree tem 2 mudanças pendentes (WhatsApp 3 colunas + hotfix retry por timezone drift, aguardando OK do Pedro pra commitar) + os 4 arquivos de homolog untracked (política de sempre — NÃO commitar).
 
 ### Releases deployadas (mais recente primeiro)
 
 | Commit | Data | O que foi |
 |--------|------|-----------|
-| _(HEAD, ainda não commitado)_ | 18/08 | **Telegram refinado com input decorativo** (clip 📎 + placeholder "Mensagem" + emoji + microfone circular estilo Telegram Web) no rodapé + **botão flutuante "nova mensagem"** no canto inferior direito da sidebar (gradient azul característico do Telegram) |
-| _(HEAD, ainda não commitado)_ | 18/08 | **Teams refeito com layout 3 colunas** fiel ao Teams real (nav rail Atividade/Chat/Calendário/Copilot/Chamadas/OneDrive/Aplicativos/Mais + sidebar de chats + chat área) + **banner amarelo "usuário externo"** sticky no topo do chat + **input decorativo** no rodapé; **tag "Externo" só no Teams** (é o único que tem esse marcador oficial na UX real — foi restrita ao Teams em revisão do Pedro no mesmo dia após aparecer em todas as plataformas por engano) |
-| _(HEAD, ainda não commitado)_ | 18/08 | **Upload de foto do remetente nos cenários** — campo `avatar_image` (nullable), Filament FileUpload com editor de crop 1:1, thumbnail na tabela do admin, renderiza em 4 lugares (`.s-avatar` header do chat, `.wapp-chat-avatar` sidebar, `.email-avatar` envelope, `.mission-avatar` card da missão). Backward compat: se `avatar_image` vazio, cai no emoji do campo `avatar`. Accessor `Scenario::getAvatarUrlAttribute()` centraliza a lógica |
+| _(HEAD, ainda não commitado)_ | 18/08 | **WhatsApp refeito com layout 3 colunas** fiel ao WhatsApp Web moderno (nav rail Conversas ativo / Chamadas / Status / Comunidades / Meta AI / Arquivadas / Configurações + avatar do usuário no bottom) + título "WhatsApp" grande no header da sidebar + **chips de filtro** (Tudo ativo / Não lidas / Grupos / +) + **input decorativo** no rodapé (+ / emoji / "Digite uma mensagem" / mic). Segue exatamente o padrão do Teams e Slack, mas com paleta WhatsApp (`#f0f2f5`, `#25D366`, `#d9fdd3`) |
+| `78a6bd1` / `ac32369` / `c574422` | 18/08 | **Telegram refinado com input decorativo** (clip 📎 + placeholder "Mensagem" + emoji + microfone circular estilo Telegram Web) no rodapé + **botão flutuante "nova mensagem"** no canto inferior direito da sidebar (gradient azul característico do Telegram) |
+| `c574422` | 18/08 | **Teams refeito com layout 3 colunas** fiel ao Teams real (nav rail Atividade/Chat/Calendário/Copilot/Chamadas/OneDrive/Aplicativos/Mais + sidebar de chats + chat área) + **banner amarelo "usuário externo"** sticky no topo do chat + **input decorativo** no rodapé; **tag "Externo" só no Teams** (é o único que tem esse marcador oficial na UX real — foi restrita ao Teams em revisão do Pedro no mesmo dia após aparecer em todas as plataformas por engano) |
+| `c574422` | 18/08 | **Upload de foto do remetente nos cenários** — campo `avatar_image` (nullable), Filament FileUpload com editor de crop 1:1, thumbnail na tabela do admin, renderiza em 4 lugares (`.s-avatar` header do chat, `.wapp-chat-avatar` sidebar, `.email-avatar` envelope, `.mission-avatar` card da missão). Backward compat: se `avatar_image` vazio, cai no emoji do campo `avatar`. Accessor `Scenario::getAvatarUrlAttribute()` centraliza a lógica |
 | `ccfb11f` | 10/08 | **Nova plataforma Slack** com layout de 3 colunas fiel ao Slack real (nav rail + sidebar canais + chat área), mensagens sem bolha com avatar quadrado, input decorativo, paleta oficial Slack + **fix cross-platform** do mascote de feedback (removido do JS — aparecia indevidamente em Telegram/Slack) |
 | `dc67186` | 05/08 | **Paleta azul `#0088cc` do Telegram** — chrome inteiro (sidebar, header, chat-wrapper) em Telegram Blue vívido do logo, bolhas them em Night Blue `#17212B`, ícones/textos secundários brancos pra contraste |
 | `40dc804` | 05/08 | **Falas do mascote personalizadas por plataforma** na tela de transição entre cenários + botão "Iniciar Missão" + timer 10s |
@@ -691,6 +692,30 @@ Mesmo tratamento em `CollaboratorController::retry()` (`->latest('id')` no lugar
 **Regra permanente:** ao ordenar registros de um mesmo collaborator/entidade por "mais recente", **sempre** ordenar por `id` quando possível — datetimes são vulneráveis a timezone drift, DST, sync de relógio, e importações de dados históricos com timestamps normalizados. `id` (auto_increment) é a única garantia de monotonicidade em MySQL/MariaDB.
 
 **Teste de regressão:** `tests/Feature/RetryTest.php` reproduz o cenário exato (session antiga com `started_at` 3h à frente da nova, simulando UTC vs BRT) e assere `$nextScenario !== null` no index após retry. Antes do fix o teste falha; com o fix passa.
+
+### Feature summary — WhatsApp refeito 3 colunas (mudança pendente 2026-08-18)
+
+**Motivação:** Pedro mandou screenshot do WhatsApp Web moderno ("agora quero que você faça a mesma coisa para o cenário do whatsapp. deixe com mais cara, com os ícones e formatos"). O layout de 2 colunas antigo estava fora de padrão em relação ao Teams e Slack (que agora têm 3 colunas com nav-rail). Refatoração pra deixar o WhatsApp visualmente coerente com o padrão e fiel ao WhatsApp Web real.
+
+**HTML novo** (só quando `platform=wapp`):
+- `<aside class="wapp-nav-rail">` antes da `.wapp-sidebar` — coluna 1 estreita com 5 nav items no topo (Conversas ativo / Chamadas / Status / Comunidades / Meta AI com gradient text) + spacer + 2 nav items no bottom (Arquivadas / Configurações) + avatar do usuário. Item ativo tem barra verde `#25D366` vertical à esquerda.
+- Header condicional novo: `@elseif($scenario->platform === 'wapp')` mostra `<div class="wapp-brand-title">WhatsApp</div>` (o avatar do usuário saiu do header e foi pra nav-rail, coerente com o WhatsApp Web real). Ícones do header: nova conversa + menu kebab.
+- `<div class="wapp-filter-chips">` depois do `.wapp-search` — 4 chips decorativos: Tudo (ativo, fundo verde-claro `#d9fdd3` + texto `#027a48`) / Não lidas / Grupos / +
+- `<div class="wapp-input-bar">` depois do `.bottom-spacer` — barra do rodapé com ícone `+` (anexar) + ícone emoji + `.wapp-input-box` (fundo branco arredondado com "Digite uma mensagem") + ícone mic
+
+**CSS `.platform-wapp`** (mudanças no bloco existente):
+- `chat-wrapper { grid-template-columns: 68px minmax(320px, 380px) 1fr }` — antes era `minmax(320px, 380px) 1fr` (2 colunas)
+- Novo bloco `.wapp-nav-rail` + `.wapp-nav-item` + `.active` (com `::before` verde) + `.meta-ai` (gradient text) + `.wapp-nav-spacer` + `.wapp-nav-avatar`
+- Novo `.wapp-brand-title` (fonte 20px peso 500)
+- Novo bloco `.wapp-filter-chips` + `.wapp-filter-chip` + `.active` (verde WhatsApp) + `.chip-more`
+- Novo bloco `.wapp-input-bar` + `.wapp-input-box` (paleta neutra WhatsApp `#f0f2f5`)
+- Media query `max-width: 900px` esconde nav-rail junto com sidebar
+
+**Padrão consistente:** todos os elementos decorativos usam `aria-hidden="true"` + `tabindex="-1"` (não interferem em navegação por teclado dos elementos funcionais). Mesmo padrão do Teams (18/08) e Slack (10/08).
+
+**Backward compat:** o header antigo do WhatsApp (avatar do usuário à esquerda) foi movido pra nav-rail; o `.wapp-user-avatar` continua sendo usado por Telegram e Slack no `@else` do header condicional.
+
+**Aguardando:** validação visual do Pedro antes de commitar.
 
 ### Feature summary — Telegram refinado com input decorativo + FAB (deploy 2026-08-18)
 

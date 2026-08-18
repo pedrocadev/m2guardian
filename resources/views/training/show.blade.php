@@ -643,13 +643,16 @@
         }
 
         /* ═══════════════════════════════════════════════════════════
-           LAYOUT 2-COLUNAS DO WHATSAPP WEB
+           LAYOUT 3-COLUNAS DO WHATSAPP WEB (fiel ao WhatsApp Web moderno)
+           (1) wapp-nav-rail — coluna estreita esquerda com Conversas / Chamadas / Status / Comunidades / Meta AI + avatar
+           (2) wapp-sidebar  — lista de chats com titulo "WhatsApp", busca, chips (Tudo/Nao lidas/Grupos)
+           (3) chat-main     — area de conversa com wallpaper doodle + input decorativo no rodape
            ═══════════════════════════════════════════════════════════ */
         .chat-wrapper { display: contents; }
 
         .platform-wapp .chat-wrapper {
             display: grid;
-            grid-template-columns: minmax(320px, 380px) 1fr;
+            grid-template-columns: 68px minmax(320px, 380px) 1fr;
             flex: 1;
             min-height: 0;
             max-width: 1400px;
@@ -658,6 +661,133 @@
             background: #fff;
             box-shadow: 0 2px 20px rgba(0,0,0,0.15);
             overflow: hidden;
+        }
+
+        /* ─── COLUNA 1 · Nav rail estreita do WhatsApp Web ────────── */
+        .platform-wapp .wapp-nav-rail {
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 8px 0;
+            border-right: 1px solid #e6e6e6;
+            overflow: hidden;
+        }
+        .platform-wapp .wapp-nav-item {
+            background: transparent;
+            border: none;
+            color: #54656f;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 0;
+            font-family: inherit;
+            position: relative;
+        }
+        .platform-wapp .wapp-nav-item svg { width: 22px; height: 22px; }
+        .platform-wapp .wapp-nav-item.active { color: #111b21; }
+        .platform-wapp .wapp-nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            background: #25D366;
+            border-radius: 0 3px 3px 0;
+        }
+        .platform-wapp .wapp-nav-item.meta-ai {
+            font-size: 11px;
+            font-weight: 700;
+            font-family: inherit;
+            letter-spacing: 0.2px;
+            background: linear-gradient(135deg, #4FCFFF 0%, #A960FF 50%, #FF5A93 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            color: transparent;
+        }
+        .platform-wapp .wapp-nav-spacer { flex: 1; }
+        .platform-wapp .wapp-nav-avatar {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: #ddd;
+            margin: 8px auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            overflow: hidden;
+        }
+        .platform-wapp .wapp-nav-avatar img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+        }
+
+        /* ─── COLUNA 2 · Header "WhatsApp" + chips de filtro ───────── */
+        .platform-wapp .wapp-brand-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #111b21;
+            letter-spacing: -0.2px;
+        }
+        .platform-wapp .wapp-filter-chips {
+            display: flex;
+            gap: 8px;
+            padding: 8px 12px 10px;
+            background: #fff;
+            border-bottom: 1px solid #e6e6e6;
+            flex-shrink: 0;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        .platform-wapp .wapp-filter-chips::-webkit-scrollbar { display: none; }
+        .platform-wapp .wapp-filter-chip {
+            background: #f5f6f6;
+            color: #3b4a54;
+            border: none;
+            font-family: inherit;
+            font-size: 13px;
+            padding: 6px 12px;
+            border-radius: 16px;
+            cursor: default;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+        .platform-wapp .wapp-filter-chip.active {
+            background: #d9fdd3;
+            color: #027a48;
+        }
+        .platform-wapp .wapp-filter-chip.chip-more {
+            width: 28px;
+            padding: 6px 0;
+            font-size: 16px;
+            line-height: 1;
+            color: #54656f;
+        }
+
+        /* ─── COLUNA 3 · Input decorativo do rodape ────────────────── */
+        .platform-wapp .wapp-input-bar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: #f0f2f5;
+            border-top: 1px solid #e6e6e6;
+        }
+        .platform-wapp .wapp-input-bar > svg {
+            width: 24px; height: 24px;
+            color: #54656f;
+            flex-shrink: 0;
+        }
+        .platform-wapp .wapp-input-box {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #667781;
+            font-size: 14px;
         }
 
         /* .chat-main + .chat-area do modo wapp: usam regras compartilhadas acima */
@@ -845,13 +975,14 @@
             overflow: hidden;
         }
 
-        /* Responsivo: sidebar some em telas menores */
+        /* Responsivo: sidebar/nav-rail somem em telas menores */
         @media (max-width: 900px) {
             .platform-wapp .chat-wrapper,
             .platform-teams .chat-wrapper {
                 grid-template-columns: 1fr;
             }
-            .wapp-sidebar { display: none; }
+            .wapp-sidebar,
+            .platform-wapp .wapp-nav-rail { display: none; }
         }
 
         /* ═══════════════════════════════════════════════════════════
@@ -2568,12 +2699,42 @@
     </div>
 </aside>
 @endif
+@if($scenario->platform === 'wapp')
+{{-- Nav rail estreita a esquerda (coluna 1 do WhatsApp Web moderno) — Conversas ativo / Chamadas / Status / Comunidades / Meta AI / Arquivadas / Configuracoes / avatar --}}
+<aside class="wapp-nav-rail">
+    <button type="button" class="wapp-nav-item active" tabindex="-1" aria-hidden="true" title="Conversas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+    </button>
+    <button type="button" class="wapp-nav-item" tabindex="-1" aria-hidden="true" title="Chamadas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+    </button>
+    <button type="button" class="wapp-nav-item" tabindex="-1" aria-hidden="true" title="Status">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" stroke-dasharray="4 2"/></svg>
+    </button>
+    <button type="button" class="wapp-nav-item" tabindex="-1" aria-hidden="true" title="Comunidades">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="7" r="3"/><circle cx="6" cy="16" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+    </button>
+    <button type="button" class="wapp-nav-item meta-ai" tabindex="-1" aria-hidden="true" title="Meta AI">Meta AI</button>
+    <span class="wapp-nav-spacer"></span>
+    <button type="button" class="wapp-nav-item" tabindex="-1" aria-hidden="true" title="Arquivadas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8"/><line x1="10" y1="13" x2="14" y2="13"/></svg>
+    </button>
+    <button type="button" class="wapp-nav-item" tabindex="-1" aria-hidden="true" title="Configuracoes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+    <div class="wapp-nav-avatar">
+        <img src="/images/mascots/training-show-sidebar.png" alt="Voce" onerror="this.style.display='none';this.parentElement.innerHTML='&#128737;';">
+    </div>
+</aside>
+@endif
 <aside class="wapp-sidebar">
     <div class="wapp-sidebar-header">
         @if($scenario->platform === 'email')
             <div class="email-sidebar-title">Caixa de entrada</div>
         @elseif($scenario->platform === 'teams')
             <div class="teams-sidebar-title">Chat</div>
+        @elseif($scenario->platform === 'wapp')
+            <div class="wapp-brand-title">WhatsApp</div>
         @else
             <div class="wapp-user-avatar">
                 <img src="/images/mascots/training-show-sidebar.png" alt="Você" onerror="this.style.display='none';this.parentElement.innerHTML='🛡️';">
@@ -2586,6 +2747,9 @@
             @elseif($scenario->platform === 'teams')
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" title="Filtrar"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" title="Novo chat"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            @elseif($scenario->platform === 'wapp')
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" title="Nova conversa"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" title="Menu"><circle cx="12" cy="5" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="12" cy="19" r="1.6"/></svg>
             @else
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" title="Comunidades"><circle cx="12" cy="7" r="3"/><circle cx="6" cy="16" r="3"/><circle cx="18" cy="16" r="3"/></svg>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" title="Status"><circle cx="12" cy="12" r="9" stroke-dasharray="4 2"/></svg>
@@ -2598,6 +2762,15 @@
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.5" y2="16.5"/></svg>
         <span>{{ $scenario->platform === 'email' ? 'Pesquisar e-mails' : ($scenario->platform === 'teams' ? 'Pesquisar' : 'Pesquisar ou começar uma nova conversa') }}</span>
     </div>
+    @if($scenario->platform === 'wapp')
+    {{-- Chips de filtro do WhatsApp Web (decorativos) — Tudo (ativo) / Nao lidas / Grupos / + --}}
+    <div class="wapp-filter-chips" aria-hidden="true">
+        <button type="button" class="wapp-filter-chip active" tabindex="-1">Tudo</button>
+        <button type="button" class="wapp-filter-chip" tabindex="-1">Não lidas</button>
+        <button type="button" class="wapp-filter-chip" tabindex="-1">Grupos</button>
+        <button type="button" class="wapp-filter-chip chip-more" tabindex="-1">+</button>
+    </div>
+    @endif
     <div class="wapp-chat-list">
         @foreach($scenarios->where('platform', $scenario->platform) as $idx => $s)
             @php
@@ -2757,6 +2930,16 @@
 </div>
 
 <div class="bottom-spacer"></div>
+
+@if($scenario->platform === 'wapp')
+{{-- Input decorativo do WhatsApp Web no rodape (nao funcional — so visual) --}}
+<div class="wapp-input-bar" aria-hidden="true">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" title="Anexar"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" title="Emoji"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+    <div class="wapp-input-box">Digite uma mensagem</div>
+    <svg viewBox="0 0 24 24" fill="currentColor" title="Audio"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11v1a7 7 0 0 1-14 0v-1" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+</div>
+@endif
 
 @if($scenario->platform === 'teams')
 {{-- Input decorativo do Teams (não funcional — só visual, como no Slack) --}}
