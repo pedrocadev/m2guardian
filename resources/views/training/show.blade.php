@@ -298,7 +298,7 @@
         .msg-time, .msg-check, .s-info-online, .wapp-header-icons { display: none; }
 
         /* Tag "Externo" no header do chat — SOMENTE no Teams (é a plataforma real que tem esse indicador oficial).
-           Blade envolve o span com @if(platform === 'teams'), entao esses estilos so aparecem no Teams. */
+           Blade condicional envolve o span (platform === 'teams'), entao esses estilos so aparecem no Teams. */
         .s-info-label-row {
             display: inline-flex;
             align-items: center;
