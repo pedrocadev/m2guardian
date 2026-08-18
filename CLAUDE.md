@@ -648,7 +648,7 @@ Ritmo intenso. **8 releases** foram pra prod desde 29/07 — todas testadas e va
 | Commit | Data | O que foi |
 |--------|------|-----------|
 | _(HEAD, ainda não commitado)_ | 18/08 | **Telegram refinado com input decorativo** (clip 📎 + placeholder "Mensagem" + emoji + microfone circular estilo Telegram Web) no rodapé + **botão flutuante "nova mensagem"** no canto inferior direito da sidebar (gradient azul característico do Telegram) |
-| _(HEAD, ainda não commitado)_ | 18/08 | **Teams refeito com layout 3 colunas** fiel ao Teams real (nav rail Atividade/Chat/Calendário/Copilot/Chamadas/OneDrive/Aplicativos/Mais + sidebar de chats + chat área) + **banner amarelo "usuário externo"** sticky no topo do chat + **input decorativo** no rodapé; **tag "Externo" universal** no header do chat de TODAS as plataformas (todos cenarios simulam contato externo, sinaliza risco) |
+| _(HEAD, ainda não commitado)_ | 18/08 | **Teams refeito com layout 3 colunas** fiel ao Teams real (nav rail Atividade/Chat/Calendário/Copilot/Chamadas/OneDrive/Aplicativos/Mais + sidebar de chats + chat área) + **banner amarelo "usuário externo"** sticky no topo do chat + **input decorativo** no rodapé; **tag "Externo" só no Teams** (é o único que tem esse marcador oficial na UX real — foi restrita ao Teams em revisão do Pedro no mesmo dia após aparecer em todas as plataformas por engano) |
 | _(HEAD, ainda não commitado)_ | 18/08 | **Upload de foto do remetente nos cenários** — campo `avatar_image` (nullable), Filament FileUpload com editor de crop 1:1, thumbnail na tabela do admin, renderiza em 4 lugares (`.s-avatar` header do chat, `.wapp-chat-avatar` sidebar, `.email-avatar` envelope, `.mission-avatar` card da missão). Backward compat: se `avatar_image` vazio, cai no emoji do campo `avatar`. Accessor `Scenario::getAvatarUrlAttribute()` centraliza a lógica |
 | `ccfb11f` | 10/08 | **Nova plataforma Slack** com layout de 3 colunas fiel ao Slack real (nav rail + sidebar canais + chat área), mensagens sem bolha com avatar quadrado, input decorativo, paleta oficial Slack + **fix cross-platform** do mascote de feedback (removido do JS — aparecia indevidamente em Telegram/Slack) |
 | `dc67186` | 05/08 | **Paleta azul `#0088cc` do Telegram** — chrome inteiro (sidebar, header, chat-wrapper) em Telegram Blue vívido do logo, bolhas them em Night Blue `#17212B`, ícones/textos secundários brancos pra contraste |
@@ -692,16 +692,34 @@ Ritmo intenso. **8 releases** foram pra prod desde 29/07 — todas testadas e va
 - Novo bloco `.teams-external-banner` (amarelo, warning icon, link Saiba mais)
 - Novo bloco `.teams-input-bar` + subitens (hint / box / placeholder / actions / send-btn)
 
-**Tag "Externo" universal** (aplicada em TODAS as 5 plataformas):
-- HTML novo no `.scenario-bar` universal: `<div class="s-info-label-row">` wrap com `<span class="s-info-label">` + `<span class="external-tag">Externo</span>` ao lado
-- Cor base padrão Teams (`#e8ebfa` bg + `#6264A7` fg — a cor real do Teams em contato externo)
-- Overrides por plataforma pra contraste visual:
-  - Wapp: `rgba(255,255,255,0.95)` bg + verde `#075E54` (sobre header verde WhatsApp)
-  - Email: `#deecf9` + azul `#0078d4`
-  - Telegram: `rgba(255,255,255,0.22)` + `#fff` (sobre chrome vívido)
-  - Slack: `#fde7c1` + `#7C4D00` (sobre header branco)
+**Tag "Externo" — SÓ no Teams** (a UX real desse marcador é exclusiva do Teams):
+- HTML no `.scenario-bar` universal: `<div class="s-info-label-row">` wrap com `<span class="s-info-label">` + `@if($scenario->platform === 'teams')` envolvendo `<span class="external-tag">Externo</span>`
+- Cor: `#e8ebfa` bg + `#6264A7` fg (cor real do Teams em contato externo)
+- **Nota histórica**: primeiro build (mesma manhã de 18/08) aplicou a tag universalmente em todas as 5 plataformas com overrides de cor por paleta, mas Pedro pediu restrição — WhatsApp/Email/Telegram/Slack no mundo real NÃO têm esse marcador de "Externo" no header. Restrito ao Teams pra ficar fiel. Os overrides de cor das outras plataformas foram removidos como código morto.
 
-**Motivação didática:** todos os cenários simulam **golpe/social engineering** — contato SEMPRE externo. A tag reforça visualmente que o remetente não é da organização (esse sinal existe no Teams real justamente pra alertar o usuário). Cai bem no exercício de treinamento.
+### ⚠️ Gotcha Nginx — `/storage/` fora da blocklist (fix 2026-08-18)
+
+Deploy inicial da feature "Upload de foto do remetente" caiu num 403 em prod: uploads apareciam como placeholder quebrado no `/admin/scenarios` mesmo com symlink, permissões e `APP_URL` corretos. Causa: a config Nginx em prod (baseada no template `deploy/nginx-https.conf` original) tinha esta regra:
+
+```nginx
+location ~ /(storage|bootstrap|database|tests|deploy|config|app|routes)/ {
+    deny all;
+}
+```
+
+O `storage|` na blocklist bloqueava a URL pública `/storage/...` — que é o **symlink oficial do Laravel** pra `storage/app/public/` (uploads via `disk('public')`). As outras pastas na lista (`bootstrap/`, `database/`, etc) ficam FORA do document root `/public`, então o `deny all` nelas é cinto-e-suspensórios cosmético. Só `storage` estava realmente ativa e quebrando o feature novo.
+
+**Fix aplicado em prod** (via `sudo sed -i` no `/etc/nginx/sites-enabled/m2guardian` + `sudo systemctl reload nginx`):
+```nginx
+# storage sai da lista
+location ~ /(bootstrap|database|tests|deploy|config|app|routes)/ {
+    deny all;
+}
+```
+
+**Fix aplicado no repo** (`deploy/nginx-http.conf` + `deploy/nginx-https.conf` — 2 blocos no HTTPS pra HTTP redirect + HTTPS main) — próximas VMs/homolog não vão sofrer disso.
+
+**Ao adicionar novos disks públicos no futuro**, sempre verificar se o path público NÃO está na blocklist do Nginx. O `03-deploy-app.sh` NÃO reescreve Nginx config — a mudança precisa ser aplicada manualmente em prod (já está feito 18/08).
 
 ### Feature summary — Upload de foto do remetente (deploy 2026-08-18)
 

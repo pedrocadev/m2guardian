@@ -297,9 +297,8 @@
         /* Elementos que sempre existem mas só aparecem em modos específicos */
         .msg-time, .msg-check, .s-info-online, .wapp-header-icons { display: none; }
 
-        /* Tag "Externo" no header do chat — universal em TODAS as plataformas.
-           Cenarios simulam contato externo (potencial golpe), sinaliza risco.
-           Cada plataforma pode override cor/fundo mais abaixo pra combinar com sua paleta. */
+        /* Tag "Externo" no header do chat — SOMENTE no Teams (é a plataforma real que tem esse indicador oficial).
+           Blade envolve o span com @if(platform === 'teams'), entao esses estilos so aparecem no Teams. */
         .s-info-label-row {
             display: inline-flex;
             align-items: center;
@@ -321,11 +320,6 @@
             line-height: 1.4;
             white-space: nowrap;
         }
-        /* Overrides de contraste por plataforma pra tag ficar visível sobre o header da plataforma */
-        .platform-wapp .external-tag { background: rgba(255,255,255,0.95); color: #075E54; }
-        .platform-email .external-tag { background: #deecf9; color: #0078d4; }
-        .platform-telegram .external-tag { background: rgba(255,255,255,0.22); color: #fff; }
-        .platform-slack .external-tag { background: #fde7c1; color: #7C4D00; }
 
         /* Foto do remetente (avatar_image) — quando o cenário tem upload de imagem,
            o <img> substitui o emoji dentro do container. Preenche o container todo e mantem
@@ -2680,8 +2674,10 @@
     <div class="s-info">
         <div class="s-info-label-row">
             <span class="s-info-label">{{ $scenario->label }}</span>
-            {{-- Tag "Externo" — universal em todas as plataformas (cenário simula contato externo, potencial golpe) --}}
-            <span class="external-tag" title="Contato externo à organização">Externo</span>
+            {{-- Tag "Externo" — só no Teams (é a única plataforma real que tem esse marcador oficial de contato externo à organização) --}}
+            @if($scenario->platform === 'teams')
+                <span class="external-tag" title="Contato externo à organização">Externo</span>
+            @endif
         </div>
         <div class="s-info-sub">{{ $scenario->preview }}</div>
         <div class="s-info-online"><span class="online-dot"></span>online</div>
