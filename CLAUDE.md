@@ -343,6 +343,16 @@ Filament resolves closures via **parameter name reflection**, NOT positional bin
 
 Same applies to filter `->query()` callbacks.
 
+### ⚠️ Blade parser gotcha — `@if(...)` textual dentro de `<style>` quebra a compilação
+
+Blade compiler é **ganancioso** e detecta qualquer string `@if(`, `@endif`, `@foreach`, etc como diretiva — **mesmo dentro de tags `<style>` ou `<script>`, mesmo dentro de comentários CSS/JS**. Comentário do tipo `/* Blade envolve o span com @if(condicao) */` faz o parser abrir uma diretiva `@if` que nunca fecha → `ParseError: syntax error, unexpected end of file, expecting "elseif" or "else" or "endif"` na compilação, HTTP 500 em produção.
+
+**Aconteceu em 2026-08-18** — comentário CSS `Blade envolve o span com @if(platform === 'teams')` na seção `.external-tag` do `training/show.blade.php` derrubou toda a rota `/treinamento/cenario/{id}` com 500. Fix (`78a6bd1`): trocar o `@if` textual por outra formulação sem o `@` (ex: `Blade condicional (platform === teams)`).
+
+**Como detectar antes de subir:** `grep -c "@if(" show.blade.php` vs `grep -c "@endif" show.blade.php` — se os números não baterem, tem `@if` textual em algum lugar (comentário/string). Blade compile via `php artisan view:cache` também flagra localmente antes do deploy.
+
+**Regra:** ao escrever comentário/documentação DENTRO de blade file, nunca usar `@if`, `@foreach`, `@endif` etc de forma literal. Alternativas: usar `@@if` (escape Blade — vira `@if` literal na saída), OU reescrever sem o `@` (`if condicional`, `condicional Blade`, etc).
+
 ### Filament CSS overlay gotcha (learned the hard way)
 
 Do **NOT** use a fixed `body::before` overlay with `position: relative; z-index: 1;` on `.fi-topbar` / `.fi-sidebar` / `.fi-main` to create background effects. This creates a new stacking context that **silently breaks Filament's user-menu dropdown** (it opens visually but clicks fall through to nothing). The dropdown uses Floating UI which positions absolute at body level — the stacking context disrupts event handling.
