@@ -296,6 +296,59 @@
 
         /* Elementos que sempre existem mas só aparecem em modos específicos */
         .msg-time, .msg-check, .s-info-online, .wapp-header-icons { display: none; }
+
+        /* Tag "Externo" no header do chat — universal em TODAS as plataformas.
+           Cenarios simulam contato externo (potencial golpe), sinaliza risco.
+           Cada plataforma pode override cor/fundo mais abaixo pra combinar com sua paleta. */
+        .s-info-label-row {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .s-info-label-row .s-info-label { display: inline; }
+        .external-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            background: #e8ebfa;
+            color: #6264A7;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+            line-height: 1.4;
+            white-space: nowrap;
+        }
+        /* Overrides de contraste por plataforma pra tag ficar visível sobre o header da plataforma */
+        .platform-wapp .external-tag { background: rgba(255,255,255,0.95); color: #075E54; }
+        .platform-email .external-tag { background: #deecf9; color: #0078d4; }
+        .platform-telegram .external-tag { background: rgba(255,255,255,0.22); color: #fff; }
+        .platform-slack .external-tag { background: #fde7c1; color: #7C4D00; }
+
+        /* Foto do remetente (avatar_image) — quando o cenário tem upload de imagem,
+           o <img> substitui o emoji dentro do container. Preenche o container todo e mantem
+           o border-radius (redondo/quadrado com cantos) do proprio container pai.
+           Classe .has-img é injetada server-side via Blade (evita depender de :has() CSS4). */
+        .s-avatar img,
+        .wapp-chat-avatar img,
+        .email-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: inherit;
+            display: block;
+        }
+        /* Zera font-size (mata o glyph do emoji) e padding; overflow: hidden pra img
+           nao vazar dos cantos arredondados do proprio container. */
+        .s-avatar.has-img,
+        .wapp-chat-avatar.has-img,
+        .email-avatar.has-img {
+            padding: 0;
+            font-size: 0;
+            overflow: hidden;
+        }
         .s-info { display: flex; flex-direction: column; gap: 2px; }
 
         /* Regras compartilhadas entre todos os modos de plataforma (wapp / teams / email / telegram / slack) */
@@ -821,10 +874,13 @@
             background: rgba(245, 245, 245, 0.9);
         }
 
-        /* Wrapper 2-colunas */
+        /* Wrapper 3-colunas fiéis ao Teams real:
+           (1) teams-nav-rail — coluna estreita com icones grandes empilhados (Atividade, Chat, Calendario...)
+           (2) wapp-sidebar   — lista de chats com header "Chat" + filtros
+           (3) chat-main      — area de conversa com banner externo + input decorativo */
         .platform-teams .chat-wrapper {
             display: grid;
-            grid-template-columns: minmax(300px, 340px) 1fr;
+            grid-template-columns: 68px minmax(280px, 320px) 1fr;
             flex: 1;
             min-height: 0;
             max-width: 1400px;
@@ -835,6 +891,135 @@
             overflow: hidden;
         }
         .platform-teams .chat-main { background: #fff; }
+
+        /* ─── COLUNA 1 · Nav rail estreita ─────────────────────────── */
+        .platform-teams .teams-nav-rail {
+            background: #f5f5f5;
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            padding: 4px 0;
+            gap: 2px;
+            border-right: 1px solid #e1dfdd;
+            overflow: hidden;
+        }
+        .platform-teams .teams-nav-item {
+            background: transparent;
+            border: none;
+            color: #616161;
+            cursor: default;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            padding: 8px 2px 6px;
+            font-size: 9.5px;
+            font-weight: 600;
+            font-family: inherit;
+            letter-spacing: -0.1px;
+        }
+        .platform-teams .teams-nav-item svg { width: 22px; height: 22px; }
+        .platform-teams .teams-nav-item.active { color: #6264A7; position: relative; }
+        .platform-teams .teams-nav-item.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 8px;
+            bottom: 8px;
+            width: 3px;
+            background: #6264A7;
+            border-radius: 0 3px 3px 0;
+        }
+        .platform-teams .teams-nav-more span { display: none; }
+        .platform-teams .teams-nav-more { padding-top: 12px; padding-bottom: 12px; }
+
+        /* Banner amarelo de aviso "usuário externo" — sticky no topo pra continuar visível conforme o chat rola
+           (no Teams real o aviso de externo fica sempre visivel; nossa chat-area tem overflow-y auto) */
+        .platform-teams .teams-external-banner {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: #fff4ce;
+            border-left: 4px solid #f9d65e;
+            padding: 10px 16px;
+            margin: 0 0 12px 0;
+            border-radius: 4px;
+            font-size: 13px;
+            color: #201f1e;
+            line-height: 1.4;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .platform-teams .teams-external-banner-icon {
+            color: #ca7e00;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            padding-top: 2px;
+        }
+        .platform-teams .teams-external-banner-icon svg { width: 18px; height: 18px; }
+        .platform-teams .teams-external-banner-text { flex: 1; }
+        .platform-teams .teams-external-banner-link {
+            color: #464775;
+            text-decoration: underline;
+            font-weight: 600;
+        }
+        .platform-teams .teams-external-banner-close {
+            background: transparent;
+            border: none;
+            color: #616161;
+            font-size: 20px;
+            line-height: 1;
+            cursor: default;
+            padding: 0 4px;
+            flex-shrink: 0;
+        }
+
+        /* Input decorativo Teams no rodapé */
+        .platform-teams .teams-input-bar {
+            padding: 8px 20px 16px;
+            background: #fff;
+        }
+        .platform-teams .teams-input-hint {
+            font-size: 11px;
+            color: #616161;
+            padding: 4px 8px;
+            margin-bottom: 4px;
+        }
+        .platform-teams .teams-input-box {
+            border: 1px solid #e1dfdd;
+            border-radius: 4px;
+            background: #fff;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .platform-teams .teams-input-placeholder {
+            flex: 1;
+            color: #616161;
+            font-size: 14px;
+        }
+        .platform-teams .teams-input-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #616161;
+            font-size: 13px;
+        }
+        .platform-teams .teams-input-actions span { cursor: default; }
+        .platform-teams .teams-send-btn {
+            background: transparent;
+            border: none;
+            color: #6264A7;
+            padding: 4px;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            border-radius: 4px;
+        }
+        .platform-teams .teams-send-btn svg { width: 18px; height: 18px; }
 
         /* Sidebar (chat list) — visual Teams */
         .platform-teams .wapp-sidebar {
@@ -1432,6 +1617,7 @@
         .platform-telegram .wapp-sidebar {
             background: #0088cc;
             border-right: 1px solid #005F8C;
+            position: relative; /* ancora o FAB "nova mensagem" no canto inferior direito */
         }
         .platform-telegram .wapp-sidebar-header {
             background: #0088cc;
@@ -1691,9 +1877,100 @@
             color: #e8e8e8;
         }
 
+        /* Botão flutuante "nova mensagem" — canto inferior direito da sidebar (característico do Telegram Web) */
+        .platform-telegram .telegram-new-message-fab {
+            position: absolute;
+            bottom: 18px;
+            right: 18px;
+            width: 54px;
+            height: 54px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #33A1D6, #0088cc);
+            border: none;
+            color: #fff;
+            cursor: default;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 14px rgba(0, 136, 204, 0.5);
+            z-index: 3;
+        }
+        .platform-telegram .telegram-new-message-fab svg { width: 24px; height: 24px; }
+
+        /* Input decorativo do Telegram Web no rodapé — clip + placeholder + emoji + microfone */
+        .platform-telegram .telegram-input-bar {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px 14px;
+            background: rgba(15, 15, 15, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+        /* Botão attach (clip fora do box) — botão redondo padding 8 */
+        .platform-telegram .telegram-input-attach {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: default;
+            padding: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .platform-telegram .telegram-input-attach svg { width: 22px; height: 22px; }
+
+        /* Botão mic (destaque circular à direita) — gradient azul + sombra */
+        .platform-telegram .telegram-input-mic {
+            background: linear-gradient(135deg, #33A1D6, #0088cc);
+            border: none;
+            color: #fff;
+            cursor: default;
+            width: 42px;
+            height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 136, 204, 0.4);
+        }
+        .platform-telegram .telegram-input-mic svg { width: 20px; height: 20px; }
+
+        /* Box central com placeholder e emoji dentro */
+        .platform-telegram .telegram-input-box {
+            flex: 1;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 22px;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+        .platform-telegram .telegram-input-placeholder {
+            color: rgba(255, 255, 255, 0.55);
+            font-size: 15px;
+            flex: 1;
+        }
+        /* Emoji só existe dentro do box — padding menor pra caber na altura da linha do placeholder */
+        .platform-telegram .telegram-input-emoji {
+            background: transparent;
+            border: none;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: default;
+            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .platform-telegram .telegram-input-emoji svg { width: 22px; height: 22px; }
+
         @media (max-width: 700px) {
             .platform-telegram .wapp-header-icons { display: none; }
             .platform-telegram .question-counter { display: none; }
+            .platform-telegram .telegram-new-message-fab { display: none; }
         }
 
         /* ═══════════════════════════════════════════════════════════
@@ -2231,6 +2508,42 @@
 <div class="chat-wrapper">
 
 @if(in_array($scenario->platform, ['wapp', 'teams', 'email', 'telegram', 'slack']))
+@if($scenario->platform === 'teams')
+{{-- Nav rail estreita à esquerda (coluna 1 do Teams) — Bell / Chat (ativo) / Calendar / Copilot / Phone / Cloud / Apps / Mais --}}
+<aside class="teams-nav-rail">
+    <button type="button" class="teams-nav-item" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span>Atividade</span>
+    </button>
+    <button type="button" class="teams-nav-item active" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <span>Chat</span>
+    </button>
+    <button type="button" class="teams-nav-item" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        <span>Calendário</span>
+    </button>
+    <button type="button" class="teams-nav-item" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        <span>Copilot</span>
+    </button>
+    <button type="button" class="teams-nav-item" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+        <span>Chamadas</span>
+    </button>
+    <button type="button" class="teams-nav-item" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/></svg>
+        <span>OneDrive</span>
+    </button>
+    <button type="button" class="teams-nav-item" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <span>Aplicativos</span>
+    </button>
+    <button type="button" class="teams-nav-item teams-nav-more" tabindex="-1" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg>
+    </button>
+</aside>
+@endif
 @if($scenario->platform === 'slack')
 {{-- Nav rail estreita à esquerda (coluna 1 do Slack) --}}
 <aside class="slack-nav-rail">
@@ -2312,7 +2625,13 @@
             @else
                 <div class="wapp-chat-item {{ $stateClass }}" title="{{ $tooltip }}">
             @endif
-                <div class="wapp-chat-avatar" style="background: {{ $s->bg_color }}20;">{{ $s->avatar }}</div>
+                <div class="wapp-chat-avatar {{ $s->avatar_url ? 'has-img' : '' }}" style="background: {{ $s->bg_color }}20;">
+                    @if($s->avatar_url)
+                        <img src="{{ $s->avatar_url }}" alt="{{ $s->label }}">
+                    @else
+                        {{ $s->avatar }}
+                    @endif
+                </div>
                 <div class="wapp-chat-body">
                     <div class="wapp-chat-line1">
                         <span class="wapp-chat-name">{{ $s->label }}</span>
@@ -2339,15 +2658,31 @@
             @endif
         @endforeach
     </div>
+    @if($scenario->platform === 'telegram')
+    {{-- Botão flutuante "nova mensagem" no canto inferior direito da sidebar (decorativo, característico do Telegram Web) --}}
+    <button type="button" class="telegram-new-message-fab" tabindex="-1" aria-hidden="true" title="Nova mensagem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+    </button>
+    @endif
 </aside>
 @endif
 
 <div class="chat-main">
 
 <div class="scenario-bar">
-    <div class="s-avatar" style="background: {{ $scenario->bg_color }}20;">{{ $scenario->avatar }}</div>
+    <div class="s-avatar {{ $scenario->avatar_url ? 'has-img' : '' }}" style="background: {{ $scenario->bg_color }}20;">
+        @if($scenario->avatar_url)
+            <img src="{{ $scenario->avatar_url }}" alt="{{ $scenario->label }}">
+        @else
+            {{ $scenario->avatar }}
+        @endif
+    </div>
     <div class="s-info">
-        <div class="s-info-label">{{ $scenario->label }}</div>
+        <div class="s-info-label-row">
+            <span class="s-info-label">{{ $scenario->label }}</span>
+            {{-- Tag "Externo" — universal em todas as plataformas (cenário simula contato externo, potencial golpe) --}}
+            <span class="external-tag" title="Contato externo à organização">Externo</span>
+        </div>
         <div class="s-info-sub">{{ $scenario->preview }}</div>
         <div class="s-info-online"><span class="online-dot"></span>online</div>
     </div>
@@ -2360,6 +2695,18 @@
 </div>
 
 <div class="chat-area" id="chatArea">
+    @if($scenario->platform === 'teams')
+    {{-- Banner amarelo de aviso do Teams — "usuário externo à organização" (decorativo, só visual) --}}
+    <div class="teams-external-banner" aria-hidden="true">
+        <span class="teams-external-banner-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </span>
+        <div class="teams-external-banner-text">
+            <strong>{{ $scenario->label }}</strong> faz parte de uma organização externa. É possível que haja políticas relacionadas às mensagens que serão aplicadas ao chat. <span class="teams-external-banner-link">Saiba mais</span>
+        </div>
+        <button class="teams-external-banner-close" type="button" tabindex="-1" aria-hidden="true">×</button>
+    </div>
+    @endif
     <div class="mascote-intro">
         <img src="/images/mascots/training-show-greeting.png" alt="Guardião">
         <div class="intro-text">
@@ -2381,7 +2728,13 @@
         <div class="email-envelope">
             <div class="email-subject-bar">{{ $emailSubject }}</div>
             <div class="email-meta-bar">
-                <div class="email-avatar" style="background: {{ $scenario->bg_color }}30;">{{ $scenario->avatar }}</div>
+                <div class="email-avatar {{ $scenario->avatar_url ? 'has-img' : '' }}" style="background: {{ $scenario->bg_color }}30;">
+                    @if($scenario->avatar_url)
+                        <img src="{{ $scenario->avatar_url }}" alt="{{ $scenario->label }}">
+                    @else
+                        {{ $scenario->avatar }}
+                    @endif
+                </div>
                 <div class="email-meta-info">
                     <div class="email-meta-line1">
                         <span class="email-from-name">{{ $emailFromName }}</span>
@@ -2408,6 +2761,44 @@
 </div>
 
 <div class="bottom-spacer"></div>
+
+@if($scenario->platform === 'teams')
+{{-- Input decorativo do Teams (não funcional — só visual, como no Slack) --}}
+<div class="teams-input-bar" aria-hidden="true">
+    <div class="teams-input-hint">Responder a participantes externos.</div>
+    <div class="teams-input-box">
+        <div class="teams-input-placeholder">Digite uma mensagem</div>
+        <div class="teams-input-actions">
+            <span title="Formatar">Aa</span>
+            <span title="Emoji">😊</span>
+            <span title="GIF">GIF</span>
+            <span title="Anexar">📎</span>
+            <span title="Mais">⋯</span>
+            <button type="button" class="teams-send-btn" tabindex="-1">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2z"/></svg>
+            </button>
+        </div>
+    </div>
+</div>
+@endif
+
+@if($scenario->platform === 'telegram')
+{{-- Input decorativo do Telegram Web no rodapé (não funcional — só visual) --}}
+<div class="telegram-input-bar" aria-hidden="true">
+    <button type="button" class="telegram-input-attach" tabindex="-1" title="Anexar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+    </button>
+    <div class="telegram-input-box">
+        <span class="telegram-input-placeholder">Mensagem</span>
+        <button type="button" class="telegram-input-emoji" tabindex="-1" title="Emoji">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+        </button>
+    </div>
+    <button type="button" class="telegram-input-mic" tabindex="-1" title="Áudio">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3z"/><path d="M19 11v1a7 7 0 0 1-14 0v-1M12 19v4M8 23h8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+</div>
+@endif
 
 @if($scenario->platform === 'slack')
 {{-- Input decorativo do Slack (não funcional — só visual) --}}

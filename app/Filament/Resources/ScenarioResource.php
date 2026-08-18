@@ -67,19 +67,35 @@ class ScenarioResource extends Resource
                                 'heroicon-m-information-circle',
                                 tooltip: 'Título exibido ao colaborador na lista de missões e no topo do chat. Seja descritivo (ex: "Diretoria Executiva", "Fatura Suspeita do Fornecedor").'
                             ),
+                        Forms\Components\FileUpload::make('avatar_image')
+                            ->label('Foto do remetente')
+                            ->image()
+                            ->imageEditor()
+                            ->imageEditorAspectRatios(['1:1'])
+                            ->imageCropAspectRatio('1:1')
+                            ->imageResizeMode('cover')
+                            ->imageResizeTargetWidth(400)
+                            ->imageResizeTargetHeight(400)
+                            ->disk('public')
+                            ->directory('scenarios/avatars')
+                            ->maxSize(2048)
+                            ->hintIcon(
+                                'heroicon-m-information-circle',
+                                tooltip: 'Foto que aparece como avatar do "remetente" no chat (rosto de pessoa deixa o cenario mais realista). Se preenchida, ganha do emoji abaixo. Recomendado quadrado (1:1); o editor embutido faz o crop. Máximo 2MB.'
+                            ),
                         Forms\Components\TextInput::make('avatar')
-                            ->label('Emoji')
+                            ->label('Emoji (fallback se sem foto)')
                             ->maxLength(8)
                             ->placeholder('👨‍💼')
                             ->hintIcon(
                                 'heroicon-m-information-circle',
-                                tooltip: 'Emoji que aparece como avatar do "remetente" no chat. Pode ser uma pessoa (👨‍💼, 👩‍💻), uma empresa (🏦, 📦) ou outro símbolo (📧, 💼).'
+                                tooltip: 'Emoji que aparece como avatar do "remetente" APENAS QUANDO não tem foto uploaded acima. Pode ser uma pessoa (👨‍💼, 👩‍💻), uma empresa (🏦, 📦) ou outro símbolo (📧, 💼). Cenarios antigos sem foto continuam usando este campo.'
                             ),
                         Forms\Components\ColorPicker::make('bg_color')
                             ->label('Cor de fundo')
                             ->hintIcon(
                                 'heroicon-m-information-circle',
-                                tooltip: 'Cor de fundo do avatar (atrás do emoji). Use cores corporativas relacionadas ao "remetente" simulado (ex: azul-marinho pra diretoria, verde pra banco).'
+                                tooltip: 'Cor de fundo do avatar. Visível quando não há foto uploaded (fica atrás do emoji). Use cores corporativas relacionadas ao "remetente" simulado (ex: azul-marinho pra diretoria, verde pra banco).'
                             ),
                         Forms\Components\TextInput::make('preview')
                             ->label('Descrição prévia (lista)')
@@ -309,6 +325,11 @@ class ScenarioResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('avatar_image')
+                    ->label('Foto')
+                    ->disk('public')
+                    ->circular()
+                    ->size(40),
                 Tables\Columns\TextColumn::make('label')
                     ->label('Cenário')
                     ->searchable()

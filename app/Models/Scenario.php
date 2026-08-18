@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Scenario extends Model
 {
@@ -20,6 +21,7 @@ class Scenario extends Model
         'slug',
         'label',
         'avatar',
+        'avatar_image',
         'bg_color',
         'preview',
         'intro',
@@ -129,5 +131,14 @@ class Scenario extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 'active');
+    }
+
+    // URL publica da foto do remetente (retorna null se nao tiver upload → views caem no emoji do campo 'avatar').
+    public function getAvatarUrlAttribute(): ?string
+    {
+        if (empty($this->avatar_image)) {
+            return null;
+        }
+        return Storage::disk('public')->url($this->avatar_image);
     }
 }

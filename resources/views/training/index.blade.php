@@ -215,6 +215,16 @@
             border: 2px dashed rgba(204, 0, 0, 0.3);
             animation: rotateBorder 12s linear infinite;
         }
+        /* Foto do remetente (avatar_image) — .has-img e injetada via Blade */
+        .mission-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: inherit;
+            display: block;
+        }
+        /* SEM overflow:hidden aqui — precisa deixar o ::after (anel dashed rotativo) vazar pra fora */
+        .mission-avatar.has-img { padding: 0; font-size: 0; }
 
         .mission-info { flex: 1; min-width: 0; }
         .mission-platform {
@@ -406,8 +416,12 @@
             </div>
 
             <div class="mission-body">
-                <div class="mission-avatar" style="background: {{ $nextScenario->bg_color }}25;">
-                    {{ $nextScenario->avatar }}
+                <div class="mission-avatar {{ $nextScenario->avatar_url ? 'has-img' : '' }}" style="background: {{ $nextScenario->bg_color }}25;">
+                    @if($nextScenario->avatar_url)
+                        <img src="{{ $nextScenario->avatar_url }}" alt="{{ $nextScenario->label }}">
+                    @else
+                        {{ $nextScenario->avatar }}
+                    @endif
                 </div>
                 <div class="mission-info">
                     <span class="mission-platform">Cenário simulado</span>

@@ -647,6 +647,9 @@ Ritmo intenso. **8 releases** foram pra prod desde 29/07 — todas testadas e va
 
 | Commit | Data | O que foi |
 |--------|------|-----------|
+| _(HEAD, ainda não commitado)_ | 18/08 | **Telegram refinado com input decorativo** (clip 📎 + placeholder "Mensagem" + emoji + microfone circular estilo Telegram Web) no rodapé + **botão flutuante "nova mensagem"** no canto inferior direito da sidebar (gradient azul característico do Telegram) |
+| _(HEAD, ainda não commitado)_ | 18/08 | **Teams refeito com layout 3 colunas** fiel ao Teams real (nav rail Atividade/Chat/Calendário/Copilot/Chamadas/OneDrive/Aplicativos/Mais + sidebar de chats + chat área) + **banner amarelo "usuário externo"** sticky no topo do chat + **input decorativo** no rodapé; **tag "Externo" universal** no header do chat de TODAS as plataformas (todos cenarios simulam contato externo, sinaliza risco) |
+| _(HEAD, ainda não commitado)_ | 18/08 | **Upload de foto do remetente nos cenários** — campo `avatar_image` (nullable), Filament FileUpload com editor de crop 1:1, thumbnail na tabela do admin, renderiza em 4 lugares (`.s-avatar` header do chat, `.wapp-chat-avatar` sidebar, `.email-avatar` envelope, `.mission-avatar` card da missão). Backward compat: se `avatar_image` vazio, cai no emoji do campo `avatar`. Accessor `Scenario::getAvatarUrlAttribute()` centraliza a lógica |
 | `ccfb11f` | 10/08 | **Nova plataforma Slack** com layout de 3 colunas fiel ao Slack real (nav rail + sidebar canais + chat área), mensagens sem bolha com avatar quadrado, input decorativo, paleta oficial Slack + **fix cross-platform** do mascote de feedback (removido do JS — aparecia indevidamente em Telegram/Slack) |
 | `dc67186` | 05/08 | **Paleta azul `#0088cc` do Telegram** — chrome inteiro (sidebar, header, chat-wrapper) em Telegram Blue vívido do logo, bolhas them em Night Blue `#17212B`, ícones/textos secundários brancos pra contraste |
 | `40dc804` | 05/08 | **Falas do mascote personalizadas por plataforma** na tela de transição entre cenários + botão "Iniciar Missão" + timer 10s |
@@ -656,6 +659,74 @@ Ritmo intenso. **8 releases** foram pra prod desde 29/07 — todas testadas e va
 | `83901b2` | 31/07 | **Randomização das opções de resposta** por sessão (evita gabarito) |
 | `0b0cf31` | 30/07 | **Logo oficial em 7 telas** + botões "Responder"/"Encaminhar" decorativos no chat E-mail |
 | `1ea56b7` | 29/07 | Wizard editor de cenários + novo layout do e-mail de convite + transição rápida entre chats + 10 correções pós-review dos 5 agentes |
+
+### Feature summary — Telegram refinado com input decorativo + FAB (deploy 2026-08-18)
+
+**Motivação:** Pedro mandou screenshot do Telegram Web real ("faça a mesma alteração para o telegran"). Diferente do Teams/Slack, Telegram Web é 2 colunas (não 3) — então não faz sentido nav rail. O foco foi trazer os elementos característicos que faltavam.
+
+**HTML novo** (só quando `platform=telegram`):
+- `<button class="telegram-new-message-fab">` dentro do `<aside class="wapp-sidebar">` (posicionado absolute no canto inferior direito) — botão circular azul com ícone de lápis, característico do Telegram Web
+- `<div class="telegram-input-bar">` depois do `.bottom-spacer` — barra de composição no rodapé com clip 📎 (anexar) + `.telegram-input-box` (fundo semi-transparente com placeholder "Mensagem" + emoji) + botão microfone circular azul
+
+**CSS `.platform-telegram`**:
+- `.wapp-sidebar { position: relative }` — pra ancorar o FAB
+- Bloco `.telegram-new-message-fab` — 54×54 redondo, gradiente `#33A1D6 → #0088cc`, sombra azul
+- Bloco `.telegram-input-bar` — flexbox horizontal, fundo `rgba(15,15,15,0.85)` com blur
+- `.telegram-input-mic` também gradiente com sombra (destaca como botão principal)
+- Media query `max-width: 700px` esconde o FAB em mobile
+
+**Mantido:** paleta `#0088cc` (Telegram Blue do logo) — cores validadas por Pedro em 05/08 (commit `dc67186`) não foram tocadas. Só adição de novos elementos.
+
+### Feature summary — Teams refeito 3 colunas + tag "Externo" universal (deploy 2026-08-18)
+
+**Motivação:** Pedro mandou screenshot do Teams real ("mais com a cara do Teams, com os icones nas laterais"). Iteração anterior era 2 colunas (`sidebar + chat`) com paleta roxa — servia mas não parecia Teams. Agora tem estrutura autêntica de 3 colunas, seguindo o mesmo padrão que foi feito pro Slack em 10/08.
+
+**HTML novo** (só quando `platform=teams`):
+- `<aside class="teams-nav-rail">` antes da `.wapp-sidebar` — coluna 1 estreita com 8 nav items (Atividade / Chat ativo / Calendário / Copilot / Chamadas / OneDrive / Aplicativos / Mais). Cada item é `<button>` com SVG grande + label pequeno embaixo. Item ativo tem barra roxa vertical à esquerda + cor `#6264A7`.
+- `<div class="teams-external-banner">` no início da `.chat-area` — banner amarelo `#fff4ce` com borda-left `#f9d65e`, ícone de warning, texto "**{label}** faz parte de uma organização externa. É possível que haja políticas relacionadas às mensagens que serão aplicadas ao chat." + link "Saiba mais" + botão × decorativo
+- `<div class="teams-input-bar">` depois do `.bottom-spacer` — input decorativo Teams no rodapé com hint "Responder a participantes externos.", placeholder "Digite uma mensagem" e ícones (Aa / 😊 / GIF / 📎 / ⋯ / send)
+
+**CSS `.platform-teams`** (mudanças no bloco existente):
+- `chat-wrapper { grid-template-columns: 68px minmax(280px, 320px) 1fr }` — antes era `minmax(300px, 340px) 1fr` (2 colunas)
+- Novo bloco `.teams-nav-rail` + `.teams-nav-item` + estados active/hover
+- Novo bloco `.teams-external-banner` (amarelo, warning icon, link Saiba mais)
+- Novo bloco `.teams-input-bar` + subitens (hint / box / placeholder / actions / send-btn)
+
+**Tag "Externo" universal** (aplicada em TODAS as 5 plataformas):
+- HTML novo no `.scenario-bar` universal: `<div class="s-info-label-row">` wrap com `<span class="s-info-label">` + `<span class="external-tag">Externo</span>` ao lado
+- Cor base padrão Teams (`#e8ebfa` bg + `#6264A7` fg — a cor real do Teams em contato externo)
+- Overrides por plataforma pra contraste visual:
+  - Wapp: `rgba(255,255,255,0.95)` bg + verde `#075E54` (sobre header verde WhatsApp)
+  - Email: `#deecf9` + azul `#0078d4`
+  - Telegram: `rgba(255,255,255,0.22)` + `#fff` (sobre chrome vívido)
+  - Slack: `#fde7c1` + `#7C4D00` (sobre header branco)
+
+**Motivação didática:** todos os cenários simulam **golpe/social engineering** — contato SEMPRE externo. A tag reforça visualmente que o remetente não é da organização (esse sinal existe no Teams real justamente pra alertar o usuário). Cai bem no exercício de treinamento.
+
+### Feature summary — Upload de foto do remetente (deploy 2026-08-18)
+
+Cenários ganharam suporte a **foto real de pessoa** no lugar do emoji, pra deixar o chat mais crível ("igual redes sociais mesmo" — Pedro). Backward-compat total: os 13 cenários catálogo com emoji continuam funcionando enquanto Pedro não substitui um a um.
+
+**Migration `2026_08_12_150000_add_avatar_image_to_scenarios_table`:** adiciona `scenarios.avatar_image` VARCHAR(255) nullable, path relativo do disco `public` (ex: `scenarios/avatars/abc123.jpg`).
+
+**Model `Scenario`:** novo accessor `getAvatarUrlAttribute()` retorna URL pública se tiver upload, ou `null` (views caem no emoji). Constrói via `Storage::disk('public')->url($this->avatar_image)`.
+
+**Form Filament (`ScenarioResource`):** `FileUpload::make('avatar_image')` com image editor embutido (crop 1:1 obrigatório), resize automático pra 400x400, `disk('public')` + `directory('scenarios/avatars')`, `maxSize 2048` (2MB). Emoji virou "fallback se sem foto" com hint atualizado. Tabela do admin ganhou `ImageColumn::make('avatar_image')` circular 40px como primeira coluna.
+
+**Views (4 lugares — `show.blade.php` × 3 + `index.blade.php` × 1):** padrão condicional idêntico em todos:
+```blade
+@if($scenario->avatar_url)
+    <img src="{{ $scenario->avatar_url }}" alt="{{ $scenario->label }}">
+@else
+    {{ $scenario->avatar }}
+@endif
+```
+
+**CSS:** regras genéricas pra `img` dentro de `.s-avatar / .wapp-chat-avatar / .email-avatar / .mission-avatar` — `width/height: 100%; object-fit: cover; border-radius: inherit`. Container ganha `padding: 0; font-size: 0; overflow: hidden` via `:has(img)` pra zerar o padding fantasma que o emoji deixaria.
+
+**Storage:** o script `deploy/03-deploy-app.sh` já roda `php artisan storage:link` (linha 85), então em prod nada muda no deploy. Local precisou rodar `storage:link` uma vez pra criar o symlink `public/storage → storage/app/public`.
+
+**Slack:** `.wapp-chat-avatar { display: none }` continua — Slack usa `#` de canal (não avatar de pessoa) na sidebar. Header do canal já não tinha avatar. Foto do remetente Slack fica no `.s-avatar` (que está escondido também no Slack, coerente com o design real onde o topo do canal não mostra avatar de sender).
 
 ### Feature summary — Plataforma Slack (5ª plataforma, deploy 2026-08-10)
 
