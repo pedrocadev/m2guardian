@@ -649,15 +649,17 @@ public/images/
 
 Exceção: `login-admin.png`, `login-leader.png` e `training-welcome-guardian.png` foram **revertidos pro mascote antigo** (corpo inteiro sem moldura circular branca) porque a "bolinha" destoava dos heros escuros dessas telas.
 
-## Estado atual (2026-08-18) — 9 releases grandes deployadas nos últimos 20 dias, WhatsApp 3col + hotfix retry pendentes
+## Estado atual (2026-08-19) — 11 releases grandes deployadas nos últimos 21 dias + feedback de aprendizado por plataforma pendente
 
-Ritmo intenso. **9 releases** foram pra prod desde 29/07 — todas testadas e validadas em `https://m2guardiao.com.br` via `production-tester`. Working tree tem 2 mudanças pendentes (WhatsApp 3 colunas + hotfix retry por timezone drift, aguardando OK do Pedro pra commitar) + os 4 arquivos de homolog untracked (política de sempre — NÃO commitar).
+Ritmo intenso. **11 releases** já foram pra prod desde 29/07. Working tree tem 1 mudança pendente (feedback de aprendizado por plataforma — modal ao terminar bloco + admin editável, aguardando OK do Pedro pra commitar) + os 4 arquivos de homolog untracked (política de sempre — NÃO commitar).
 
 ### Releases deployadas (mais recente primeiro)
 
 | Commit | Data | O que foi |
 |--------|------|-----------|
-| _(HEAD, ainda não commitado)_ | 18/08 | **WhatsApp refeito com layout 3 colunas** fiel ao WhatsApp Web moderno (nav rail Conversas ativo / Chamadas / Status / Comunidades / Meta AI / Arquivadas / Configurações + avatar do usuário no bottom) + título "WhatsApp" grande no header da sidebar + **chips de filtro** (Tudo ativo / Não lidas / Grupos / +) + **input decorativo** no rodapé (+ / emoji / "Digite uma mensagem" / mic). Segue exatamente o padrão do Teams e Slack, mas com paleta WhatsApp (`#f0f2f5`, `#25D366`, `#d9fdd3`) |
+| _(HEAD, ainda não commitado)_ | 19/08 | **Feedback de aprendizado por plataforma** — modal com fundo esmaecido ao terminar TODOS os cenários de uma plataforma (antes da tela de transição ao próximo bloco, ou antes do resultado no último bloco). Nova aba "Feedbacks" no admin Filament pra editar título + corpo de cada plataforma. Tabela `platform_feedbacks` (unique por platform) seeded com 5 registros default. Backend injeta `block_feedback` no payload do `answer()` só nos dois eventos-chave (mudança de bloco / treinamento completo) |
+| `b6a5ae7` | 18/08 | **WhatsApp refeito com layout 3 colunas** fiel ao WhatsApp Web moderno (nav rail Conversas ativo / Chamadas / Status / Comunidades / Meta AI / Arquivadas / Configurações + avatar do usuário no bottom) + título "WhatsApp" grande no header da sidebar + **chips de filtro** (Tudo ativo / Não lidas / Grupos / +) + **input decorativo** no rodapé (+ / emoji / "Digite uma mensagem" / mic). Segue exatamente o padrão do Teams e Slack, mas com paleta WhatsApp (`#f0f2f5`, `#25D366`, `#d9fdd3`) |
+| `e5bea12` | 18/08 | **Hotfix retry** — "Refazer treinamento do zero" caía na tela "🏆 Treinamento concluído!" em vez da 1ª missão. Causa: timezone drift entre `started_at` de sessions históricas (UTC) e novas (BRT) fazia `latestOfMany('started_at')` retornar a session antiga. Fix: ordena por `id` (auto_increment é imune a timezone/DST). Regra permanente registrada em gotcha (ver seção "⚠️ Gotcha `latestOfMany`") |
 | `78a6bd1` / `ac32369` / `c574422` | 18/08 | **Telegram refinado com input decorativo** (clip 📎 + placeholder "Mensagem" + emoji + microfone circular estilo Telegram Web) no rodapé + **botão flutuante "nova mensagem"** no canto inferior direito da sidebar (gradient azul característico do Telegram) |
 | `c574422` | 18/08 | **Teams refeito com layout 3 colunas** fiel ao Teams real (nav rail Atividade/Chat/Calendário/Copilot/Chamadas/OneDrive/Aplicativos/Mais + sidebar de chats + chat área) + **banner amarelo "usuário externo"** sticky no topo do chat + **input decorativo** no rodapé; **tag "Externo" só no Teams** (é o único que tem esse marcador oficial na UX real — foi restrita ao Teams em revisão do Pedro no mesmo dia após aparecer em todas as plataformas por engano) |
 | `c574422` | 18/08 | **Upload de foto do remetente nos cenários** — campo `avatar_image` (nullable), Filament FileUpload com editor de crop 1:1, thumbnail na tabela do admin, renderiza em 4 lugares (`.s-avatar` header do chat, `.wapp-chat-avatar` sidebar, `.email-avatar` envelope, `.mission-avatar` card da missão). Backward compat: se `avatar_image` vazio, cai no emoji do campo `avatar`. Accessor `Scenario::getAvatarUrlAttribute()` centraliza a lógica |
@@ -670,6 +672,61 @@ Ritmo intenso. **9 releases** foram pra prod desde 29/07 — todas testadas e va
 | `83901b2` | 31/07 | **Randomização das opções de resposta** por sessão (evita gabarito) |
 | `0b0cf31` | 30/07 | **Logo oficial em 7 telas** + botões "Responder"/"Encaminhar" decorativos no chat E-mail |
 | `1ea56b7` | 29/07 | Wizard editor de cenários + novo layout do e-mail de convite + transição rápida entre chats + 10 correções pós-review dos 5 agentes |
+
+### Feature summary — Feedback de aprendizado por plataforma v2: Guardião + carousel de slides (mudança pendente 2026-08-19)
+
+**Motivação inicial:** Pedro pediu reforço pedagógico entre blocos ("depois de cada finalização de cenario de bloco tipo: terminou de responder todas perguntas do whatsapp, antes de vim a tela de transição para o outro bloco, tem que aparecer um pop na tela atual esmaecendo o fundo com de apredizado"). A **v1** foi um modal com título + corpo único (monolito). Pedro rejeitou: "com a mensagem grande fica um bloco muito fino e tem que descer" → "quero que esse pop seja largo e a letra maior" → depois "quero em paisagem" → finalmente **"no pop final tem que ter o guardião esquerda e abrir tipo um balão de conversa ao lado. tem que ter essa telinha que vai passando pra ver tudo que aprendeu, em vez de ficar só em um monolito gigante"**.
+
+**v2 (esta release):** Layout paisagem com **Guardião body inteiro à esquerda + balão de fala com carousel de slides à direita**. Cada plataforma tem 5 slides (Intro / Sinais de alerta / Regra de ouro / Resumo / Fecho) baseados no roteiro do docx "Card de encerramento". Setas de navegação + contador "X/N" + dots + botão "Continuar" que só aparece no ÚLTIMO slide (evita o colaborador pular sem ler). Cauda triangular do balão apontando pro Guardião (via `::before`).
+
+**Modelagem** (`platform_feedbacks`) — 3 migrations:
+1. `2026_08_19_120000_create_platform_feedbacks_table` — cria tabela com `platform` UNIQUE, `title`, `body` (deprecated), timestamps + seed inicial simples
+2. `2026_08_19_140000_expand_platform_feedbacks_for_slides` — ADD COLUMN `guardian_image` (nullable) + `slides` (JSON), depois faz UPDATE nos 5 registros com o roteiro do docx (5 slides cada em HTML pronto pro RichEditor)
+3. `2026_08_19_160000_make_body_nullable_on_platform_feedbacks` — **fix clean-code**: `body` era `TEXT NOT NULL` sem default e o form v2 não expõe mais o campo. Qualquer INSERT via código (factory, seeder futuro, plataforma nova adicionada ao enum) quebrava com constraint violation em MySQL strict. Migration torna `body` nullable
+- `body` mantido pra backward compat (não é mais editado no admin, mas ainda serve de fallback via `normalized_slides` accessor se `slides` estiver vazio)
+- Padrão M2 apenas (não por empresa) — se surgir demanda de personalização, dá pra evoluir com pivot
+
+**Model `PlatformFeedback`:**
+- `$table = 'platform_feedbacks'` forçado — **gotcha**: `Str::plural('feedback') === 'feedback'` (palavra invariável em inglês, mesmo pluralismo do `equipment`, `series`, etc). Sem o override o Laravel busca em `platform_feedback` e explode com `no such table`
+- Cast `slides` → array (JSON)
+- `forPlatform(string): ?self` — retorna null se não achar
+- Accessor `getGuardianImageUrlAttribute()` — retorna URL pública via `Storage::disk('public')` ou null (front cai no mascote padrão)
+- Accessor `getNormalizedSlidesAttribute()` — retorna sempre `[{title, body}, ...]`; se `slides` vazio E `body` presente, converte legado num slide único
+
+**Admin (Filament `PlatformFeedbackResource`):**
+- Nav "Feedbacks" com ícone `academic-cap`, sort 5 (logo abaixo de "Cenários" que é sort 4)
+- Form v2:
+  - Select `platform` (disabled + options `Scenario::PLATFORM_LABELS`)
+  - TextInput `title` (título principal do modal, aparece no cabeçalho)
+  - **`FileUpload::make('guardian_image')`** com `image()`, `imageEditor()`, resize target 600, disk `public` (`platform-feedbacks/guardians/`)
+  - **`Repeater::make('slides')`** com `TextInput::make('title')` + **`RichEditor::make('body')`** — toolbar: bold, italic, strike, h2, h3, bulletList, orderedList, blockquote, link, undo, redo. Repeater é `reorderableWithButtons`, `cloneable`, `collapsible + collapsed`, `itemLabel` mostra o título do slide, `minItems=1`, `defaultItems=1`. Reordena via drag ou botões
+- Table: badge com cor `Scenario::PLATFORM_COLORS`, `updated_at` visível, sort default por `platform`
+- `canCreate() = false` + `canDelete() = false` — 5 records são fixos, admin só EDITA (não cria/apaga)
+- Sem `CreatePlatformFeedback` page — só `List` + `Edit`
+
+**Limitações conhecidas do RichEditor padrão do Filament 3** (Tiptap-based): NÃO tem underline, alignment (esq/dir/centro) nem escolha de fonte. Se surgir demanda, instalar plugin `awcodes/filament-tiptap-editor` (~5 min de composer install). Cobre bem o essencial: negrito, itálico, tachado, listas, títulos (h2/h3), link, blockquote.
+
+**Backend (`CollaboratorController::answer()`):**
+- Novo campo `block_feedback` no payload de resposta (via helper privado `platformFeedbackPayload(string): ?array`)
+- Injeta o feedback **apenas em 2 pontos**:
+  1. `$allScenariosDone = true` (treinamento inteiro acabou) — usa feedback do cenário atual (o último do último bloco)
+  2. `$next->platform !== $scenario->platform` (próximo cenário é de outra plataforma) — usa feedback do cenário atual (o que ele acabou de fechar)
+- NÃO injeta quando `quick_transition = true` (mesma plataforma, próximo cenário) — aí o usuário só troca de chat na mesma plataforma, não fecha bloco
+
+**Frontend (`show.blade.php`) — layout paisagem carousel:**
+- HTML: `<div class="block-feedback-modal">` fixed com backdrop + card em grid 2 colunas. **Coluna esquerda** = `<div class="bfm-hero">` com `<img class="bfm-guardian">` (imagem body inteira flutuando via animation `bfmFloat`). **Coluna direita** = `<div class="bfm-balloon">` (fundo branco, `border-radius: 20px`) com header (título + contador "X/N"), corpo do slide atual (title + rich HTML), nav (setas prev/next + dots) e botão Continuar hidden até o último slide.
+- CSS: cauda triangular do balão apontando pro Guardião via `.bfm-balloon::before` (border trick + `drop-shadow` sutil). Setas circulares `.bfm-arrow` com borda vermelha `#CC0000` que preenche no hover. Dots `.bfm-dot` com scale no ativo. Estilos ricos pro `.bfm-slide-body` cobrem `<ul>/<ol>/<blockquote>/<strong>/<em>/<h2>/<h3>/<a>` (o RichEditor salva HTML — não é markdown). Backdrop com `backdrop-filter: blur(5px)`.
+- CSS responsivo: 3 níveis. `≤900px` reduz Guardião pra 200px. `≤640px` colapsa pra 1 coluna vertical (Guardião em cima, sem cauda).
+- JS: `showBlockFeedbackModal(payload, onContinue)` — recebe `{title, guardian_image_url, slides: [{title, body}]}`. Carrega Guardião custom (com fallback `onerror` → default), popula dots dinamicamente, `render(idx)` alterna slide + habilita/desabilita setas + toggle do botão Continuar. `slideBodyEl.innerHTML = slide.body` (autor confiável = admin autenticado, sem XSS risk). Scroll do balão volta pro topo em cada slide.
+- Botão Continuar SÓ aparece no ÚLTIMO slide (`idx === total - 1`). Antes disso o colaborador é forçado a navegar pelas setas — pedagógico intencional.
+
+**Testes** (`tests/Feature/PlatformFeedbackTest.php`, 4):
+1. `block_feedback` é injetado quando termina TODOS de uma plataforma e próxima é diferente (assere estrutura `{platform, title, slides:[{title, body}]}`) ✓
+2. `block_feedback` **NÃO** é injetado quando próximo cenário é da mesma plataforma (quick_transition) ✓
+3. `block_feedback` é injetado no último cenário (training complete) ✓
+4. Backward-compat: registro sem `slides` mas com `body` retorna `[{title:null, body:legado}]` via `normalized_slides` ✓
+
+**Padrão consistente:** todos os elementos decorativos do modal (backdrop) não interferem em navegação de teclado — foco vai direto pro botão "Continuar" quando abre. `aria-modal="true"` no card indica ao leitor de tela que conteúdo atrás está inativo.
 
 ### ⚠️ Gotcha `latestOfMany` — nunca ordenar sessions por `started_at` (hotfix 2026-08-18)
 

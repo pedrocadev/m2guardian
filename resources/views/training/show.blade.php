@@ -156,6 +156,251 @@
             transition: opacity 0.35s ease;
             backdrop-filter: blur(3px);
         }
+
+        /* ═══════════════════════════════════════════════════════════
+           MODAL DE APRENDIZADO DE BLOCO (fim de plataforma)
+           Aparece ANTES da tela de transicao entre blocos e antes da
+           tela de resultado no ultimo bloco. Fundo esmaecido, card
+           branco central com titulo/corpo/CTA. Fecha via botao Continuar.
+           ═══════════════════════════════════════════════════════════ */
+        .block-feedback-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        .block-feedback-modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .bfm-backdrop {
+            position: absolute;
+            inset: 0;
+            background: rgba(15, 15, 15, 0.7);
+            backdrop-filter: blur(5px);
+        }
+        /* Card paisagem: Guardiao a esquerda + balao de fala carousel a direita.
+           O balao tem cauda triangular apontando pro Guardiao (::before). */
+        .bfm-card {
+            position: relative;
+            background: transparent;
+            border-radius: 0;
+            padding: 0;
+            max-width: 1080px;
+            width: 100%;
+            max-height: calc(100vh - 48px);
+            box-shadow: none;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+            align-items: center;
+        }
+        .block-feedback-modal.show .bfm-card {
+            transform: scale(1) translateY(0);
+        }
+        .bfm-hero {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .bfm-guardian {
+            width: 100%;
+            max-width: 300px;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0 12px 24px rgba(204, 0, 0, 0.35));
+            animation: bfmFloat 3.5s ease-in-out infinite;
+        }
+        @keyframes bfmFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        .bfm-balloon {
+            position: relative;
+            background: #fff;
+            border-radius: 20px;
+            padding: 26px 32px 22px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 96px);
+        }
+        /* Cauda do balao apontando pro Guardiao */
+        .bfm-balloon::before {
+            content: '';
+            position: absolute;
+            left: -14px;
+            top: 60px;
+            width: 0; height: 0;
+            border-top: 12px solid transparent;
+            border-bottom: 12px solid transparent;
+            border-right: 14px solid #fff;
+            filter: drop-shadow(-2px 0 2px rgba(0, 0, 0, 0.08));
+        }
+        .bfm-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .bfm-header-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #CC0000;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+        }
+        .bfm-counter {
+            font-size: 13px;
+            font-weight: 700;
+            color: #999;
+            flex-shrink: 0;
+        }
+        .bfm-slide {
+            flex: 1;
+            min-height: 200px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+        .bfm-slide::-webkit-scrollbar { width: 6px; }
+        .bfm-slide::-webkit-scrollbar-thumb { background: #ddd; border-radius: 3px; }
+        .bfm-slide-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #111;
+            line-height: 1.3;
+            margin-bottom: 14px;
+        }
+        .bfm-slide-body {
+            font-size: 15.5px;
+            color: #333;
+            line-height: 1.75;
+        }
+        .bfm-slide-body p { margin-bottom: 10px; }
+        .bfm-slide-body p:last-child { margin-bottom: 0; }
+        .bfm-slide-body ul,
+        .bfm-slide-body ol { margin: 10px 0 10px 22px; }
+        .bfm-slide-body li { margin-bottom: 6px; }
+        .bfm-slide-body strong { color: #111; }
+        .bfm-slide-body h2 { font-size: 18px; font-weight: 800; margin: 14px 0 8px; color: #111; }
+        .bfm-slide-body h3 { font-size: 16px; font-weight: 700; margin: 12px 0 6px; color: #222; }
+        .bfm-slide-body blockquote {
+            border-left: 4px solid #CC0000;
+            background: #fff5f5;
+            padding: 10px 16px;
+            margin: 12px 0;
+            font-weight: 600;
+            color: #111;
+            border-radius: 6px;
+        }
+        .bfm-slide-body a { color: #CC0000; text-decoration: underline; }
+        .bfm-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 2px solid #f0f0f0;
+            margin-top: 14px;
+        }
+        .bfm-arrow {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            border: 2px solid #CC0000;
+            background: #fff;
+            color: #CC0000;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s, color 0.15s, transform 0.05s;
+            flex-shrink: 0;
+        }
+        .bfm-arrow svg { width: 20px; height: 20px; }
+        .bfm-arrow:hover:not(:disabled) { background: #CC0000; color: #fff; }
+        .bfm-arrow:active:not(:disabled) { transform: scale(0.94); }
+        .bfm-arrow:disabled {
+            border-color: #e5e5e5;
+            color: #ccc;
+            cursor: not-allowed;
+        }
+        .bfm-dots {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex: 1;
+        }
+        .bfm-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: #ddd;
+            transition: background 0.2s, transform 0.2s;
+        }
+        .bfm-dot.active {
+            background: #CC0000;
+            transform: scale(1.4);
+        }
+        .bfm-continue {
+            background: #CC0000;
+            color: #fff;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 800;
+            font-family: inherit;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: background 0.15s, transform 0.05s;
+            min-width: 220px;
+            margin: 16px auto 0;
+            display: block;
+            animation: bfmFadeInBtn 0.4s ease;
+        }
+        @keyframes bfmFadeInBtn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bfm-continue:hover { background: #a30000; }
+        .bfm-continue:active { transform: scale(0.98); }
+
+        /* Tela media (tablet): reduz Guardiao */
+        @media (max-width: 900px) {
+            .bfm-card {
+                grid-template-columns: 200px 1fr;
+                gap: 18px;
+            }
+            .bfm-guardian { max-width: 200px; }
+            .bfm-slide-title { font-size: 19px; }
+            .bfm-slide-body { font-size: 14.5px; }
+        }
+        /* Mobile: colapsa pra 1 coluna (Guardiao em cima, balao embaixo, sem cauda) */
+        @media (max-width: 640px) {
+            .bfm-card {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            .bfm-hero { padding-top: 0; }
+            .bfm-guardian { max-width: 130px; }
+            .bfm-balloon { padding: 20px 20px 18px; }
+            .bfm-balloon::before { display: none; }
+            .bfm-header-title { font-size: 13px; }
+            .bfm-slide-title { font-size: 17px; }
+            .bfm-slide-body { font-size: 14px; }
+            .bfm-arrow { width: 40px; height: 40px; }
+            .bfm-continue { min-width: 180px; padding: 12px 24px; font-size: 14px; }
+        }
         .quick-overlay.show {
             opacity: 1;
             pointer-events: auto;
@@ -3033,6 +3278,95 @@ const QUICK_MASCOTS = [
     '/images/transicao-chats/completion-n3.png',
 ];
 
+// Mostra modal de aprendizado do bloco (fim de plataforma) em formato carousel:
+// Guardiao a esquerda + balao com slides navegaveis a direita. O botao "Continuar"
+// so aparece quando o colaborador chega no ultimo slide.
+const BFM_DEFAULT_GUARDIAN = '/images/mascots/training-index-progress.png';
+
+function showBlockFeedbackModal(payload, onContinue) {
+    const modal = document.getElementById('blockFeedbackModal');
+    const guardianEl = document.getElementById('bfmGuardian');
+    const headerTitleEl = document.getElementById('bfmHeaderTitle');
+    const slideTitleEl = document.getElementById('bfmSlideTitle');
+    const slideBodyEl = document.getElementById('bfmSlideBody');
+    const counterCurrent = document.getElementById('bfmCurrent');
+    const counterTotal = document.getElementById('bfmTotal');
+    const dotsEl = document.getElementById('bfmDots');
+    const prevBtn = document.getElementById('bfmPrev');
+    const nextBtn = document.getElementById('bfmNext');
+    const continueBtn = document.getElementById('bfmContinue');
+    // Guard COMPLETO: se qualquer elemento do modal sumir do DOM, cai no fallback
+    // sem tentar setar propriedade em null.
+    if (!modal || !guardianEl || !headerTitleEl || !slideTitleEl || !slideBodyEl
+        || !counterCurrent || !counterTotal || !dotsEl
+        || !prevBtn || !nextBtn || !continueBtn) {
+        onContinue();
+        return;
+    }
+
+    const slides = Array.isArray(payload.slides) && payload.slides.length ? payload.slides : [{title: null, body: ''}];
+    const total = slides.length;
+    let idx = 0;
+
+    guardianEl.src = payload.guardian_image_url || BFM_DEFAULT_GUARDIAN;
+    // Fallback pro mascote default se o upload custom falhar. onerror=null antes
+    // do fallback pra evitar loop infinito caso o default tambem esteja quebrado.
+    guardianEl.onerror = () => {
+        guardianEl.onerror = null;
+        guardianEl.src = BFM_DEFAULT_GUARDIAN;
+    };
+    headerTitleEl.textContent = payload.title || 'Aprendizado do bloco';
+    counterTotal.textContent = total;
+
+    dotsEl.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+        const d = document.createElement('span');
+        d.className = 'bfm-dot' + (i === 0 ? ' active' : '');
+        dotsEl.appendChild(d);
+    }
+
+    function render(newIdx) {
+        idx = Math.max(0, Math.min(total - 1, newIdx));
+        const slide = slides[idx];
+        slideTitleEl.textContent = slide.title || '';
+        slideTitleEl.style.display = slide.title ? '' : 'none';
+        // body vem como HTML rico do RichEditor (autor confiavel = admin autenticado)
+        slideBodyEl.innerHTML = slide.body || '';
+        // Links externos do RichEditor abrem em nova aba pra nao roubar o
+        // colaborador do treinamento no meio do modal.
+        slideBodyEl.querySelectorAll('a[href^="http"]').forEach(a => {
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+        });
+        counterCurrent.textContent = idx + 1;
+        dotsEl.querySelectorAll('.bfm-dot').forEach((d, i) => d.classList.toggle('active', i === idx));
+        prevBtn.disabled = idx === 0;
+        nextBtn.disabled = idx === total - 1;
+        continueBtn.hidden = idx !== total - 1;
+        slideBodyEl.parentElement.scrollTop = 0;
+    }
+
+    prevBtn.onclick = () => render(idx - 1);
+    nextBtn.onclick = () => render(idx + 1);
+    continueBtn.onclick = () => {
+        modal.classList.remove('show');
+        modal.setAttribute('aria-hidden', 'true');
+        modal.onkeydown = null;
+        onContinue();
+    };
+    // Navegacao por teclado: setas esquerda/direita alternam slide.
+    // Escape NAO fecha (leitura obrigatoria do bloco).
+    modal.onkeydown = (e) => {
+        if (e.key === 'ArrowLeft' && !prevBtn.disabled) { e.preventDefault(); render(idx - 1); }
+        if (e.key === 'ArrowRight' && !nextBtn.disabled) { e.preventDefault(); render(idx + 1); }
+    };
+
+    render(0);
+    modal.classList.add('show');
+    modal.setAttribute('aria-hidden', 'false');
+    (total > 1 ? nextBtn : continueBtn).focus();
+}
+
 // ─── Agrupa mensagens em "chunks", cada um termina com uma pergunta ──────
 const chunks = [];
 let buffer = [];
@@ -3288,6 +3622,18 @@ async function renderQuestion(q, questionIndex, isLastChunk) {
                     contBtn.classList.add('next-scenario');
                     contBtn.addEventListener('click', () => {
                         const target = data.next_url || nextScenarioFallback;
+
+                        // Fluxo 1: modal de aprendizado de bloco (fim de plataforma).
+                        // Backend so envia block_feedback quando o proximo cenario e de
+                        // outra plataforma OU quando o treinamento inteiro acabou.
+                        if (data.block_feedback) {
+                            showBlockFeedbackModal(data.block_feedback, () => {
+                                window.location.href = target;
+                            });
+                            return;
+                        }
+
+                        // Fluxo 2: transicao rapida (mesma plataforma, proximo cenario)
                         if (data.quick_transition) {
                             const overlay = document.getElementById('quickOverlay');
                             const mascote = document.getElementById('quickMascote');
@@ -3342,6 +3688,39 @@ run();
         </div>
         <div class="quick-balao">
             <span class="quick-emphasize">Etapa concluída.</span> Vamos para a próxima?
+        </div>
+    </div>
+</div>
+
+{{-- Modal de aprendizado de bloco: aparece ao terminar todos os cenarios de uma plataforma,
+     antes da tela de transicao pro proximo bloco (ou antes da tela de resultado no ultimo bloco).
+     Layout paisagem: Guardiao a esquerda + balao de fala carousel a direita.
+     Conteudo (titulo + slides + imagem) vem do backend via block_feedback no JSON. --}}
+<div class="block-feedback-modal" id="blockFeedbackModal" aria-hidden="true">
+    <div class="bfm-backdrop"></div>
+    <div class="bfm-card" role="dialog" aria-modal="true" aria-labelledby="bfmHeaderTitle">
+        <div class="bfm-hero">
+            <img class="bfm-guardian" id="bfmGuardian" src="/images/mascots/training-index-progress.png" alt="Guardião">
+        </div>
+        <div class="bfm-balloon">
+            <div class="bfm-header">
+                <h2 class="bfm-header-title" id="bfmHeaderTitle"></h2>
+                <div class="bfm-counter"><span id="bfmCurrent">1</span> / <span id="bfmTotal">1</span></div>
+            </div>
+            <div class="bfm-slide">
+                <h3 class="bfm-slide-title" id="bfmSlideTitle"></h3>
+                <div class="bfm-slide-body" id="bfmSlideBody"></div>
+            </div>
+            <div class="bfm-nav">
+                <button type="button" class="bfm-arrow bfm-prev" id="bfmPrev" aria-label="Slide anterior" disabled>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                </button>
+                <div class="bfm-dots" id="bfmDots"></div>
+                <button type="button" class="bfm-arrow bfm-next" id="bfmNext" aria-label="Próximo slide">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                </button>
+            </div>
+            <button type="button" class="bfm-continue" id="bfmContinue" hidden>Continuar →</button>
         </div>
     </div>
 </div>

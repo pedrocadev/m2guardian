@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Answer;
 use App\Models\Collaborator;
+use App\Models\PlatformFeedback;
 use App\Models\Scenario;
 use App\Models\TrainingSession;
 use Illuminate\Http\Request;
@@ -274,6 +275,10 @@ class CollaboratorController extends Controller
         $trainingComplete = false;
         $nextUrl = null;
         $quickTransition = false;
+        // Aprendizado do bloco: exibido em modal quando termina TODOS os cenarios de uma plataforma
+        // (ou seja: quando o proximo cenario e de outra plataforma, ou quando o treinamento inteiro acabou).
+        // O texto vem da tabela platform_feedbacks (editavel no admin).
+        $blockFeedback = null;
 
         if ($scenarioComplete) {
             $completedIds = $this->completedScenarioIds($session, $scenarios);
@@ -283,6 +288,7 @@ class CollaboratorController extends Controller
                 $this->completeTraining($collaborator, $session, $scenarios);
                 $trainingComplete = true;
                 $nextUrl = route('training.completed');
+                $blockFeedback = $this->platformFeedbackPayload($scenario->platform);
             } else {
                 $next = $scenarios->first(fn($s) => !$completedIds->contains($s->id));
                 if ($next) {
@@ -292,6 +298,7 @@ class CollaboratorController extends Controller
                         $quickTransition = true;
                     } else {
                         $nextUrl = route('training.transition', $next->id);
+                        $blockFeedback = $this->platformFeedbackPayload($scenario->platform);
                     }
                 } else {
                     $nextUrl = route('training.completed');
@@ -306,7 +313,32 @@ class CollaboratorController extends Controller
             'training_complete' => $trainingComplete,
             'next_url'          => $nextUrl,
             'quick_transition'  => $quickTransition,
+            'block_feedback'    => $blockFeedback,
         ]);
+    }
+
+    /**
+     * Serializa o feedback da plataforma pro payload de resposta.
+     * Retorna null se nao houver feedback cadastrado OU se a lista normalizada
+     * de slides estiver vazia (fail-safe: front so exibe o modal quando ha
+     * conteudo real pra mostrar).
+     */
+    private function platformFeedbackPayload(string $platform): ?array
+    {
+        $fb = PlatformFeedback::forPlatform($platform);
+        if (!$fb) {
+            return null;
+        }
+        $slides = $fb->normalized_slides;
+        if (empty($slides)) {
+            return null;
+        }
+        return [
+            'platform'           => $fb->platform,
+            'title'              => $fb->title,
+            'guardian_image_url' => $fb->guardian_image_url,
+            'slides'             => $slides,
+        ];
     }
 
     private function respondAnswer(Request $request, array $data)
