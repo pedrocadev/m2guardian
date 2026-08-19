@@ -332,7 +332,8 @@ class ScenarioResource extends Resource
                     ->size(40),
                 Tables\Columns\TextColumn::make('label')
                     ->label('Cenário')
-                    ->searchable()
+                    ->description(fn ($record) => $record->slug)
+                    ->searchable(['label', 'slug'])
                     ->sortable(),
                 Tables\Columns\TextColumn::make('platform')
                     ->label('Plataforma')
