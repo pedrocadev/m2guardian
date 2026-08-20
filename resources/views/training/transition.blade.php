@@ -318,38 +318,37 @@
 <div class="main">
     @php
         $firstName = explode(' ', $collaborator->name ?? 'colaborador')[0];
-        $missionOrdinal = [1 => 'primeira', 2 => 'segunda', 3 => 'terceira', 4 => 'quarta', 5 => 'quinta', 6 => 'sexta', 7 => 'sétima'][$position] ?? 'próxima';
 
         $platforms = [
             'wapp'     => [
                 'icon'  => '📱',
-                'title' => 'Sua ' . $missionOrdinal . ' missão chegou! Vamos lá?',
+                'title' => 'Sua próxima missão chegou! Vamos lá?',
                 'text'  => 'Mensagens rápidas exigem decisões cuidadosas. Leia, confirme e não aja por impulso.',
             ],
             'teams'    => [
                 'icon'  => '💼',
-                'title' => 'Pronto, ' . $firstName . '? Sua ' . $missionOrdinal . ' missão chegou. Agora vamos usar o Microsoft Teams.',
+                'title' => 'Pronto, ' . $firstName . '? Sua próxima missão chegou. Agora vamos usar o Microsoft Teams.',
                 'text'  => 'Ambiente corporativo não é sinônimo de confiança automática. Valide sempre o perfil e o processo, antes de seguir com a conversa.',
             ],
             'email'    => [
                 'icon'  => '📧',
-                'title' => 'Tudo certo para a ' . $missionOrdinal . ' missão? Chegamos ao e-mail corporativo.',
+                'title' => 'Tudo certo para a próxima missão? Chegamos ao e-mail corporativo.',
                 'text'  => 'Nesse cenário a aparência pode enganar. Confira remetente, domínio, links e anexos antes de agir.',
             ],
             'telegram' => [
                 'icon'  => '✈️',
-                'title' => 'Sua ' . $missionOrdinal . ' missão chegou! Vamos lá?',
+                'title' => 'Sua próxima missão chegou! Vamos lá?',
                 'text'  => 'Mensageiros pessoais também são usados pra golpes. Valide contatos e não clique em links suspeitos.',
             ],
             'slack'    => [
                 'icon'  => '💬',
-                'title' => 'Hora da ' . $missionOrdinal . ' missão! Chegamos ao Slack.',
+                'title' => 'Hora da próxima missão! Chegamos ao Slack.',
                 'text'  => 'Canais de trabalho parecem seguros, mas bots e integrações podem ser exploradas. Confirme identidades antes de compartilhar dados sensíveis.',
             ],
         ];
         $platform = $platforms[$scenario->platform] ?? [
             'icon'  => '⚡',
-            'title' => 'Sua ' . $missionOrdinal . ' missão chegou!',
+            'title' => 'Sua próxima missão chegou!',
             'text'  => 'Leia com calma e tome a decisão mais segura possível.',
         ];
 
