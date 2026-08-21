@@ -56,6 +56,25 @@ test('training index shows scenarios for demo company', function () {
     $response->assertViewHas('scenarios');
 });
 
+test('scenarios list respects sort_order defined by admin (not id order)', function () {
+    // Zera os cenarios do beforeEach (sort_order default 0 competiria pelo top-3 do demo).
+    Scenario::query()->delete();
+
+    // Cria 3 cenarios com sort_order INVERTIDO relativo ao id — se o controller
+    // ainda estiver ordenando por id, isso pega.
+    $s1 = Scenario::factory()->create(['is_default' => true, 'demo_eligible' => true, 'status' => 'active', 'sort_order' => 30]);
+    $s2 = Scenario::factory()->create(['is_default' => true, 'demo_eligible' => true, 'status' => 'active', 'sort_order' => 10]);
+    $s3 = Scenario::factory()->create(['is_default' => true, 'demo_eligible' => true, 'status' => 'active', 'sort_order' => 20]);
+
+    $this->actingAs($this->collaborator, 'collaborator');
+    $response = $this->withSession(['training.welcome_seen' => true])->get(route('training.index'));
+
+    $response->assertOk();
+    $scenarios = $response->viewData('scenarios');
+    // Esperado: s2 (10) → s3 (20) → s1 (30), NAO na ordem de criacao.
+    expect($scenarios->pluck('id')->all())->toBe([$s2->id, $s3->id, $s1->id]);
+});
+
 test('completing training marks collaborator as done', function () {
     $this->actingAs($this->collaborator, 'collaborator')
         ->withSession(['training.welcome_seen' => true]);

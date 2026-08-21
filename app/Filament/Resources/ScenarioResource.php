@@ -404,7 +404,12 @@ class ScenarioResource extends Resource
                     })
                     ->successNotificationTitle('Cenário duplicado como rascunho'),
             ])
-            ->defaultSort('platform');
+            // Ordena por sort_order (com id como desempate estavel) e habilita drag-and-drop.
+            // Reordenar so aparece quando a tabela esta ordenada por sort_order — se o admin
+            // clicar em outra coluna, os handles somem, o que evita reordenar "por cima" de
+            // outra sort e persistir uma ordem inconsistente.
+            ->defaultSort('sort_order')
+            ->reorderable('sort_order');
     }
 
     public static function getRelations(): array

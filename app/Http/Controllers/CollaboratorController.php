@@ -373,6 +373,11 @@ class CollaboratorController extends Controller
         return redirect('/');
     }
 
+    /**
+     * Cenarios elegiveis para o treinamento deste colaborador.
+     * Ordena por sort_order (definido pelo admin via drag-and-drop no Filament),
+     * com id como desempate pra ordem estavel entre cenarios de mesmo sort_order.
+     */
     private function getScenariosFor(Collaborator $collaborator)
     {
         $company = $collaborator->company;
@@ -382,6 +387,7 @@ class CollaboratorController extends Controller
             return Scenario::defaults()
                 ->demoEligible()
                 ->active()
+                ->orderBy('sort_order')
                 ->orderBy('id')
                 ->take(3)
                 ->get();
@@ -392,11 +398,16 @@ class CollaboratorController extends Controller
         if ($company->scenarios()->exists()) {
             return $company->scenarios()
                 ->where('status', 'active')
+                ->orderBy('scenarios.sort_order')
                 ->orderBy('scenarios.id')
                 ->get();
         }
 
-        return Scenario::defaults()->active()->orderBy('id')->get();
+        return Scenario::defaults()
+            ->active()
+            ->orderBy('sort_order')
+            ->orderBy('id')
+            ->get();
     }
 
     /**
